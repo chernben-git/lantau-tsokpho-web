@@ -1139,6 +1139,8 @@ function openAdd(){
   document.getElementById('f_gen').value='1';
   document.getElementById('f_gender').value='male';
   document.getElementById('f_twlv').value='';
+  document.getElementById('orderLabel').style.display='none';
+  document.getElementById('orderHint').style.display='none';
   buildParentSel('');
   open_('editModal');
 }
@@ -1161,6 +1163,8 @@ function openEdit(id){
   buildParentSel(m.parentId||'');
   close_('viewModal');
   open_('editModal');
+  // 打開時立即顯示排行標籤
+  setTimeout(checkOrderDuplicate, 100);
 }
 function buildParentSel(sel){
   let h='<option value="">（根節點）</option>';
