@@ -18,7 +18,6 @@ async function fallbackFetch(url, prompt, key) {
 }
 
 exports.handler = async (event) => {
-  // CORS 預檢
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -43,22 +42,40 @@ exports.handler = async (event) => {
     if (!API_KEY) return { statusCode: 500, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'API Key 未設定' }) };
 
     const isSpouse = type === 'spouse';
-    
-    // --- 核心修改：強化國語轉台語發音的邏輯 ---
-    const prompt = isSpouse
-      ? `你是一位台灣台語專家。請將人名「${name}」先轉為台灣閩南語唸法，再輸出為台羅拼音。格式：{"tl":"Tân Tsî"}`
-      : `你是一位台灣台語專家。使用者會提供國語書寫的姓名「${name}」，請依照以下步驟處理：
-         1. 思考該姓名在台灣閩南語中的正確發音（例如「陳」讀 Tân，「齊」讀 Tsî）。
-         2. 根據該台語發音輸出台羅拼音（需含調符）、方音符號及台灣常用護照英文。
-         
-         請嚴格只輸出 JSON 格式如下：
-         {
-           "tl": "台語發音的台羅拼音",
-           "bp": "台灣方音符號",
-           "en": "台灣常用英文譯名(如 Chen Chi)"
-         }`;
 
-    // 使用 v1beta 以確保 responseMimeType 支援
+    const prompt = isSpouse
+      ? `你是台灣閩南語（台語）專家，精通台羅拼音（Taiwan Romanization System, TRS）。
+請將人名漢字「${name}」，依照台灣閩南語（非普通話、非客語）的正確發音，轉換為台羅拼音。
+
+參考發音規則：
+- 陳 → Tân（台語，非普通話 Chen）
+- 林 → Lîm（台語，非普通話 Lin）
+- 黃 → N̂g（台語）
+- 李 → Lí（台語）
+- 齊 → Tsî（台語）
+- 賞 → Síng（台語）
+
+只輸出 JSON，格式：{"tl":"台羅拼音"}`
+
+      : `你是台灣閩南語（台語）專家，精通台羅拼音（Taiwan Romanization System, TRS）。
+請將人名漢字「${name}」，依照台灣閩南語（非普通話、非客語）的正確發音，轉換為以下格式。
+
+參考發音規則：
+- 陳 → Tân（台語，非普通話 Chen）
+- 林 → Lîm（台語，非普通話 Lin）
+- 黃 → N̂g（台語）
+- 李 → Lí（台語）
+- 齊 → Tsî（台語）
+- 賞 → Síng（台語）
+- 人名各字之間用空格分開，姓氏首字大寫
+
+只輸出 JSON，格式：
+{
+  "tl": "台羅拼音（含聲調符號，如 Tân Tsî）",
+  "bp": "台灣方音符號（如 ㄉㄢˊㄐㄧˊ）",
+  "en": "台灣護照慣用英文（如 Tan Chi）"
+}`;
+
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     const resp = await fetch(url, {
@@ -74,9 +91,8 @@ exports.handler = async (event) => {
     });
 
     const data = await resp.json();
-    
+
     if (!resp.ok) {
-      // 網址或參數錯誤時自動降級
       return await fallbackFetch(url, prompt, API_KEY);
     }
 
