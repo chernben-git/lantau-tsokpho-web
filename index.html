@@ -517,6 +517,7 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
     </div>
     <div class="fg"><label>上代（父節點）</label><select id="f_parent" onchange="autoFillGen()" ><option value="">（根節點）</option></select></div>
     <div class="fg"><label>出生年份</label><input id="f_birth" placeholder="1950"></div>
+    <div class="fg"><label>家中排行</label><input id="f_order" type="number" min="1" max="20" placeholder="1" oninput="checkOrderConflict()"></div>
     <div class="fg"><label>配偶漢字</label><input id="f_spouse" placeholder="配偶姓名" oninput="clearSpouseTL()"></div>
     <div class="fg" style="position:relative"><label>配偶台羅</label><input id="f_spTL" placeholder="配偶台羅">
       <button onclick="autoTranslateSpouse()" title="配偶台羅請手動輸入" style="position:absolute;right:6px;bottom:8px;background:none;border:none;cursor:pointer;font-size:16px;color:#2dd4a0">✨</button>
@@ -902,10 +903,12 @@ function renderTree(){
     svg.innerHTML='<text x="300" y="55" text-anchor="middle" font-size="13" fill="#4a5568" font-family="Noto Sans TC">尚未新增成員，點選「＋ 新增成員」開始建立族譜</text>';
     return;
   }
+  // 按排行排序
+  const sorted = [...members].sort((a,b)=> (a.order||99) - (b.order||99));
   const byId={};
-  members.forEach(m=>{byId[m.id]={...m,_ch:[]};});
+  sorted.forEach(m=>{byId[m.id]={...m,_ch:[]};});
   const roots=[];
-  members.forEach(m=>{
+  sorted.forEach(m=>{
     if(m.parentId&&byId[m.parentId]) byId[m.parentId]._ch.push(byId[m.id]);
     else roots.push(byId[m.id]);
   });
@@ -1128,7 +1131,7 @@ function vrow(k,v){return `<div class="vrow"><span class="vkey">${k}</span><span
 function openAdd(){
   curEdit=null;
   document.getElementById('editTitle').textContent='新增族譜成員';
-  ['f_name','f_tl','f_en','f_spouse','f_spTL','f_birth','f_note'].forEach(i=>document.getElementById(i).value='');
+  ['f_name','f_tl','f_en','f_spouse','f_spTL','f_birth','f_note','f_order'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('f_gen').value='1';
   document.getElementById('f_gender').value='male';
   document.getElementById('f_twlv').value='';
@@ -1148,6 +1151,7 @@ function openEdit(id){
   document.getElementById('f_spouse').value=m.spouse||'';
   document.getElementById('f_spTL').value=m.spTL||'';
   document.getElementById('f_birth').value=m.birth||'';
+  document.getElementById('f_order').value=m.order||'';
   document.getElementById('f_twlv').value=m.twLevel||'';
   document.getElementById('f_note').value=m.note||'';
   buildParentSel(m.parentId||'');
@@ -1158,6 +1162,24 @@ function buildParentSel(sel){
   let h='<option value="">（根節點）</option>';
   members.forEach(m=>{if(m.id!==curEdit)h+=`<option value="${m.id}" ${m.id===sel?'selected':''}>${m.name}（第${m.gen}代）</option>`;});
   document.getElementById('f_parent').innerHTML=h;
+}
+
+// 排行衝突檢查
+function checkOrderConflict(){
+  const order = parseInt(document.getElementById('f_order').value);
+  const parentId = document.getElementById('f_parent').value;
+  if(!order || !parentId) return;
+  const conflict = members.find(m =>
+    m.id !== curEdit &&
+    m.parentId === parentId &&
+    m.order === order
+  );
+  if(conflict){
+    document.getElementById('f_order').style.borderColor='#e05555';
+    toast(`⚠️ 排行 ${order} 已被「${conflict.name}」使用，請修改`);
+  } else {
+    document.getElementById('f_order').style.borderColor='';
+  }
 }
 
 // 選了上代自動填世代
@@ -1251,7 +1273,8 @@ async function saveMember(){
     name:nm, tl:document.getElementById('f_tl').value.trim(),
     bp:'', en:document.getElementById('f_en').value.trim(),
     gen:parseInt(document.getElementById('f_gen').value), gender:document.getElementById('f_gender').value,
-    parentId:document.getElementById('f_parent').value, spouse:document.getElementById('f_spouse').value.trim(),
+    parentId:document.getElementById('f_parent').value, order:parseInt(document.getElementById('f_order').value)||0,
+    spouse:document.getElementById('f_spouse').value.trim(),
     spTL:document.getElementById('f_spTL').value.trim(), birth:document.getElementById('f_birth').value.trim(),
     twLevel:document.getElementById('f_twlv').value, note:document.getElementById('f_note').value.trim(),
   };
