@@ -517,7 +517,7 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
     </div>
     <div class="fg"><label>上代（父節點）</label><select id="f_parent" onchange="autoFillGen()" ><option value="">（根節點）</option></select></div>
     <div class="fg"><label>出生年份</label><input id="f_birth" placeholder="1950"></div>
-    <div class="fg"><label>家中排行</label><input id="f_order" type="number" min="1" max="20" placeholder="1" oninput="checkOrderConflict()"></div>
+    <div class="fg"><label>排行（兄弟姊妹順序）</label><input id="f_order" type="number" min="1" max="20" placeholder="1" oninput="checkOrderDuplicate()"><div id="orderHint" style="font-size:11px;margin-top:4px;display:none"></div></div>
     <div class="fg"><label>配偶漢字</label><input id="f_spouse" placeholder="配偶姓名" oninput="clearSpouseTL()"></div>
     <div class="fg" style="position:relative"><label>配偶台羅</label><input id="f_spTL" placeholder="配偶台羅">
       <button onclick="autoTranslateSpouse()" title="配偶台羅請手動輸入" style="position:absolute;right:6px;bottom:8px;background:none;border:none;cursor:pointer;font-size:16px;color:#2dd4a0">✨</button>
@@ -1164,23 +1164,6 @@ function buildParentSel(sel){
   document.getElementById('f_parent').innerHTML=h;
 }
 
-// 排行衝突檢查
-function checkOrderConflict(){
-  const order = parseInt(document.getElementById('f_order').value);
-  const parentId = document.getElementById('f_parent').value;
-  if(!order || !parentId) return;
-  const conflict = members.find(m =>
-    m.id !== curEdit &&
-    m.parentId === parentId &&
-    m.order === order
-  );
-  if(conflict){
-    document.getElementById('f_order').style.borderColor='#e05555';
-    toast(`⚠️ 排行 ${order} 已被「${conflict.name}」使用，請修改`);
-  } else {
-    document.getElementById('f_order').style.borderColor='';
-  }
-}
 
 // 選了上代自動填世代
 function autoFillGen(){
@@ -1213,6 +1196,27 @@ async function shiftAllGen(){
   }catch(e){
     toast('更新失敗：' + e.message);
   }
+}
+
+// 排行重複檢查
+function checkOrderDuplicate(){
+  const order = parseInt(document.getElementById('f_order').value);
+  const parentId = document.getElementById('f_parent').value;
+  if(!order || !parentId) return;
+  const dup = members.find(m =>
+    m.id !== curEdit &&
+    m.parentId === parentId &&
+    m.order === order
+  );
+  const hint = document.getElementById('orderHint');
+  if(dup){
+    hint.textContent = `⚠️ ${dup.name} 已是排行第${order}，請確認是否重複`;
+    hint.style.color = '#e07060';
+  } else {
+    hint.textContent = '✓ 排行無重複';
+    hint.style.color = '#2dd4a0';
+  }
+  hint.style.display = 'block';
 }
 
 function closeEdit(){close_('editModal');}
@@ -1276,6 +1280,7 @@ async function saveMember(){
     parentId:document.getElementById('f_parent').value, order:parseInt(document.getElementById('f_order').value)||0,
     spouse:document.getElementById('f_spouse').value.trim(),
     spTL:document.getElementById('f_spTL').value.trim(), birth:document.getElementById('f_birth').value.trim(),
+    order:parseInt(document.getElementById('f_order').value)||0,
     twLevel:document.getElementById('f_twlv').value, note:document.getElementById('f_note').value.trim(),
   };
   const id = curEdit || ('m'+Date.now());
