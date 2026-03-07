@@ -33,7 +33,8 @@ exports.handler = async (event) => {
 只輸出這個 JSON（不要任何說明、不要markdown）：
 {"tl":"台羅拼音含調符","bp":"台灣方音符號","en":"護照英文"}`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // 使用 v1 + gemini-1.5-flash
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     const resp = await fetch(url, {
       method: 'POST',
@@ -57,7 +58,6 @@ exports.handler = async (event) => {
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     if (!rawText) throw new Error('AI 沒有回傳內容');
 
-    // 清除 markdown 標記，取出 JSON
     const clean = rawText.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
 
