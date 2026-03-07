@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>咱兜的台語 ✦ 家族族譜</title>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, push, onValue, remove, update }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ══════════════════════════════════════════════
+  // ★ 請在這裡填入你的 Firebase 設定 ★
+  // (從 Firebase Console → 專案設定 → 你的應用程式 複製)
+  // ══════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAVftEiQjt4qlQDK9tQhf7p1ZkIJlgvsM8",
+    authDomain:        "lantau-tsokpho.firebaseapp.com",
+    databaseURL:       "https://lantau-tsokpho-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "lantau-tsokpho",
+    storageBucket:     "lantau-tsokpho.firebasestorage.app",
+    messagingSenderId: "752318687157",
+    appId:             "1:752318687157:web:9f68a5c713a163f0aa9bfc"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  // 把 Firebase 掛到 window 讓後面的 JS 使用
+  window._fb = { db, ref, set, get, push, onValue, remove, update };
+  window._fbReady = true;
+  document.dispatchEvent(new Event('fbReady'));
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+:root{
+  --bg:#0d1117; --sf:#161b22; --sf2:#1e2530;
+  --br:#2d3748; --br2:#3d4f63;
+  --jade:#2dd4a0; --jd:#1a8c6a; --jg:rgba(45,212,160,.12);
+  --gold:#f0c060; --gd:#a07820;
+  --red:#e05555; --blue:#60a8f0;
+  --tx:#e8e8e0; --td:#7a8a9a; --tm:#4a5568;
+  --g1:#e05555;--g2:#e08840;--g3:#c8b820;--g4:#40c060;
+  --g5:#40a8e0;--g6:#9060e0;--g7:#e040a0;--g8:#20c0a0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--tx);font-family:'Noto Serif TC',serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 70% 50% at 15% 15%,rgba(45,212,160,.05),transparent 60%),
+             radial-gradient(ellipse 60% 40% at 85% 80%,rgba(96,168,240,.04),transparent 60%);
+  pointer-events:none;z-index:0;}
+
+/* ── SCREENS ── */
+.screen{display:none;position:relative;z-index:5;}
+.screen.active{display:block;}
+
+/* ── LOADING ── */
+#scLoading{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);gap:20px;z-index:9000;}
+#scLoading.active{display:flex;}
+.spinner{width:48px;height:48px;border:3px solid var(--br2);border-top-color:var(--jade);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.load-title{font-size:20px;font-weight:700;color:var(--jade);letter-spacing:3px;}
+.load-sub{font-size:12px;color:var(--td);letter-spacing:2px;}
+
+/* ── ENTRY (login) ── */
+#scEntry{min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;}
+#scEntry.active{display:flex;}
+.entry-box{background:var(--sf);border:1px solid var(--br2);border-radius:20px;padding:40px 36px;width:100%;max-width:480px;box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 0 1px rgba(45,212,160,.08);}
+.entry-logo{text-align:center;margin-bottom:32px;}
+.entry-mark{width:64px;height:64px;background:linear-gradient(135deg,var(--jade),var(--blue));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#0d1117;margin:0 auto 14px;box-shadow:0 0 30px rgba(45,212,160,.3);}
+.entry-title{font-size:22px;font-weight:900;color:var(--gold);letter-spacing:4px;}
+.entry-poj{font-size:12px;color:var(--jade);letter-spacing:2px;margin-top:5px;}
+
+.entry-tabs{display:flex;background:var(--bg);border:1px solid var(--br);border-radius:10px;overflow:hidden;margin-bottom:24px;}
+.etab{flex:1;padding:10px;text-align:center;font-size:13px;letter-spacing:1px;cursor:pointer;color:var(--td);transition:all .2s;font-family:'Noto Sans TC',sans-serif;}
+.etab.active{background:var(--jg);color:var(--jade);}
+
+.inp{width:100%;padding:12px 16px;background:var(--bg);border:1px solid var(--br);border-radius:9px;color:var(--tx);font-size:14px;font-family:'Noto Sans TC',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;margin-bottom:12px;}
+.inp:focus{border-color:var(--jd);box-shadow:0 0 0 3px rgba(45,212,160,.1);}
+.inp::placeholder{color:var(--tm);}
+
+.big-btn{width:100%;padding:14px;border-radius:10px;font-size:15px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .2s;font-family:'Noto Serif TC',serif;border:none;}
+.big-btn.jade{background:linear-gradient(135deg,var(--jd),#165c46);color:#fff;}
+.big-btn.jade:hover{background:linear-gradient(135deg,var(--jade),var(--jd));box-shadow:0 0 20px rgba(45,212,160,.3);}
+.big-btn.gold{background:linear-gradient(135deg,var(--gd),#6a4a08);color:#fff;}
+.big-btn.gold:hover{background:linear-gradient(135deg,var(--gold),var(--gd));}
+
+.entry-form{display:none;}
+.entry-form.active{display:block;}
+
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--tm);font-size:12px;font-family:'Noto Sans TC',sans-serif;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--br);}
+
+.family-code-display{background:var(--bg);border:2px dashed var(--br2);border-radius:10px;padding:16px;text-align:center;margin:14px 0;}
+.fcd-label{font-size:11px;color:var(--td);letter-spacing:2px;margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;}
+.fcd-code{font-size:32px;font-weight:900;color:var(--jade);letter-spacing:6px;}
+.fcd-hint{font-size:11px;color:var(--tm);margin-top:5px;letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:200;background:rgba(13,17,23,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--br);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;gap:12px;}
+.nav-logo{display:flex;align-items:center;gap:10px;flex-shrink:0;cursor:pointer;}
+.logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--jade),var(--blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#0d1117;}
+.logo-tw{font-size:14px;font-weight:700;color:var(--jade);letter-spacing:2px;}
+.logo-sub{font-size:10px;color:var(--tm);letter-spacing:1px;}
+.nav-center{display:flex;gap:2px;}
+.ntab{padding:6px 12px;border-radius:6px;font-size:12px;letter-spacing:1px;cursor:pointer;transition:all .2s;color:var(--tm);font-family:'Noto Sans TC',sans-serif;border:1px solid transparent;white-space:nowrap;}
+.ntab:hover{color:var(--tx);background:var(--sf);}
+.ntab.active{color:var(--jade);background:var(--jg);border-color:rgba(45,212,160,.25);}
+.nav-right{display:flex;gap:7px;align-items:center;flex-shrink:0;}
+
+.btn{padding:7px 13px;border-radius:7px;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all .2s;font-family:'Noto Sans TC',sans-serif;border:1px solid var(--br2);background:var(--sf2);color:var(--td);white-space:nowrap;}
+.btn:hover{border-color:var(--jd);color:var(--jade);}
+.btn.p{background:linear-gradient(135deg,var(--jd),#165c46);border-color:var(--jade);color:#fff;font-weight:600;}
+.btn.p:hover{background:linear-gradient(135deg,var(--jade),var(--jd));}
+.btn.g{background:linear-gradient(135deg,var(--gd),#6a4a08);border-color:var(--gold);color:#fff;}
+.btn.ghost{background:transparent;border-color:var(--br);}
+.btn.danger{border-color:#5a2020;color:#e05555;}
+.btn.danger:hover{background:rgba(224,85,85,.1);}
+.btn.sm{padding:5px 10px;font-size:11px;}
+
+/* ── MAIN ── */
+main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
+.panel{display:none;}
+.panel.active{display:block;animation:fi .22s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── FAMILY CODE BADGE ── */
+.fc-badge{background:var(--sf);border:1px solid var(--br2);border-radius:10px;padding:10px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.fc-info{font-size:12px;color:var(--td);letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;}
+.fc-code{font-size:18px;font-weight:900;color:var(--jade);letter-spacing:4px;}
+.fc-actions{display:flex;gap:7px;}
+
+/* ── HERO ── */
+.hero{background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:24px 24px 18px;margin-bottom:18px;position:relative;overflow:hidden;text-align:center;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 90% at 50% 0%,rgba(45,212,160,.07),transparent 70%);pointer-events:none;}
+.hero-name{font-size:24px;font-weight:900;color:var(--gold);letter-spacing:6px;text-shadow:0 0 25px rgba(240,192,96,.2);}
+.hero-poj{font-size:12px;color:var(--jade);letter-spacing:3px;margin-top:4px;}
+.hero-sub{font-size:11px;color:var(--tm);letter-spacing:2px;margin-top:4px;}
+.hero-corner{position:absolute;top:12px;right:12px;display:flex;gap:6px;}
+
+/* ── SYNC STATUS ── */
+.sync-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;}
+.sync-dot.ok{background:#2dd4a0;}
+.sync-dot.syncing{background:#f0c060;animation:pulse 1s infinite;}
+.sync-dot.err{background:#e05555;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* ── LANG BAR ── */
+.lang-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.legend{display:flex;flex-wrap:wrap;gap:6px;flex:1;}
+.leg-i{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--td);font-family:'Noto Sans TC',sans-serif;}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.leg-circ{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.lt{display:inline-flex;background:var(--sf2);border:1px solid var(--br);border-radius:7px;overflow:hidden;}
+.ltb{padding:4px 11px;font-size:11px;letter-spacing:1px;cursor:pointer;color:var(--tm);transition:all .2s;font-family:'Noto Sans TC',sans-serif;}
+.ltb.active{background:var(--jg);color:var(--jade);}
+
+/* ── TREE ── */
+.tree-box{background:var(--sf);border:1px solid var(--br);border-radius:12px;overflow:auto;min-height:240px;max-height:70vh;cursor:grab;}
+.tree-box:active{cursor:grabbing;}
+.tree-tip{text-align:center;font-size:10px;color:var(--tm);margin-top:6px;letter-spacing:1px;}
+
+/* ── LIST ── */
+.sbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.sinp{flex:1;min-width:150px;padding:9px 13px;background:var(--sf);border:1px solid var(--br);border-radius:8px;color:var(--tx);font-size:13px;font-family:'Noto Sans TC',sans-serif;outline:none;transition:border-color .2s;}
+.sinp:focus{border-color:var(--jd);}
+.sinp::placeholder{color:var(--tm);}
+.ssel{padding:9px 11px;background:var(--sf);border:1px solid var(--br);border-radius:8px;color:var(--td);font-size:12px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;outline:none;}
+.mcard{background:var(--sf);border:1px solid var(--br);border-radius:10px;padding:13px 16px;margin-bottom:7px;display:flex;align-items:center;gap:13px;transition:border-color .2s;cursor:pointer;}
+.mcard:hover{border-color:var(--br2);}
+.mavatar{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;flex-shrink:0;}
+.mname{font-size:14px;font-weight:700;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;}
+.mpoj{font-size:11px;color:var(--jade);font-weight:400;}
+.mmeta{font-size:11px;color:var(--td);margin-top:3px;letter-spacing:.5px;font-family:'Noto Sans TC',sans-serif;line-height:1.6;}
+.gbadge{display:inline-flex;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;font-family:'Noto Sans TC',sans-serif;}
+
+/* ── ADMIN ── */
+.admin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.admin-card{background:var(--sf);border:1px solid var(--br);border-radius:10px;padding:16px;text-align:center;}
+.admin-num{font-size:30px;font-weight:900;background:linear-gradient(135deg,var(--jade),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.admin-label{font-size:11px;color:var(--tm);letter-spacing:2px;margin-top:4px;font-family:'Noto Sans TC',sans-serif;}
+.family-row{background:var(--sf);border:1px solid var(--br);border-radius:9px;padding:12px 16px;margin-bottom:7px;display:flex;align-items:center;gap:12px;}
+.fcode{font-size:16px;font-weight:900;color:var(--jade);letter-spacing:3px;min-width:80px;}
+.fname{font-size:14px;font-weight:700;}
+.fmeta{font-size:11px;color:var(--td);font-family:'Noto Sans TC',sans-serif;margin-top:2px;}
+
+/* ── STATS ── */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.scard{background:var(--sf);border:1px solid var(--br);border-radius:10px;padding:16px;text-align:center;}
+.snum{font-size:32px;font-weight:900;background:linear-gradient(135deg,var(--jade),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;}
+.slabel{font-size:11px;color:var(--tm);letter-spacing:2px;margin-top:4px;font-family:'Noto Sans TC',sans-serif;}
+
+/* ── HERITAGE ── */
+.hgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.hcard{background:var(--sf);border:1px solid var(--br);border-radius:10px;padding:16px;}
+.hcard h3{font-size:12px;color:var(--jade);letter-spacing:2px;margin-bottom:10px;font-family:'Noto Sans TC',sans-serif;}
+.pbar{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:3px;}
+.pfill{height:100%;background:linear-gradient(90deg,var(--jd),var(--jade));border-radius:3px;transition:width .7s;}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--sf);border:1px solid var(--br2);border-radius:14px;padding:26px;width:90%;max-width:520px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 70px rgba(0,0,0,.6);transform:scale(.95) translateY(8px);transition:transform .22s;}
+.overlay.open .modal{transform:scale(1) translateY(0);}
+.modal-h{font-size:17px;font-weight:900;color:var(--jade);letter-spacing:3px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--br);}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:10px;color:var(--tm);letter-spacing:2px;font-family:'Noto Sans TC',sans-serif;text-transform:uppercase;}
+.fg input,.fg select,.fg textarea{padding:9px 13px;background:var(--bg);border:1px solid var(--br);border-radius:7px;color:var(--tx);font-size:13px;font-family:'Noto Sans TC',sans-serif;outline:none;transition:border-color .2s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--jd);}
+.fg select option{background:var(--sf2);}
+.fg textarea{resize:vertical;min-height:60px;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.full{grid-column:1/-1;}
+.mfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--br);}
+.vrow{display:flex;gap:10px;padding:8px 12px;background:var(--bg);border-radius:7px;border:1px solid var(--br);font-size:12px;margin-bottom:5px;}
+.vkey{color:var(--tm);min-width:70px;letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;flex-shrink:0;}
+.vval{color:var(--tx);font-weight:500;line-height:1.6;}
+
+/* ── SHARE MODAL ── */
+.share-url{background:var(--bg);border:1px solid var(--br);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--jade);word-break:break-all;margin:12px 0;font-family:'Noto Sans TC',sans-serif;}
+.share-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0;}
+.share-opt{background:var(--bg);border:1px solid var(--br);border-radius:9px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;}
+.share-opt:hover{border-color:var(--jd);background:var(--jg);}
+.share-opt .si{font-size:24px;margin-bottom:5px;}
+.share-opt .sl{font-size:11px;color:var(--td);letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--sf);border:1px solid var(--jd);border-radius:9px;padding:11px 18px;font-size:12px;color:var(--jade);z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.5);transform:translateY(50px);opacity:0;transition:all .3s;pointer-events:none;letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* ── PRINT ── */
+.popt{background:var(--bg);border:1px solid var(--br);border-radius:9px;padding:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.popt:hover,.popt.sel{border-color:var(--jd);background:var(--jg);}
+.popt .poi{font-size:20px;}
+.popt-l{font-size:12px;font-weight:700;color:var(--tx);letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;}
+.popt-d{font-size:10px;color:var(--tm);}
+.pgrid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px;}
+.pgrid3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px;}
+.popt.col{flex-direction:column;align-items:center;padding:13px 8px;text-align:center;}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:50px 20px;}
+.empty-icon{font-size:40px;opacity:.3;margin-bottom:10px;}
+.empty h3{font-size:14px;color:var(--td);letter-spacing:2px;}
+
+/* ── MOBILE ── */
+#mobTabs{display:flex;border-bottom:1px solid var(--br);background:var(--sf);position:sticky;top:56px;z-index:190;overflow-x:auto;}
+
+@media(max-width:768px){
+  nav{padding:0 12px;}
+  .nav-center{display:none;}
+  main{padding:12px;}
+  .sgrid{grid-template-columns:1fr 1fr;}
+  .admin-grid{grid-template-columns:1fr 1fr;}
+  .fgrid{grid-template-columns:1fr;}
+  .hgrid{grid-template-columns:1fr;}
+}
+
+/* ── PRINT CSS ── */
+#printWatermark{display:none;}
+@media print{
+  @page{size:A4 landscape;margin:10mm;}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  body{background:white!important;color:#111!important;}
+  body::before{display:none!important;}
+  nav,#mobTabs,.overlay,.toast,.tree-tip,.lang-bar,.hero-corner,.fc-badge,.sbar,.btn{display:none!important;}
+  main{padding:0!important;}
+  .panel{display:none!important;}
+  .panel.active{display:block!important;}
+  .hero{background:white!important;border:2px solid #8b6914!important;border-radius:4px!important;padding:14px!important;margin-bottom:12px!important;}
+  .hero::before{display:none!important;}
+  .hero-name{color:#8b1a1a!important;text-shadow:none!important;font-size:20px!important;}
+  .hero-poj{color:#1a6b5c!important;}
+  .tree-box{border:1px solid #ccc!important;max-height:none!important;overflow:visible!important;cursor:default!important;}
+  .mcard{background:white!important;border:1px solid #ddd!important;box-shadow:none!important;page-break-inside:avoid;}
+  .btn.sm{display:none!important;}
+  #printWatermark{display:block!important;text-align:center;font-size:10px;color:#aaa;margin-top:14px;border-top:1px solid #eee;padding-top:7px;letter-spacing:2px;}
+}
+
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--br2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- ── LOADING ── -->
+<div id="scLoading" class="screen active">
+  <div class="spinner"></div>
+  <div class="load-title">咱兜的台語</div>
+  <div class="load-sub">Lán-tau ê Tâi-gí · 族譜系統載入中…</div>
+</div>
+
+<!-- ── ENTRY ── -->
+<div id="scEntry" class="screen">
+  <div class="entry-box">
+    <div class="entry-logo">
+      <div class="entry-mark">咱</div>
+      <div class="entry-title">咱兜的台語</div>
+      <div class="entry-poj">Lán-tau ê Tâi-gí · 家族族譜</div>
+    </div>
+
+    <div class="entry-tabs">
+      <div class="etab active" onclick="switchEntry('family')">👨‍👩‍👧 我有族譜代碼</div>
+      <div class="etab" onclick="switchEntry('new')">🌱 建立新族譜</div>
+      <div class="etab" onclick="switchEntry('admin')">🔑 管理員</div>
+    </div>
+
+    <!-- 輸入族譜代碼 -->
+    <div class="entry-form active" id="ef-family">
+      <p style="font-size:12px;color:var(--td);letter-spacing:1px;margin-bottom:14px;line-height:1.7;font-family:'Noto Sans TC',sans-serif;">
+        請輸入教會/學校給你的族譜代碼（6位英數字）：
+      </p>
+      <input class="inp" id="ei-code" placeholder="例：CHEN01" maxlength="8"
+        style="text-align:center;font-size:24px;font-weight:900;letter-spacing:6px;color:var(--jade);"
+        oninput="this.value=this.value.toUpperCase()">
+      <input class="inp" id="ei-name" placeholder="您的姓名（選填）">
+      <button class="big-btn jade" onclick="enterFamily()">進入族譜 →</button>
+    </div>
+
+    <!-- 建立新族譜 -->
+    <div class="entry-form" id="ef-new">
+      <p style="font-size:12px;color:var(--td);letter-spacing:1px;margin-bottom:14px;line-height:1.7;font-family:'Noto Sans TC',sans-serif;">
+        建立你的家族族譜，系統會自動產生一個唯一代碼，可以分享給家人：
+      </p>
+      <input class="inp" id="en-family" placeholder="家族名稱（例：陳齊 家氏）">
+      <input class="inp" id="en-creator" placeholder="建立者姓名">
+      <button class="big-btn jade" onclick="createFamily()">建立族譜 ✦</button>
+      <div class="divider">或</div>
+      <button class="big-btn gold" onclick="switchEntry('family')">我已有代碼</button>
+    </div>
+
+    <!-- 管理員 -->
+    <div class="entry-form" id="ef-admin">
+      <p style="font-size:12px;color:var(--td);letter-spacing:1px;margin-bottom:14px;font-family:'Noto Sans TC',sans-serif;">
+        教會/學校管理員入口：
+      </p>
+      <input class="inp" id="ea-pw" type="password" placeholder="管理員密碼">
+      <button class="big-btn jade" onclick="adminLogin()">管理員登入</button>
+      <p style="font-size:10px;color:var(--tm);text-align:center;margin-top:10px;letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;">
+        預設密碼：lantau2024（可在 Firebase 更改）
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="scApp" class="screen">
+
+  <nav>
+    <div class="nav-logo" onclick="goHome()">
+      <div class="logo-mark">咱</div>
+      <div>
+        <div class="logo-tw">咱兜的台語 · 族譜</div>
+        <div class="logo-sub">Lán-tau ê Tâi-gí · Tsok-phó͘</div>
+      </div>
+    </div>
+    <div class="nav-center">
+      <div class="ntab active" onclick="switchTab('tree',this)">🌳 族譜圖</div>
+      <div class="ntab" onclick="switchTab('list',this)">👥 成員</div>
+      <div class="ntab" onclick="switchTab('heritage',this)">🗣 台語傳承</div>
+      <div class="ntab" onclick="switchTab('stats',this)">📊 統計</div>
+    </div>
+    <div class="nav-right">
+      <span id="syncStatus" style="font-size:11px;color:var(--td);font-family:'Noto Sans TC',sans-serif;">
+        <span class="sync-dot ok"></span>已同步
+      </span>
+      <button class="btn ghost" onclick="openPrint()">🖨️</button>
+      <button class="btn ghost" onclick="openShare()">🔗 分享</button>
+      <button class="btn p" onclick="openAdd()">＋ 新增</button>
+    </div>
+  </nav>
+
+  <div id="mobTabs">
+    <div class="ntab active" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="switchTab('tree',this)">🌳 族譜</div>
+    <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="switchTab('list',this)">👥 成員</div>
+    <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="switchTab('heritage',this)">🗣 台語</div>
+    <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="switchTab('stats',this)">📊 統計</div>
+    <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="openShare()">🔗 分享</div>
+  </div>
+
+  <main>
+    <!-- Family code badge -->
+    <div class="fc-badge">
+      <div>
+        <div class="fc-info">族譜代碼 · Tsok-phó͘ Tāi-bé</div>
+        <div class="fc-code" id="fcDisplay">------</div>
+      </div>
+      <div class="fc-actions">
+        <button class="btn sm ghost" onclick="copyCode()">複製代碼</button>
+        <button class="btn sm ghost" onclick="openShare()">分享給家人</button>
+        <button class="btn sm danger" onclick="logout()">離開</button>
+      </div>
+    </div>
+
+    <!-- TREE -->
+    <div id="panel-tree" class="panel active">
+      <div class="hero">
+        <div class="hero-name" id="hTW">家族族譜</div>
+        <div class="hero-poj" id="hPOJ">Ka-tsok Tsok-phó͘</div>
+        <div class="hero-sub" id="hSUB"></div>
+        <div class="hero-corner">
+          <button class="btn sm ghost" onclick="openTitleEdit()">✏️ 標題</button>
+        </div>
+      </div>
+      <div class="lang-bar">
+        <div class="legend" id="genLeg"></div>
+        <div class="lt">
+          <div class="ltb active" onclick="setLang('zh',this)">漢字</div>
+          <div class="ltb" onclick="setLang('tl',this)">台羅</div>
+          <div class="ltb" onclick="setLang('bp',this)">方音</div>
+          <div class="ltb" onclick="setLang('en',this)">英文</div>
+          <div class="ltb" onclick="setLang('all',this)">全顯示</div>
+        </div>
+      </div>
+      <div class="tree-box"><svg id="treeCanvas"></svg></div>
+      <div class="tree-tip">點擊節點查看詳情 · 右角彩點＝台語程度</div>
+    </div>
+
+    <!-- LIST -->
+    <div id="panel-list" class="panel">
+      <div class="sbar">
+        <input class="sinp" type="text" id="sQ" placeholder="搜尋姓名、台羅、方音…" oninput="renderList()">
+        <select class="ssel" id="sGen" onchange="renderList()"><option value="">全部世代</option></select>
+        <select class="ssel" id="sTW" onchange="renderList()">
+          <option value="">台語程度</option>
+          <option value="流利">🟢 流利</option>
+          <option value="基本">🟡 基本</option>
+          <option value="理解">🟠 聽懂</option>
+          <option value="學習">🔵 學習中</option>
+          <option value="不會">⚪ 尚未</option>
+        </select>
+        <button class="btn p" onclick="openAdd()">＋ 新增</button>
+      </div>
+      <div id="listBody"></div>
+    </div>
+
+    <!-- HERITAGE -->
+    <div id="panel-heritage" class="panel">
+      <div class="hgrid">
+        <div class="hcard"><h3>📊 台語傳承分析</h3><div id="hStats"></div></div>
+        <div class="hcard"><h3>🎯 能力分佈</h3><canvas id="hPie" width="260" height="180"></canvas></div>
+      </div>
+      <div class="hcard" style="margin-bottom:12px;">
+        <h3>🏆 台語傳承模範</h3><div id="hChamps"></div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div id="panel-stats" class="panel">
+      <div class="sgrid" id="sGrid"></div>
+      <div style="background:var(--sf);border:1px solid var(--br);border-radius:10px;padding:18px;">
+        <div style="font-size:12px;color:var(--jade);letter-spacing:2px;margin-bottom:14px;font-family:'Noto Sans TC',sans-serif;">各世代人數分佈</div>
+        <canvas id="barChart" height="90"></canvas>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── ADMIN SCREEN ── -->
+<div id="scAdmin" class="screen">
+  <nav>
+    <div class="nav-logo">
+      <div class="logo-mark">管</div>
+      <div><div class="logo-tw">族譜管理後台</div><div class="logo-sub">Admin Dashboard</div></div>
+    </div>
+    <div class="nav-right">
+      <button class="btn ghost" onclick="logout()">登出</button>
+    </div>
+  </nav>
+  <main>
+    <div class="admin-grid" id="adminStats"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:700;color:var(--jade);letter-spacing:2px;">族譜列表</div>
+      <button class="btn p" onclick="adminCreateFamily()">＋ 建立族譜</button>
+    </div>
+    <div id="familyList"></div>
+  </main>
+</div>
+
+<!-- ── PRINT WATERMARK ── -->
+<div id="printWatermark">咱兜的台語 · 族譜系統 · 列印於 <span id="printDate"></span></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ── MODALS ── -->
+
+<!-- Edit member -->
+<div class="overlay" id="editModal">
+<div class="modal">
+  <div class="modal-h" id="editTitle">新增族譜成員</div>
+  <div class="fgrid">
+    <div class="fg"><label>漢字姓名 *</label><input id="f_name" placeholder="陳齊森" oninput="clearAutoFields()"></div>
+    <div class="fg"><label>台羅拼音 TL</label><input id="f_tl" placeholder="Tân Tsî-sim"></div>
+    <div class="fg full"><label>方音符號</label><input id="f_bp" placeholder="ㄊㄢˊㄗㄧˊㄒㄧㆬ"></div>
+    <div class="fg"><label>英文 EN</label><input id="f_en" placeholder="Chen Chi-sen"></div>
+    <div class="fg full" style="margin-top:-6px">
+      <button class="btn p" id="autoTransBtn" onclick="autoTranslate()" style="width:100%;background:linear-gradient(135deg,#1a4a8a,#1a3060);font-size:13px;padding:10px">
+        🌐 自動翻譯英文（免費）
+      </button>
+      <div id="autoTransStatus" style="font-size:11px;color:#5a8a7a;margin-top:5px;text-align:center;display:none"></div>
+    </div>
+    <div class="fg"><label>世代 *</label>
+      <select id="f_gen">
+        <option value="1">第1代</option><option value="2">第2代</option><option value="3">第3代</option>
+        <option value="4">第4代</option><option value="5">第5代</option><option value="6">第6代</option>
+        <option value="7">第7代</option><option value="8">第8代</option><option value="9">第9代</option>
+        <option value="10">第10代</option>
+      </select>
+    </div>
+    <div class="fg"><label>性別</label>
+      <select id="f_gender"><option value="male">♂ 男</option><option value="female">♀ 女</option></select>
+    </div>
+    <div class="fg"><label>上代（父節點）</label><select id="f_parent"><option value="">（根節點）</option></select></div>
+    <div class="fg"><label>出生年份</label><input id="f_birth" placeholder="1950"></div>
+    <div class="fg"><label>配偶漢字</label><input id="f_spouse" placeholder="配偶姓名" oninput="clearSpouseTL()"></div>
+    <div class="fg" style="position:relative"><label>配偶台羅</label><input id="f_spTL" placeholder="配偶台羅">
+      <button onclick="autoTranslateSpouse()" title="配偶台羅請手動輸入" style="position:absolute;right:6px;bottom:8px;background:none;border:none;cursor:pointer;font-size:16px;color:#2dd4a0">✨</button>
+    </div>
+    <div class="fg full"><label>台語能力</label>
+      <select id="f_twlv">
+        <option value="">未記錄</option>
+        <option value="流利">🟢 流利（日常使用台語）</option>
+        <option value="基本">🟡 基本會話</option>
+        <option value="理解">🟠 聽懂但不說</option>
+        <option value="學習">🔵 學習中</option>
+        <option value="不會">⚪ 尚未學習</option>
+      </select>
+    </div>
+    <div class="fg full"><label>台語故事 / 備註</label><textarea id="f_note" placeholder="記錄台語故事、生平事蹟…"></textarea></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn ghost" onclick="closeEdit()">取消</button>
+    <button class="btn p" onclick="saveMember()">儲存到雲端</button>
+  </div>
+</div>
+</div>
+
+<!-- View member -->
+<div class="overlay" id="viewModal">
+<div class="modal">
+  <div id="viewBody"></div>
+  <div class="mfoot" id="viewFoot"></div>
+</div>
+</div>
+
+<!-- Title edit -->
+<div class="overlay" id="titleModal">
+<div class="modal">
+  <div class="modal-h">編輯族譜標題</div>
+  <div class="fg full" style="margin-bottom:11px;"><label>漢字名稱</label><input id="t_tw"></div>
+  <div class="fg full" style="margin-bottom:11px;"><label>台羅拼音</label><input id="t_poj"></div>
+  <div class="fg full" style="margin-bottom:11px;"><label>說明 / 版本</label><input id="t_sub"></div>
+  <div class="mfoot">
+    <button class="btn ghost" onclick="close_('titleModal')">取消</button>
+    <button class="btn p" onclick="saveTitle()">儲存</button>
+  </div>
+</div>
+</div>
+
+<!-- Share modal -->
+<div class="overlay" id="shareModal">
+<div class="modal">
+  <div class="modal-h">🔗 分享族譜給家人</div>
+  <p style="font-size:12px;color:var(--td);letter-spacing:1px;line-height:1.8;font-family:'Noto Sans TC',sans-serif;">
+    家人只需要這個<strong style="color:var(--jade)">族譜代碼</strong>，就能在任何裝置開啟同一份族譜。資料存在雲端，即時同步。
+  </p>
+  <div style="background:var(--bg);border:2px dashed var(--br2);border-radius:10px;padding:18px;text-align:center;margin:14px 0;">
+    <div style="font-size:11px;color:var(--td);letter-spacing:2px;margin-bottom:6px;font-family:'Noto Sans TC',sans-serif;">族譜代碼</div>
+    <div id="shareCode" style="font-size:36px;font-weight:900;color:var(--jade);letter-spacing:8px;"></div>
+  </div>
+  <div class="share-url" id="shareURLdisp">網址產生中…</div>
+  <div class="share-grid">
+    <div class="share-opt" onclick="shareViaLINE()"><div class="si">💬</div><div class="sl">分享到 LINE</div></div>
+    <div class="share-opt" onclick="shareViaCopy()"><div class="si">📋</div><div class="sl">複製連結</div></div>
+    <div class="share-opt" onclick="shareViaQR()"><div class="si">📷</div><div class="sl">QR Code</div></div>
+    <div class="share-opt" onclick="exportJSON()"><div class="si">💾</div><div class="sl">下載備份</div></div>
+  </div>
+  <div id="qrArea" style="display:none;text-align:center;margin-top:12px;">
+    <canvas id="qrCanvas" width="180" height="180" style="background:white;border-radius:8px;padding:10px;"></canvas>
+    <div style="font-size:10px;color:var(--tm);margin-top:6px;letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;">掃描即可開啟族譜</div>
+  </div>
+  <div class="mfoot"><button class="btn ghost" onclick="close_('shareModal')">關閉</button></div>
+</div>
+</div>
+
+<!-- Print modal -->
+<div class="overlay" id="printModal">
+<div class="modal">
+  <div class="modal-h">🖨️ 輸出族譜</div>
+  <div style="font-size:11px;color:var(--tm);letter-spacing:2px;margin-bottom:8px;font-family:'Noto Sans TC',sans-serif;">輸出方式</div>
+  <div class="pgrid3" style="margin-bottom:14px;">
+    <div class="popt col sel" id="pm-print" onclick="selPM('print')"><div class="poi">🖨️</div><div class="popt-l">直接列印</div><div class="popt-d">傳送到印表機</div></div>
+    <div class="popt col" id="pm-png" onclick="selPM('png')"><div class="poi">🖼️</div><div class="popt-l">存成圖片</div><div class="popt-d">PNG · 存到手機</div></div>
+    <div class="popt col" id="pm-pdf" onclick="selPM('pdf')"><div class="poi">📄</div><div class="popt-l">PDF</div><div class="popt-d">另存為 PDF</div></div>
+  </div>
+  <div style="font-size:11px;color:var(--tm);letter-spacing:2px;margin-bottom:8px;font-family:'Noto Sans TC',sans-serif;">內容</div>
+  <div class="pgrid2">
+    <div class="popt sel" id="po-tree" onclick="selPO('tree')"><div class="poi">🌳</div><div><div class="popt-l">族譜圖</div><div class="popt-d">樹狀圖</div></div></div>
+    <div class="popt" id="po-list" onclick="selPO('list')"><div class="poi">📋</div><div><div class="popt-l">成員名單</div><div class="popt-d">列表</div></div></div>
+  </div>
+  <div style="font-size:11px;color:var(--tm);letter-spacing:2px;margin-bottom:8px;font-family:'Noto Sans TC',sans-serif;">顯示語言</div>
+  <div class="pgrid2">
+    <div class="popt sel" id="pl-zh" onclick="selPL('zh')"><div class="poi" style="font-size:16px">漢</div><div><div class="popt-l">漢字</div></div></div>
+    <div class="popt" id="pl-tl" onclick="selPL('tl')"><div class="poi" style="font-size:16px">台</div><div><div class="popt-l">台羅拼音</div></div></div>
+    <div class="popt" id="pl-bp" onclick="selPL('bp')"><div class="poi" style="font-size:16px">音</div><div><div class="popt-l">方音符號</div></div></div>
+    <div class="popt" id="pl-all" onclick="selPL('all')"><div class="poi" style="font-size:16px">全</div><div><div class="popt-l">四語並列</div></div></div>
+  </div>
+  <div id="pngPrev" style="display:none;margin:10px 0;">
+    <img id="pngImg" style="max-width:100%;border:1px solid var(--br);border-radius:8px;">
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn p" style="flex:1" onclick="dlImg()">⬇️ 下載圖片</button>
+      <button class="btn" style="flex:1" onclick="shareImg()">📤 分享到手機</button>
+    </div>
+  </div>
+  <div class="mfoot">
+    <button class="btn ghost" onclick="close_('printModal')">關閉</button>
+    <button class="btn p" id="execBtn" onclick="execPrint()">🖨️ 執行</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════
+const GC=['','#e05555','#e08840','#c8b820','#40c060','#40a8e0','#9060e0','#e040a0','#20c0a0','#a0a0a0','#c09060'];
+const GT=['','#fff','#fff','#111','#fff','#fff','#fff','#fff','#fff','#fff','#fff'];
+const TLC={流利:'#2dd4a0',基本:'#f0c060',理解:'#e08840',學習:'#60a8f0',不會:'#4a5568',''  :'#4a5568'};
+const ADMIN_PW = 'lantau2024'; // 可改成你要的密碼
+
+// ════════════════════════════════
+// STATE
+// ════════════════════════════════
+let fb = null;         // Firebase helpers
+let familyCode = '';   // current family code (e.g. "CHEN01")
+let isAdmin = false;
+let members = [];
+let learnings = [];
+let titleData = {tw:'家族族譜',poj:'Ka-tsok Tsok-phó͘',sub:''};
+let displayLang = 'zh';
+let curEdit = null, curView = null;
+let unsubscribe = null; // Firebase listener
+let printMode='print', printOpt_='tree', printLang_='zh';
+let imgDataURL = null;
+
+// ════════════════════════════════
+// INIT — wait for Firebase
+// ════════════════════════════════
+document.addEventListener('fbReady', ()=>{
+  fb = window._fb;
+
+  // Check URL param for code
+  const urlCode = new URLSearchParams(location.search).get('code');
+  if(urlCode){
+    show('scEntry');
+    document.getElementById('ei-code').value = urlCode.toUpperCase();
+    show('scLoading');
+    setTimeout(()=>enterFamily(urlCode.toUpperCase()), 600);
+    return;
+  }
+
+  // Check localStorage for saved session
+  const saved = localStorage.getItem('ltau_session');
+  if(saved){
+    const s = JSON.parse(saved);
+    if(s.isAdmin){ isAdmin=true; show('scAdmin'); loadAdmin(); return; }
+    if(s.code){ familyCode=s.code; loadFamily(); return; }
+  }
+
+  show('scEntry');
+});
+
+// Fallback if Firebase not configured
+setTimeout(()=>{
+  if(!window._fbReady){
+    console.warn('Firebase not configured — running in offline demo mode');
+    window._fbReady = true;
+    window._fb = makeOfflineFB();
+    document.dispatchEvent(new Event('fbReady'));
+  }
+},2000);
+
+// Offline demo mode (localStorage fallback when Firebase not yet set up)
+function makeOfflineFB(){
+  const store = {};
+  const listeners = {};
+  return {
+    db: null,
+    ref: (db,path)=>({_path:path}),
+    set: async(r,v)=>{ store[r._path]=JSON.parse(JSON.stringify(v)); triggerListeners(r._path,v); return v; },
+    get: async(r)=>{ const v=store[r._path]; return {val:()=>v||null,exists:()=>!!v}; },
+    push: async(r,v)=>{ const id='m'+Date.now(); const p=r._path+'/'+id; store[p]=v; return {key:id}; },
+    onValue: (r,cb)=>{ cb({val:()=>store[r._path]||null}); return ()=>{}; },
+    remove: async(r)=>{ delete store[r._path]; },
+    update: async(r,v)=>{ store[r._path]={...store[r._path],...v}; },
+  };
+  function triggerListeners(path,v){ if(listeners[path]) listeners[path]({val:()=>v}); }
+}
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ════════════════════════════════
+// ENTRY SCREENS
+// ════════════════════════════════
+function switchEntry(t){
+  document.querySelectorAll('.etab').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.entry-form').forEach(e=>e.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('ef-'+t).classList.add('active');
+}
+
+async function enterFamily(code){
+  const c = code || document.getElementById('ei-code').value.trim().toUpperCase();
+  if(!c||c.length<4){ toast('請輸入族譜代碼'); return; }
+  show('scLoading');
+  try{
+    const snap = await fb.get(fb.ref(fb.db, `families/${c}`));
+    if(!snap.exists()){ show('scEntry'); toast('找不到此代碼，請確認後再試'); return; }
+    familyCode = c;
+    localStorage.setItem('ltau_session', JSON.stringify({code:c}));
+    loadFamily();
+  }catch(e){ show('scEntry'); toast('連線失敗，請檢查網路'); }
+}
+
+async function createFamily(){
+  const name    = document.getElementById('en-family').value.trim();
+  const creator = document.getElementById('en-creator').value.trim();
+  if(!name){ toast('請填入家族名稱'); return; }
+  show('scLoading');
+  // Generate 6-char code from family name
+  const code = generateCode(name);
+  try{
+    // Check if code exists, if so append number
+    let finalCode = code;
+    for(let i=1;i<99;i++){
+      const snap = await fb.get(fb.ref(fb.db, `families/${finalCode}`));
+      if(!snap.exists()) break;
+      finalCode = code.slice(0,4)+(i<10?'0':'')+i;
+    }
+    await fb.set(fb.ref(fb.db, `families/${finalCode}`), {
+      name, creator, createdAt: Date.now(),
+      title:{tw:name+' 族譜',poj:'',sub:new Date().getFullYear()+' 建立'},
+      members:{}, learnings:{}
+    });
+    familyCode = finalCode;
+    localStorage.setItem('ltau_session', JSON.stringify({code:finalCode}));
+
+    // Show the code to user before entering
+    show('scEntry');
+    document.getElementById('ef-new').innerHTML = `
+      <p style="font-size:12px;color:var(--td);letter-spacing:1px;margin-bottom:10px;font-family:'Noto Sans TC',sans-serif;">族譜建立成功！請記住這個代碼：</p>
+      <div class="family-code-display">
+        <div class="fcd-label">你的族譜代碼</div>
+        <div class="fcd-code">${finalCode}</div>
+        <div class="fcd-hint">分享給家人，大家用同一代碼進入</div>
+      </div>
+      <button class="big-btn jade" onclick="loadFamily()">進入族譜 →</button>`;
+    toast('族譜建立成功！代碼：'+finalCode);
+  }catch(e){ show('scEntry'); toast('建立失敗：'+e.message); }
+}
+
+function generateCode(name){
+  const first = name.replace(/\s/g,'').slice(0,2);
+  const pinyin = toPinyin(first);
+  const num = String(Date.now()).slice(-2);
+  return (pinyin+num).toUpperCase().slice(0,6).padEnd(6,'0');
+}
+function toPinyin(s){
+  // Simple mapping for common chars, fallback to romanize index
+  const map={'陳':'CHEN','林':'LIN','黃':'HUANG','張':'CHANG','李':'LI','王':'WANG','吳':'WU','劉':'LIU','蔡':'TSAI','楊':'YANG'};
+  let r='';
+  for(const c of s) r+=(map[c]||c.charCodeAt(0).toString(36).toUpperCase()).slice(0,2);
+  return r.slice(0,4);
+}
+
+function adminLogin(){
+  const pw = document.getElementById('ea-pw').value;
+  if(pw!==ADMIN_PW){ toast('密碼錯誤'); return; }
+  isAdmin=true;
+  localStorage.setItem('ltau_session',JSON.stringify({isAdmin:true}));
+  show('scAdmin');
+  loadAdmin();
+}
+
+// ════════════════════════════════
+// FIREBASE DATA
+// ════════════════════════════════
+function loadFamily(){
+  show('scLoading');
+  if(unsubscribe) unsubscribe();
+
+  unsubscribe = fb.onValue(fb.ref(fb.db, `families/${familyCode}`), snap=>{
+    const d = snap.val();
+    if(!d){ toast('資料讀取失敗'); show('scEntry'); return; }
+    members   = d.members   ? Object.entries(d.members).map(([id,v])=>({id,...v})) : [];
+    learnings = d.learnings ? Object.values(d.learnings) : [];
+    titleData = d.title || {tw:'家族族譜',poj:'Ka-tsok Tsok-phó͘',sub:''};
+
+    document.getElementById('fcDisplay').textContent = familyCode;
+    syncTitle();
+    show('scApp');
+    renderTree();
+    renderList();
+    setSyncStatus('ok');
+  });
+}
+
+async function saveToCloud(path, data){
+  setSyncStatus('syncing');
+  try{
+    await fb.set(fb.ref(fb.db, `families/${familyCode}/${path}`), data);
+    setSyncStatus('ok');
+  }catch(e){ setSyncStatus('err'); toast('儲存失敗：'+e.message); }
+}
+
+async function deleteFromCloud(path){
+  setSyncStatus('syncing');
+  try{
+    await fb.remove(fb.ref(fb.db, `families/${familyCode}/${path}`));
+    setSyncStatus('ok');
+  }catch(e){ setSyncStatus('err'); toast('刪除失敗'); }
+}
+
+function setSyncStatus(s){
+  const el = document.getElementById('syncStatus');
+  const states={ok:'<span class="sync-dot ok"></span>已同步',syncing:'<span class="sync-dot syncing"></span>同步中…',err:'<span class="sync-dot err"></span>同步失敗'};
+  el.innerHTML = states[s]||states.ok;
+}
+
+// ════════════════════════════════
+// TITLE
+// ════════════════════════════════
+function syncTitle(){
+  document.getElementById('hTW').textContent  = titleData.tw;
+  document.getElementById('hPOJ').textContent = titleData.poj;
+  document.getElementById('hSUB').textContent = titleData.sub;
+}
+function openTitleEdit(){
+  document.getElementById('t_tw').value  = titleData.tw;
+  document.getElementById('t_poj').value = titleData.poj;
+  document.getElementById('t_sub').value = titleData.sub;
+  open_('titleModal');
+}
+async function saveTitle(){
+  titleData.tw  = document.getElementById('t_tw').value.trim()||'家族族譜';
+  titleData.poj = document.getElementById('t_poj').value.trim();
+  titleData.sub = document.getElementById('t_sub').value.trim();
+  syncTitle();
+  await saveToCloud('title', titleData);
+  close_('titleModal'); toast('標題已更新 ✓');
+}
+
+// ════════════════════════════════
+// TABS
+// ════════════════════════════════
+function switchTab(n,el){
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll(`.ntab`).forEach(t=>{
+    if(t.getAttribute('onclick')===`switchTab('${n}',this)`) t.classList.add('active');
+  });
+  document.getElementById('panel-'+n).classList.add('active');
+  if(n==='tree')     renderTree();
+  if(n==='list')     renderList();
+  if(n==='stats')    renderStats();
+  if(n==='heritage') renderHeritage();
+}
+
+function setLang(l,el){
+  displayLang=l;
+  document.querySelectorAll('.ltb').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderTree();
+}
+
+// ════════════════════════════════
+// TREE
+// ════════════════════════════════
+function nodeLabel(m){
+  const isAll=displayLang==='all';
+  const nm=m.name||'';
+  const tl=m.tl||''; const bp=m.bp||''; const en=m.en||'';
+  const sh=s=>s.length>9?s.slice(0,8)+'…':s;
+  if(displayLang==='tl') return sh(tl)||nm;
+  if(displayLang==='bp') return sh(bp)||nm;
+  if(displayLang==='en') return sh(en)||nm;
+  if(isAll){ let ls=[nm]; if(tl)ls.push(tl); if(bp)ls.push(bp); return ls.join('\n'); }
+  return nm;
+}
+
+function renderTree(){
+  const svg=document.getElementById('treeCanvas');
+  if(!members.length){
+    svg.setAttribute('width',600);svg.setAttribute('height',100);
+    svg.innerHTML='<text x="300" y="55" text-anchor="middle" font-size="13" fill="#4a5568" font-family="Noto Sans TC">尚未新增成員，點選「＋ 新增成員」開始建立族譜</text>';
+    return;
+  }
+  const byId={};
+  members.forEach(m=>{byId[m.id]={...m,_ch:[]};});
+  const roots=[];
+  members.forEach(m=>{
+    if(m.parentId&&byId[m.parentId]) byId[m.parentId]._ch.push(byId[m.id]);
+    else roots.push(byId[m.id]);
+  });
+  const isAll=displayLang==='all';
+  const NW=88,NH=isAll?56:36,HG=10,VG=isAll?70:56;
+  function cw(n){return n._ch.length===0?NW:Math.max(NW,n._ch.reduce((s,c)=>s+cw(c)+HG,-HG));}
+  function layout(n,x,y){n.__w=cw(n);n.__x=x+n.__w/2-NW/2;n.__y=y;let cx=x;n._ch.forEach(c=>{layout(c,cx,y+NH+VG);cx+=cw(c)+HG;});}
+  let rx=20;roots.forEach(r=>{layout(r,rx,22);rx+=cw(r)+HG*3;});
+  let mx=0,my=0;
+  function bb(n){mx=Math.max(mx,n.__x+NW+25);my=Math.max(my,n.__y+NH+22);n._ch.forEach(bb);}
+  roots.forEach(bb);
+  svg.setAttribute('width',Math.max(mx,700));svg.setAttribute('height',Math.max(my,200));
+  let out='';
+  function drawLines(n){
+    n._ch.forEach(c=>{
+      const x1=n.__x+NW/2,y1=n.__y+NH,x2=c.__x+NW/2,y2=c.__y,mid=(y1+y2)/2;
+      out+=`<path d="M${x1},${y1}C${x1},${mid} ${x2},${mid} ${x2},${y2}" stroke="#2d3748" stroke-width="1.5" fill="none"/>`;
+      drawLines(c);
+    });
+  }
+  roots.forEach(drawLines);
+  function drawNode(n){
+    const col=GC[Math.min(n.gen,GC.length-1)]||'#666';
+    const tc=GT[Math.min(n.gen,GT.length-1)]||'#fff';
+    const twc=TLC[n.twLevel||'']||'#4a5568';
+    const lbl=nodeLabel(n),lns=lbl.split('\n');
+    const hasSpouse=!!n.spouse;
+    const spouseLabel=hasSpouse?(displayLang==='tl'?(n.spTL||n.spouse):n.spouse):'';
+    const spShort=spouseLabel.length>7?spouseLabel.slice(0,6)+'…':spouseLabel;
+    // extra height if spouse
+    const nodeH = hasSpouse ? NH+14 : NH;
+    out+=`<g style="cursor:pointer" onclick="viewMember('${n.id}')">`;
+    out+=`<rect x="${n.__x+2}" y="${n.__y+2}" width="${NW}" height="${nodeH}" rx="5" fill="rgba(0,0,0,.35)"/>`;
+    out+=`<rect x="${n.__x}" y="${n.__y}" width="${NW}" height="${nodeH}" rx="5" fill="${col}" stroke="rgba(255,255,255,.15)" stroke-width="1"/>`;
+    out+=`<circle cx="${n.__x+NW-7}" cy="${n.__y+7}" r="4" fill="${twc}"/>`;
+    if(lns.length===1){
+      const ty = hasSpouse ? n.__y+NH/2-4 : n.__y+NH/2+1;
+      out+=`<text x="${n.__x+NW/2}" y="${ty}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-family="Noto Serif TC,serif" font-weight="700" fill="${tc}">${lns[0]}</text>`;
+    }else if(lns.length===2){
+      out+=`<text x="${n.__x+NW/2}" y="${n.__y+14}" text-anchor="middle" font-size="12" font-family="Noto Serif TC,serif" font-weight="700" fill="${tc}">${lns[0]}</text>`;
+      out+=`<text x="${n.__x+NW/2}" y="${n.__y+28}" text-anchor="middle" font-size="9" font-family="Noto Sans TC" fill="${tc}" opacity=".85">${lns[1]}</text>`;
+    }else{
+      out+=`<text x="${n.__x+NW/2}" y="${n.__y+13}" text-anchor="middle" font-size="11" font-family="Noto Serif TC,serif" font-weight="700" fill="${tc}">${lns[0]}</text>`;
+      out+=`<text x="${n.__x+NW/2}" y="${n.__y+26}" text-anchor="middle" font-size="9" font-family="Noto Sans TC" fill="${tc}" opacity=".85">${lns[1]}</text>`;
+      out+=`<text x="${n.__x+NW/2}" y="${n.__y+40}" text-anchor="middle" font-size="8" font-family="Noto Sans TC" fill="${tc}" opacity=".7">${lns[2]}</text>`;
+    }
+    if(hasSpouse){
+      out+=`<line x1="${n.__x+6}" y1="${n.__y+NH+1}" x2="${n.__x+NW-6}" y2="${n.__y+NH+1}" stroke="rgba(255,255,255,.15)" stroke-width="1"/>`;
+      out+=`<text x="${n.__x+NW/2}" y="${n.__y+NH+10}" text-anchor="middle" font-size="9" font-family="Noto Sans TC" fill="${tc}" opacity=".7">♥ ${spShort}</text>`;
+    }
+    out+=`</g>`;
+    // spouse shown as small text inside node bottom — no extra space needed
+    n._ch.forEach(drawNode);
+  }
+  roots.forEach(drawNode);
+  svg.innerHTML=out;
+  const maxG=members.length>0?Math.max(...members.map(m=>m.gen)):0;
+  let leg='';
+  for(let g=1;g<=maxG;g++) leg+=`<div class="leg-i"><div class="leg-dot" style="background:${GC[Math.min(g,GC.length-1)]}"></div>第${g}代</div>`;
+  leg+=`<div class="leg-i" style="margin-left:8px;"><div class="leg-circ" style="background:#2dd4a0"></div>流利</div>`;
+  leg+=`<div class="leg-i"><div class="leg-circ" style="background:#f0c060"></div>基本</div>`;
+  leg+=`<div class="leg-i"><div class="leg-circ" style="background:#e08840"></div>聽懂</div>`;
+  leg+=`<div class="leg-i"><div class="leg-circ" style="background:#60a8f0"></div>學習中</div>`;
+  document.getElementById('genLeg').innerHTML=leg;
+}
+
+// ════════════════════════════════
+// LIST
+// ════════════════════════════════
+function renderList(){
+  const q=(document.getElementById('sQ').value||'').toLowerCase();
+  const gf=document.getElementById('sGen').value;
+  const tf=document.getElementById('sTW').value;
+  const maxG=members.length>0?Math.max(...members.map(m=>m.gen)):8;
+  let opts='<option value="">全部世代</option>';
+  for(let g=1;g<=maxG;g++) opts+=`<option value="${g}" ${gf==g?'selected':''}>第${g}代</option>`;
+  document.getElementById('sGen').innerHTML=opts;
+  const filtered=members.filter(m=>{
+    const mq=!q||[m.name,m.tl||'',m.bp||'',m.en||'',m.note||''].join(' ').toLowerCase().includes(q);
+    return mq&&(!gf||String(m.gen)===gf)&&(!tf||m.twLevel===tf);
+  });
+  const pn=id=>{const p=members.find(m=>m.id===id);return p?p.name:'—';};
+  const body=document.getElementById('listBody');
+  if(!filtered.length){body.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><h3>無符合結果</h3></div>';return;}
+  body.innerHTML=filtered.map(m=>{
+    const col=GC[Math.min(m.gen,GC.length-1)];
+    const tc=GT[Math.min(m.gen,GT.length-1)];
+    const sub=[m.tl,m.bp,m.en].filter(Boolean).join(' · ');
+    return `<div class="mcard" onclick="viewMember('${m.id}')">
+      <div class="mavatar" style="background:${col};color:${tc}">${(m.name||'?').slice(-1)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="mname">${m.name}${sub?`<span class="mpoj">${sub}</span>`:''}</div>
+        <div class="mmeta">
+          <span class="gbadge" style="background:${col};color:${tc}">第${m.gen}代</span>
+          ${m.gender==='male'?'♂':'♀'}
+          ${m.parentId?` · ${pn(m.parentId)}`:''}
+          ${m.twLevel?` · <span style="color:${TLC[m.twLevel]}">${m.twLevel}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button class="btn sm" onclick="event.stopPropagation();openEdit('${m.id}')">編輯</button>
+        <button class="btn sm danger" onclick="event.stopPropagation();delMember('${m.id}')">刪除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════
+// HERITAGE
+// ════════════════════════════════
+function renderHeritage(){
+  const total=members.length;
+  if(!total){document.getElementById('hStats').innerHTML='<p style="color:var(--tm);font-size:12px">尚無資料</p>';return;}
+  const ct={'流利':0,'基本':0,'理解':0,'學習':0,'不會':0,'':0};
+  members.forEach(m=>{ct[m.twLevel||'']=(ct[m.twLevel||'']||0)+1;});
+  const p=v=>Math.round(v/total*100);
+  const rows=[
+    {l:'🟢 流利',v:ct['流利'],bg:'linear-gradient(90deg,#1a8c6a,#2dd4a0)'},
+    {l:'🟡 基本',v:ct['基本'],bg:'linear-gradient(90deg,#a07820,#f0c060)'},
+    {l:'🟠 聽懂',v:ct['理解'],bg:'linear-gradient(90deg,#a05010,#e08840)'},
+    {l:'🔵 學習',v:ct['學習'],bg:'linear-gradient(90deg,#2060a0,#60a8f0)'},
+    {l:'⚪ 尚未',v:(ct['不會']||0)+(ct['']||0),bg:'linear-gradient(90deg,#2d3748,#4a5568)'},
+  ];
+  document.getElementById('hStats').innerHTML=rows.map(r=>`
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--td);margin-bottom:3px;font-family:'Noto Sans TC'">
+        <span>${r.l}（${r.v}人）</span><span>${p(r.v)}%</span>
+      </div>
+      <div class="pbar"><div class="pfill" style="width:${p(r.v)}%;background:${r.bg}"></div></div>
+    </div>`).join('')+
+    `<div style="margin-top:10px;padding:9px 12px;background:var(--bg);border:1px solid var(--br);border-radius:7px;font-size:11px;font-family:'Noto Sans TC'">
+      <div style="color:var(--jade);letter-spacing:1px;margin-bottom:3px">台語傳承指數</div>
+      <div style="font-size:26px;font-weight:900;color:var(--gold)">${p(ct['流利']+ct['基本'])}<span style="font-size:12px">%</span></div>
+      <div style="color:var(--tm);margin-top:1px">基本以上台語能力</div>
+    </div>`;
+  const fl=members.filter(m=>m.twLevel==='流利');
+  document.getElementById('hChamps').innerHTML=fl.length>0
+    ?fl.map(m=>`<div class="mcard" style="margin-bottom:6px" onclick="viewMember('${m.id}')">
+      <div class="mavatar" style="background:${GC[Math.min(m.gen,GC.length-1)]};color:${GT[Math.min(m.gen,GT.length-1)]}">${(m.name||'?').slice(-1)}</div>
+      <div class="mname">${m.name}<span class="mpoj">${m.tl||''}</span></div>
+    </div>`).join('')
+    :'<p style="color:var(--tm);font-size:12px">尚未記錄流利台語的成員</p>';
+  // Pie
+  const canvas=document.getElementById('hPie');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const colors=['#2dd4a0','#f0c060','#e08840','#60a8f0','#3d4f63'];
+  const pd=rows.map((r,i)=>({...r,col:colors[i]})).filter(r=>r.v>0);
+  let ang=-Math.PI/2;
+  pd.forEach(d=>{const sw=(d.v/total)*Math.PI*2;ctx.beginPath();ctx.moveTo(90,90);ctx.arc(90,90,80,ang,ang+sw);ctx.closePath();ctx.fillStyle=d.col;ctx.fill();ctx.strokeStyle='#0d1117';ctx.lineWidth=2;ctx.stroke();ang+=sw;});
+  ctx.font='11px Noto Sans TC,sans-serif';
+  pd.forEach((d,i)=>{ctx.fillStyle=d.col;ctx.fillRect(188,10+i*22,11,11);ctx.fillStyle='#7a8a9a';ctx.fillText(`${d.l.split(' ')[1]} ${d.v}`,204,21+i*22);});
+}
+
+// ════════════════════════════════
+// STATS
+// ════════════════════════════════
+function renderStats(){
+  const t=members.length,maxG=t>0?Math.max(...members.map(m=>m.gen)):0;
+  const fl=members.filter(m=>m.twLevel==='流利').length;
+  document.getElementById('sGrid').innerHTML=`
+    <div class="scard"><div class="snum">${t}</div><div class="slabel">總成員數</div></div>
+    <div class="scard"><div class="snum">${maxG}</div><div class="slabel">最大世代</div></div>
+    <div class="scard"><div class="snum">${fl}</div><div class="slabel">台語流利</div></div>
+    <div class="scard"><div class="snum">${t>0?Math.round(fl/t*100):0}%</div><div class="slabel">台語傳承率</div></div>`;
+  const canvas=document.getElementById('barChart');
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.parentElement.clientWidth-40;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(!t) return;
+  const gc={};for(let g=1;g<=maxG;g++) gc[g]=0;
+  members.forEach(m=>{if(gc[m.gen]!==undefined)gc[m.gen]++;});
+  const vals=Object.values(gc),mv=Math.max(...vals,1);
+  const bW=(canvas.width-40)/Math.max(maxG,1);
+  vals.forEach((v,i)=>{
+    const bh=(v/mv)*(canvas.height-32),bx=20+i*bW+bW*.15,bww=bW*.7,by=canvas.height-22-bh;
+    ctx.fillStyle=GC[i+1]||'#666';ctx.beginPath();ctx.roundRect(bx,by,bww,bh,3);ctx.fill();
+    ctx.fillStyle='#7a8a9a';ctx.font='10px Noto Sans TC';ctx.textAlign='center';
+    if(v)ctx.fillText(v,bx+bww/2,by-3);
+    ctx.fillText(`第${i+1}`,bx+bww/2,canvas.height-4);
+  });
+}
+
+// ════════════════════════════════
+// VIEW MEMBER
+// ════════════════════════════════
+function viewMember(id){
+  const m=members.find(x=>x.id===id);if(!m)return;
+  curView=id;
+  const col=GC[Math.min(m.gen,GC.length-1)],tc=GT[Math.min(m.gen,GT.length-1)];
+  const par=m.parentId?members.find(x=>x.id===m.parentId):null;
+  const kids=members.filter(x=>x.parentId===id);
+  document.getElementById('viewBody').innerHTML=`
+    <div style="display:flex;align-items:center;gap:13px;margin-bottom:18px;">
+      <div style="width:52px;height:52px;border-radius:12px;background:${col};color:${tc};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;flex-shrink:0">${(m.name||'?').slice(-1)}</div>
+      <div>
+        <div style="font-size:21px;font-weight:900;color:var(--gold)">${m.name}</div>
+        <div style="font-size:12px;color:var(--jade);margin-top:2px">${[m.tl,m.bp,m.en].filter(Boolean).join(' · ')}</div>
+      </div>
+    </div>
+    ${vrow('世代',`<span class="gbadge" style="background:${col};color:${tc}">第${m.gen}代</span>`)}
+    ${vrow('性別',m.gender==='male'?'♂ 男':'♀ 女')}
+    ${m.birth?vrow('出生年',m.birth):''}
+    ${m.spouse?vrow('配偶',m.spouse+(m.spTL?` <span style="color:var(--jade);font-size:11px">${m.spTL}</span>`:'')):''}
+    ${vrow('上代',par?par.name:'（始祖）')}
+    ${kids.length?vrow('子孫',kids.map(c=>c.name).join('、')):''}
+    ${m.twLevel?vrow('台語程度',`<span style="color:${TLC[m.twLevel]}">${m.twLevel}</span>`):''}
+    ${m.note?vrow('故事',`<span style="line-height:1.7">${m.note}</span>`):''}`;
+  document.getElementById('viewFoot').innerHTML=`
+    <button class="btn danger" onclick="delMember('${id}',true)">刪除</button>
+    <button class="btn ghost" onclick="openEdit('${id}')">編輯</button>
+    <button class="btn p" onclick="close_('viewModal')">關閉</button>`;
+  open_('viewModal');
+}
+function vrow(k,v){return `<div class="vrow"><span class="vkey">${k}</span><span class="vval">${v}</span></div>`;}
+
+// ════════════════════════════════
+// ADD / EDIT MEMBER
+// ════════════════════════════════
+function openAdd(){
+  curEdit=null;
+  document.getElementById('editTitle').textContent='新增族譜成員';
+  ['f_name','f_tl','f_bp','f_en','f_spouse','f_spTL','f_birth','f_note'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('f_gen').value='1';
+  document.getElementById('f_gender').value='male';
+  document.getElementById('f_twlv').value='';
+  buildParentSel('');
+  open_('editModal');
+}
+function openEdit(id){
+  const m=members.find(x=>x.id===id);if(!m)return;
+  curEdit=id;
+  document.getElementById('editTitle').textContent='編輯成員資料';
+  document.getElementById('f_name').value=m.name;
+  document.getElementById('f_tl').value=m.tl||'';
+  document.getElementById('f_bp').value=m.bp||'';
+  document.getElementById('f_en').value=m.en||'';
+  document.getElementById('f_gen').value=m.gen;
+  document.getElementById('f_gender').value=m.gender||'male';
+  document.getElementById('f_spouse').value=m.spouse||'';
+  document.getElementById('f_spTL').value=m.spTL||'';
+  document.getElementById('f_birth').value=m.birth||'';
+  document.getElementById('f_twlv').value=m.twLevel||'';
+  document.getElementById('f_note').value=m.note||'';
+  buildParentSel(m.parentId||'');
+  close_('viewModal');
+  open_('editModal');
+}
+function buildParentSel(sel){
+  let h='<option value="">（根節點）</option>';
+  members.forEach(m=>{if(m.id!==curEdit)h+=`<option value="${m.id}" ${m.id===sel?'selected':''}>${m.name}（第${m.gen}代）</option>`;});
+  document.getElementById('f_parent').innerHTML=h;
+}
+function closeEdit(){close_('editModal');}
+
+
+// ── AUTO TRANSLATE ──
+function clearAutoFields(){
+  // don't clear — user may have manually edited
+}
+function clearSpouseTL(){
+  document.getElementById('f_spTL').value='';
+}
+
+async function autoTranslate(){
+  const name = document.getElementById('f_name').value.trim();
+  if(!name){ toast('請先輸入漢字姓名'); return; }
+  const btn = document.getElementById('autoTransBtn');
+  const status = document.getElementById('autoTransStatus');
+  btn.disabled=true; btn.textContent='⏳ 翻譯中...';
+  status.style.display='block'; status.textContent='正在翻譯英文…';
+  try{
+    // MyMemory 免費翻譯 API（每天5000次，無需Key）
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(name)}&langpair=zh-TW|en-US`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if(data.responseStatus===200){
+      const enRaw = data.responseData.translatedText;
+      // 轉成 Title Case
+      const en = enRaw.split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ');
+      document.getElementById('f_en').value = en;
+      status.textContent='✓ 英文翻譯完成！台羅／方音請手動輸入。';
+      status.style.color='#2dd4a0';
+    } else {
+      status.textContent='翻譯失敗，請手動輸入。'; status.style.color='#e07060';
+    }
+  }catch(e){
+    status.textContent='網路錯誤，請手動輸入。'; status.style.color='#e07060';
+  }
+  btn.disabled=false; btn.textContent='🌐 自動翻譯英文（免費）';
+}
+
+async function autoTranslateSpouse(){
+  // 配偶台羅需手動輸入，此按鈕改為提示
+  toast('配偶台羅請手動輸入台羅拼音');
+}
+
+async function saveMember(){
+  const nm=document.getElementById('f_name').value.trim();
+  if(!nm){toast('請填入漢字姓名');return;}
+  const d={
+    name:nm, tl:document.getElementById('f_tl').value.trim(),
+    bp:document.getElementById('f_bp').value.trim(), en:document.getElementById('f_en').value.trim(),
+    gen:parseInt(document.getElementById('f_gen').value), gender:document.getElementById('f_gender').value,
+    parentId:document.getElementById('f_parent').value, spouse:document.getElementById('f_spouse').value.trim(),
+    spTL:document.getElementById('f_spTL').value.trim(), birth:document.getElementById('f_birth').value.trim(),
+    twLevel:document.getElementById('f_twlv').value, note:document.getElementById('f_note').value.trim(),
+  };
+  const id = curEdit || ('m'+Date.now());
+  await saveToCloud(`members/${id}`, d);
+  closeEdit(); toast('已儲存到雲端 ✓');
+}
+
+async function delMember(id, fromView=false){
+  const m=members.find(x=>x.id===id);if(!m)return;
+  const ch=members.filter(x=>x.parentId===id).length;
+  if(!confirm(`確認刪除「${m.name}」？${ch?`\n${ch}位子孫上代關係將解除`:''}`)) return;
+  await deleteFromCloud(`members/${id}`);
+  if(fromView)close_('viewModal');
+  toast('已刪除');
+}
+
+// ════════════════════════════════
+// SHARE
+// ════════════════════════════════
+function openShare(){
+  const url = `${location.origin}${location.pathname}?code=${familyCode}`;
+  document.getElementById('shareCode').textContent = familyCode;
+  document.getElementById('shareURLdisp').textContent = url;
+  document.getElementById('qrArea').style.display='none';
+  open_('shareModal');
+}
+function shareViaLINE(){
+  const url=`${location.origin}${location.pathname}?code=${familyCode}`;
+  const msg=`咱兜的台語族譜\n族譜代碼：${familyCode}\n\n點連結開啟：${url}`;
+  window.open(`https://line.me/R/msg/text/?${encodeURIComponent(msg)}`);
+}
+function shareViaCopy(){
+  const url=`${location.origin}${location.pathname}?code=${familyCode}`;
+  navigator.clipboard.writeText(url).then(()=>toast('連結已複製 ✓'));
+}
+function copyCode(){
+  navigator.clipboard.writeText(familyCode).then(()=>toast('代碼已複製：'+familyCode));
+}
+function shareViaQR(){
+  document.getElementById('qrArea').style.display='';
+  const canvas=document.getElementById('qrCanvas');
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='white';ctx.fillRect(0,0,180,180);
+  ctx.fillStyle='#1a1a2e';ctx.font='bold 13px Noto Sans TC';
+  ctx.textAlign='center';
+  ctx.fillText('族譜代碼',90,55);
+  ctx.font='bold 28px Noto Serif TC';ctx.fillStyle='#1a8c6a';
+  ctx.fillText(familyCode,90,95);
+  ctx.font='11px Noto Sans TC';ctx.fillStyle='#888';
+  ctx.fillText('咱兜的台語 族譜系統',90,125);
+  ctx.fillText('掃描 → 輸入代碼開啟',90,145);
+  toast('在正式部署後可產生真實 QR Code');
+}
+
+// ════════════════════════════════
+// PRINT & PNG
+// ════════════════════════════════
+function openPrint(){imgDataURL=null;document.getElementById('pngPrev').style.display='none';open_('printModal');}
+function selPM(v){printMode=v;document.querySelectorAll('[id^="pm-"]').forEach(e=>e.classList.remove('sel'));document.getElementById('pm-'+v).classList.add('sel');document.getElementById('execBtn').textContent=v==='png'?'🖼️ 產生圖片':v==='pdf'?'📄 另存PDF':'🖨️ 直接列印';}
+function selPO(v){printOpt_=v;document.querySelectorAll('[id^="po-"]').forEach(e=>e.classList.remove('sel'));document.getElementById('po-'+v).classList.add('sel');}
+function selPL(v){printLang_=v;document.querySelectorAll('[id^="pl-"]').forEach(e=>e.classList.remove('sel'));document.getElementById('pl-'+v).classList.add('sel');}
+
+function execPrint(){
+  if(printMode==='png'){genPNG();return;}
+  close_('printModal');
+  const prev=displayLang; displayLang=printLang_;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  if(printOpt_==='tree'){document.getElementById('panel-tree').classList.add('active');renderTree();}
+  else{document.getElementById('panel-list').classList.add('active');renderList();}
+  document.getElementById('printDate').textContent=new Date().toLocaleDateString('zh-TW');
+  let el=document.getElementById('dps');
+  if(!el){el=document.createElement('style');el.id='dps';document.head.appendChild(el);}
+  el.textContent=`@media print{@page{size:A4 ${printOpt_==='list'?'portrait':'landscape'};margin:10mm;}}`;
+  setTimeout(()=>{window.print();displayLang=prev;renderTree();document.getElementById('panel-tree').classList.add('active');},350);
+}
+
+function genPNG(){
+  const prev=displayLang; displayLang=printLang_; renderTree();
+  const svgEl=document.getElementById('treeCanvas');
+  const sw=parseInt(svgEl.getAttribute('width'))||800;
+  const sh=parseInt(svgEl.getAttribute('height'))||400;
+  const PAD=36,TH=80,scale=2;
+  const canvas=document.createElement('canvas');
+  canvas.width=(sw+PAD*2)*scale; canvas.height=(sh+TH+PAD*2)*scale;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#8b1a1a'; ctx.fillRect(0,0,canvas.width,scale*5);
+  ctx.save(); ctx.scale(scale,scale);
+  ctx.fillStyle='#8b1a1a'; ctx.font='bold 18px Noto Serif TC,serif';
+  ctx.textAlign='center'; ctx.fillText(titleData.tw,(sw/2+PAD),PAD+22);
+  if(titleData.poj){ctx.fillStyle='#1a6b5c';ctx.font='12px Noto Sans TC,sans-serif';ctx.fillText(titleData.poj,(sw/2+PAD),PAD+40);}
+  ctx.strokeStyle='#eee';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD,TH);ctx.lineTo(sw+PAD,TH);ctx.stroke();
+  ctx.restore();
+  const svgData=new XMLSerializer().serializeToString(svgEl);
+  const blob=new Blob([svgData],{type:'image/svg+xml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const img=new Image();
+  img.onload=()=>{
+    ctx.drawImage(img,PAD*scale,(TH+PAD)*scale,sw*scale,sh*scale);
+    URL.revokeObjectURL(url);
+    ctx.save();ctx.scale(scale,scale);
+    ctx.fillStyle='#bbb';ctx.font='9px Noto Sans TC,sans-serif';ctx.textAlign='center';
+    ctx.fillText(`咱兜的台語 族譜系統 · 代碼：${familyCode} · ${new Date().toLocaleDateString('zh-TW')}`,sw/2+PAD,sh+TH+PAD+14);
+    ctx.restore();
+    imgDataURL=canvas.toDataURL('image/png');
+    document.getElementById('pngImg').src=imgDataURL;
+    document.getElementById('pngPrev').style.display='';
+    displayLang=prev; renderTree();
+    toast('圖片已產生 ✓');
+  };
+  img.onerror=()=>{toast('圖片產生失敗');displayLang=prev;renderTree();};
+  img.src=url;
+}
+function dlImg(){
+  if(!imgDataURL){toast('請先產生圖片');return;}
+  const a=document.createElement('a');a.href=imgDataURL;a.download=`${titleData.tw}_${familyCode}.png`;a.click();toast('圖片已下載 ✓');
+}
+async function shareImg(){
+  if(!imgDataURL){toast('請先產生圖片');return;}
+  const res=await fetch(imgDataURL);const blob=await res.blob();
+  const file=new File([blob],`${titleData.tw}_${familyCode}.png`,{type:'image/png'});
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({title:titleData.tw,files:[file]});toast('分享成功 ✓');}
+    catch(e){if(e.name!=='AbortError')dlImg();}
+  }else{dlImg();toast('已下載（此裝置不支援直接分享）');}
+}
+
+// ════════════════════════════════
+// EXPORT / IMPORT JSON
+// ════════════════════════════════
+function exportJSON(){
+  const data={familyCode,title:titleData,members,learnings,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`咱兜的台語_${familyCode}_${new Date().toISOString().slice(0,10)}.json`;a.click();
+  toast('備份已下載 ✓');
+}
+
+// ════════════════════════════════
+// ADMIN
+// ════════════════════════════════
+async function loadAdmin(){
+  try{
+    const snap=await fb.get(fb.ref(fb.db,'families'));
+    const families=snap.val()||{};
+    const list=Object.entries(families);
+    document.getElementById('adminStats').innerHTML=`
+      <div class="admin-card"><div class="admin-num">${list.length}</div><div class="admin-label">族譜數量</div></div>
+      <div class="admin-card"><div class="admin-num">${list.reduce((s,[,f])=>s+Object.keys(f.members||{}).length,0)}</div><div class="admin-label">總成員數</div></div>
+      <div class="admin-card"><div class="admin-num">${list.filter(([,f])=>f.createdAt>Date.now()-30*86400000).length}</div><div class="admin-label">本月新增</div></div>`;
+    document.getElementById('familyList').innerHTML=list.map(([code,f])=>`
+      <div class="family-row">
+        <div class="fcode">${code}</div>
+        <div style="flex:1">
+          <div class="fname">${(f.title&&f.title.tw)||f.name||'未命名族譜'}</div>
+          <div class="fmeta">建立者：${f.creator||'—'} · 成員：${Object.keys(f.members||{}).length}人 · ${f.createdAt?new Date(f.createdAt).toLocaleDateString('zh-TW'):''}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn sm" onclick="adminEnter('${code}')">進入</button>
+          <button class="btn sm ghost" onclick="adminCopyCode('${code}')">複製代碼</button>
+        </div>
+      </div>`).join('')||'<div class="empty"><div class="empty-icon">📂</div><h3>尚未建立任何族譜</h3></div>';
+  }catch(e){document.getElementById('familyList').innerHTML='<p style="color:var(--tm)">載入失敗：Firebase 尚未設定</p>';}
+}
+function adminEnter(code){familyCode=code;localStorage.setItem('ltau_session',JSON.stringify({code}));loadFamily();}
+function adminCopyCode(code){navigator.clipboard.writeText(code).then(()=>toast('代碼已複製：'+code));}
+async function adminCreateFamily(){
+  const nm=prompt('請輸入族譜名稱：');if(!nm)return;
+  const creator=prompt('建立者姓名：')||'管理員';
+  document.getElementById('en-family').value=nm;
+  document.getElementById('en-creator').value=creator;
+  await createFamily();
+  loadAdmin();
+}
+
+// ════════════════════════════════
+// LOGOUT / HOME
+// ════════════════════════════════
+function logout(){
+  if(unsubscribe){unsubscribe();unsubscribe=null;}
+  localStorage.removeItem('ltau_session');
+  familyCode='';isAdmin=false;members=[];
+  show('scEntry');
+}
+function goHome(){ show('scEntry'); logout(); }
+
+// ════════════════════════════════
+// HELPERS
+// ════════════════════════════════
+function open_(id){document.getElementById(id).classList.add('open');}
+function close_(id){document.getElementById(id).classList.remove('open');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+</script>
+</body>
+</html>
