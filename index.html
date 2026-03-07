@@ -413,7 +413,6 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
         <div class="lt">
           <div class="ltb active" onclick="setLang('zh',this)">漢字</div>
           <div class="ltb" onclick="setLang('tl',this)">台羅</div>
-          <div class="ltb" onclick="setLang('bp',this)">方音</div>
           <div class="ltb" onclick="setLang('en',this)">英文</div>
           <div class="ltb" onclick="setLang('all',this)">全顯示</div>
         </div>
@@ -425,7 +424,7 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
     <!-- LIST -->
     <div id="panel-list" class="panel">
       <div class="sbar">
-        <input class="sinp" type="text" id="sQ" placeholder="搜尋姓名、台羅、方音…" oninput="renderList()">
+        <input class="sinp" type="text" id="sQ" placeholder="搜尋姓名、台羅…" oninput="renderList()">
         <select class="ssel" id="sGen" onchange="renderList()"><option value="">全部世代</option></select>
         <select class="ssel" id="sTW" onchange="renderList()">
           <option value="">台語程度</option>
@@ -498,11 +497,10 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
   <div class="fgrid">
     <div class="fg"><label>漢字姓名 *</label><input id="f_name" placeholder="陳齊森" oninput="clearAutoFields()"></div>
     <div class="fg"><label>台羅拼音 TL</label><input id="f_tl" placeholder="Tân Tsî-sim"></div>
-    <div class="fg full"><label>方音符號</label><input id="f_bp" placeholder="ㄊㄢˊㄗㄧˊㄒㄧㆬ"></div>
     <div class="fg"><label>英文 EN</label><input id="f_en" placeholder="Chen Chi-sen"></div>
     <div class="fg full" style="margin-top:-6px">
       <button class="btn p" id="autoTransBtn" onclick="autoTranslate()" style="width:100%;background:linear-gradient(135deg,#1a4a8a,#1a3060);font-size:13px;padding:10px">
-        ✨ 自動翻譯台羅／方音／英文
+        🌐 自動翻譯英文
       </button>
       <div id="autoTransStatus" style="font-size:11px;color:#5a8a7a;margin-top:5px;text-align:center;display:none"></div>
     </div>
@@ -609,7 +607,6 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
   <div class="pgrid2">
     <div class="popt sel" id="pl-zh" onclick="selPL('zh')"><div class="poi" style="font-size:16px">漢</div><div><div class="popt-l">漢字</div></div></div>
     <div class="popt" id="pl-tl" onclick="selPL('tl')"><div class="poi" style="font-size:16px">台</div><div><div class="popt-l">台羅拼音</div></div></div>
-    <div class="popt" id="pl-bp" onclick="selPL('bp')"><div class="poi" style="font-size:16px">音</div><div><div class="popt-l">方音符號</div></div></div>
     <div class="popt" id="pl-all" onclick="selPL('all')"><div class="poi" style="font-size:16px">全</div><div><div class="popt-l">四語並列</div></div></div>
   </div>
   <div id="pngPrev" style="display:none;margin:10px 0;">
@@ -1131,7 +1128,7 @@ function vrow(k,v){return `<div class="vrow"><span class="vkey">${k}</span><span
 function openAdd(){
   curEdit=null;
   document.getElementById('editTitle').textContent='新增族譜成員';
-  ['f_name','f_tl','f_bp','f_en','f_spouse','f_spTL','f_birth','f_note'].forEach(i=>document.getElementById(i).value='');
+  ['f_name','f_tl','f_en','f_spouse','f_spTL','f_birth','f_note'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('f_gen').value='1';
   document.getElementById('f_gender').value='male';
   document.getElementById('f_twlv').value='';
@@ -1144,7 +1141,7 @@ function openEdit(id){
   document.getElementById('editTitle').textContent='編輯成員資料';
   document.getElementById('f_name').value=m.name;
   document.getElementById('f_tl').value=m.tl||'';
-  document.getElementById('f_bp').value=m.bp||'';
+  
   document.getElementById('f_en').value=m.en||'';
   document.getElementById('f_gen').value=m.gen;
   document.getElementById('f_gender').value=m.gender||'male';
@@ -1179,24 +1176,20 @@ async function autoTranslate(){
   const btn = document.getElementById('autoTransBtn');
   const status = document.getElementById('autoTransStatus');
   btn.disabled=true; btn.textContent='⏳ 翻譯中...';
-  status.style.display='block'; status.textContent='正在用 Gemini AI 翻譯…';
+  status.style.display='block'; status.textContent='正在翻譯英文…';
   try{
-    const resp = await fetch('/.netlify/functions/translate', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ name })
-    });
-    const parsed = await resp.json();
-    if(parsed.error) throw new Error(parsed.error);
-    if(parsed.tl) document.getElementById('f_tl').value = parsed.tl;
-    if(parsed.bp) document.getElementById('f_bp').value = parsed.bp;
-    if(parsed.en) document.getElementById('f_en').value = parsed.en;
-    status.textContent='✓ 台羅／方音／英文翻譯完成！請確認是否正確。';
+    // 使用 MyMemory 免費翻譯 API（無需 API Key，每天5000次）
+    const resp = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(name)}&langpair=zh-TW|en`);
+    const data = await resp.json();
+    if(data.responseStatus !== 200) throw new Error('翻譯服務暫時無法使用');
+    const enText = data.responseData.translatedText;
+    if(enText) document.getElementById('f_en').value = enText;
+    status.textContent='✓ 英文翻譯完成！請確認是否正確。';
     status.style.color='#2dd4a0';
   }catch(e){
     status.textContent='翻譯失敗：' + e.message; status.style.color='#e07060';
   }
-  btn.disabled=false; btn.textContent='✨ 自動翻譯台羅／方音／英文';
+  btn.disabled=false; btn.textContent='🌐 自動翻譯英文';
 }
 
 async function autoTranslateSpouse(){
@@ -1222,7 +1215,7 @@ async function saveMember(){
   if(!nm){toast('請填入漢字姓名');return;}
   const d={
     name:nm, tl:document.getElementById('f_tl').value.trim(),
-    bp:document.getElementById('f_bp').value.trim(), en:document.getElementById('f_en').value.trim(),
+    bp:'', en:document.getElementById('f_en').value.trim(),
     gen:parseInt(document.getElementById('f_gen').value), gender:document.getElementById('f_gender').value,
     parentId:document.getElementById('f_parent').value, spouse:document.getElementById('f_spouse').value.trim(),
     spTL:document.getElementById('f_spTL').value.trim(), birth:document.getElementById('f_birth').value.trim(),
