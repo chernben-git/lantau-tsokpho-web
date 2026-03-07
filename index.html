@@ -515,7 +515,7 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
     <div class="fg"><label>性別</label>
       <select id="f_gender"><option value="male">♂ 男</option><option value="female">♀ 女</option></select>
     </div>
-    <div class="fg"><label>上代（父節點）</label><select id="f_parent"><option value="">（根節點）</option></select></div>
+    <div class="fg"><label>上代（父節點）</label><select id="f_parent" onchange="autoFillGen()" ><option value="">（根節點）</option></select></div>
     <div class="fg"><label>出生年份</label><input id="f_birth" placeholder="1950"></div>
     <div class="fg"><label>配偶漢字</label><input id="f_spouse" placeholder="配偶姓名" oninput="clearSpouseTL()"></div>
     <div class="fg" style="position:relative"><label>配偶台羅</label><input id="f_spTL" placeholder="配偶台羅">
@@ -1159,6 +1159,40 @@ function buildParentSel(sel){
   members.forEach(m=>{if(m.id!==curEdit)h+=`<option value="${m.id}" ${m.id===sel?'selected':''}>${m.name}（第${m.gen}代）</option>`;});
   document.getElementById('f_parent').innerHTML=h;
 }
+
+// 選了上代自動填世代
+function autoFillGen(){
+  const parentId = document.getElementById('f_parent').value;
+  if(!parentId){
+    // 根節點：如果已有第1代成員，詢問是否往上追溯
+    const hasGen1 = members.some(m => m.gen === 1 && m.id !== curEdit);
+    if(hasGen1){
+      if(confirm('設為根節點將新增第1代祖先。\n系統將把所有現有成員往下推一代（原第1代→第2代），確定嗎？')){
+        shiftAllGen();
+      }
+    }
+    return;
+  }
+  const parent = members.find(m => m.id === parentId);
+  if(parent){
+    document.getElementById('f_gen').value = String(parent.gen + 1);
+  }
+}
+
+// 全家族往下推一代（尋根用）
+async function shiftAllGen(){
+  if(!members.length) return;
+  show('scLoading');
+  try{
+    for(const m of members){
+      await fb.update(fb.ref(fb.db, `families/${familyCode}/members/${m.id}`), { gen: m.gen + 1 });
+    }
+    toast('所有成員已往下推一代 ✓');
+  }catch(e){
+    toast('更新失敗：' + e.message);
+  }
+}
+
 function closeEdit(){close_('editModal');}
 
 
