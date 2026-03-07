@@ -1202,18 +1202,24 @@ async function shiftAllGen(){
 function checkOrderDuplicate(){
   const order = parseInt(document.getElementById('f_order').value);
   const parentId = document.getElementById('f_parent').value;
-  if(!order || !parentId) return;
+  const hint = document.getElementById('orderHint');
+  if(!order){ hint.style.display='none'; return; }
+  if(!parentId){
+    hint.textContent = '💡 請先選擇上代，才能檢查排行';
+    hint.style.color = '#a0aec0';
+    hint.style.display = 'block';
+    return;
+  }
   const dup = members.find(m =>
     m.id !== curEdit &&
     m.parentId === parentId &&
     m.order === order
   );
-  const hint = document.getElementById('orderHint');
   if(dup){
     hint.textContent = `⚠️ ${dup.name} 已是排行第${order}，請確認是否重複`;
     hint.style.color = '#e07060';
   } else {
-    hint.textContent = '✓ 排行無重複';
+    hint.textContent = `✓ 排行第${order}，無重複`;
     hint.style.color = '#2dd4a0';
   }
   hint.style.display = 'block';
@@ -1273,14 +1279,25 @@ async function autoTranslateSpouse(){
 async function saveMember(){
   const nm=document.getElementById('f_name').value.trim();
   if(!nm){toast('請填入漢字姓名');return;}
+  const order = parseInt(document.getElementById('f_order').value)||0;
+  const parentId = document.getElementById('f_parent').value;
+
+  // 儲存前檢查排行重複
+  if(order && parentId){
+    const dup = members.find(m => m.id !== curEdit && m.parentId === parentId && m.order === order);
+    if(dup){
+      const ok = confirm(`⚠️ 排行第${order}已有「${dup.name}」\n確定要繼續儲存嗎？（建議修改排行）`);
+      if(!ok) return;
+    }
+  }
+
   const d={
     name:nm, tl:document.getElementById('f_tl').value.trim(),
     bp:'', en:document.getElementById('f_en').value.trim(),
     gen:parseInt(document.getElementById('f_gen').value), gender:document.getElementById('f_gender').value,
-    parentId:document.getElementById('f_parent').value, order:parseInt(document.getElementById('f_order').value)||0,
+    parentId:parentId, order:order,
     spouse:document.getElementById('f_spouse').value.trim(),
     spTL:document.getElementById('f_spTL').value.trim(), birth:document.getElementById('f_birth').value.trim(),
-    order:parseInt(document.getElementById('f_order').value)||0,
     twLevel:document.getElementById('f_twlv').value, note:document.getElementById('f_note').value.trim(),
   };
   const id = curEdit || ('m'+Date.now());
