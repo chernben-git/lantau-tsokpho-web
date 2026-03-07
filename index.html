@@ -513,11 +513,15 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
       </select>
     </div>
     <div class="fg"><label>性別</label>
-      <select id="f_gender"><option value="male">♂ 男</option><option value="female">♀ 女</option></select>
+      <select id="f_gender" onchange="checkOrderDuplicate()"><option value="male">♂ 男</option><option value="female">♀ 女</option></select>
     </div>
     <div class="fg"><label>上代（父節點）</label><select id="f_parent" onchange="autoFillGen()" ><option value="">（根節點）</option></select></div>
     <div class="fg"><label>出生年份</label><input id="f_birth" placeholder="1950"></div>
-    <div class="fg"><label>排行（兄弟姊妹順序）</label><input id="f_order" type="number" min="1" max="20" placeholder="1" oninput="checkOrderDuplicate()"><div id="orderHint" style="font-size:11px;margin-top:4px;display:none"></div></div>
+    <div class="fg"><label>家中排行</label>
+      <input id="f_order" type="number" min="1" max="20" placeholder="例：1（長子）、2（次子）" oninput="checkOrderDuplicate()">
+      <div id="orderLabel" style="font-size:13px;color:#2dd4a0;margin-top:5px;font-weight:600;display:none"></div>
+      <div id="orderHint" style="font-size:11px;margin-top:3px;display:none"></div>
+    </div>
     <div class="fg"><label>配偶漢字</label><input id="f_spouse" placeholder="配偶姓名" oninput="clearSpouseTL()"></div>
     <div class="fg" style="position:relative"><label>配偶台羅</label><input id="f_spTL" placeholder="配偶台羅">
       <button onclick="autoTranslateSpouse()" title="配偶台羅請手動輸入" style="position:absolute;right:6px;bottom:8px;background:none;border:none;cursor:pointer;font-size:16px;color:#2dd4a0">✨</button>
@@ -1199,11 +1203,30 @@ async function shiftAllGen(){
 }
 
 // 排行重複檢查
+const ORDER_LABELS = ['','長','次','三','四','五','六','七','八','九','十'];
+function getOrderLabel(order, gender){
+  const g = gender || document.getElementById('f_gender').value;
+  const word = g === 'female' ? '女' : '子';
+  if(order >= 1 && order <= 10){
+    return `家中排行第${order}（${ORDER_LABELS[order]}${word}）`;
+  }
+  return `家中排行第${order}`;
+}
+
 function checkOrderDuplicate(){
   const order = parseInt(document.getElementById('f_order').value);
   const parentId = document.getElementById('f_parent').value;
   const hint = document.getElementById('orderHint');
-  if(!order){ hint.style.display='none'; return; }
+  const label = document.getElementById('orderLabel');
+  if(!order){
+    hint.style.display='none';
+    label.style.display='none';
+    return;
+  }
+  // 顯示排行標籤
+  label.textContent = getOrderLabel(order);
+  label.style.display = 'block';
+
   if(!parentId){
     hint.textContent = '💡 請先選擇上代，才能檢查排行';
     hint.style.color = '#a0aec0';
@@ -1219,7 +1242,7 @@ function checkOrderDuplicate(){
     hint.textContent = `⚠️ ${dup.name} 已是排行第${order}，請確認是否重複`;
     hint.style.color = '#e07060';
   } else {
-    hint.textContent = `✓ 排行第${order}，無重複`;
+    hint.textContent = `✓ 無重複`;
     hint.style.color = '#2dd4a0';
   }
   hint.style.display = 'block';
