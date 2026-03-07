@@ -1,4 +1,4 @@
-// 降級備案：手動過濾文字標籤
+// 降級備案：當 JSON 模式出錯時，手動過濾文字標籤
 async function fallbackFetch(url, prompt, key) {
   const resp = await fetch(url, {
     method: 'POST',
@@ -18,6 +18,7 @@ async function fallbackFetch(url, prompt, key) {
 }
 
 exports.handler = async (event) => {
+  // 1. CORS 預檢請求處理
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -31,53 +32,48 @@ exports.handler = async (event) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers: { 'Access-Control-Allow-Origin': '*' }, body: 'Method Not Allowed' };
+    return { 
+      statusCode: 405, 
+      headers: { 'Access-Control-Allow-Origin': '*' }, 
+      body: 'Method Not Allowed' 
+    };
   }
 
   try {
     const { name, type } = JSON.parse(event.body || '{}');
-    if (!name) return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: '缺少姓名' }) };
+    if (!name) return { 
+      statusCode: 400, 
+      headers: { 'Access-Control-Allow-Origin': '*' }, 
+      body: JSON.stringify({ error: '缺少姓名' }) 
+    };
 
     const API_KEY = process.env.GEMINI_API_KEY;
-    if (!API_KEY) return { statusCode: 500, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'API Key 未設定' }) };
+    if (!API_KEY) return { 
+      statusCode: 500, 
+      headers: { 'Access-Control-Allow-Origin': '*' }, 
+      body: JSON.stringify({ error: '後端 API Key 未設定' }) 
+    };
 
+    // 2. 核心邏輯：強制 AI 從國語轉台語發音
     const isSpouse = type === 'spouse';
-
     const prompt = isSpouse
-      ? `你是台灣閩南語（台語）專家，精通台羅拼音（Taiwan Romanization System, TRS）。
-請將人名漢字「${name}」，依照台灣閩南語（非普通話、非客語）的正確發音，轉換為台羅拼音。
+      ? `你是一位台語專家。請將人名漢字「${name}」轉換為「台灣閩南語」發音的台羅拼音。禁止使用華語發音（例如「陳」不讀 Chen，要讀 Tân）。只輸出 JSON：{"tl":"Tân Tsî"}`
+      : `你是一位精通台灣閩南語的專家。
+         使用者會輸入國語姓名「${name}」，請依照以下邏輯處理：
+         1. 判斷該姓名在「台灣閩南語」中的正確讀音（絕對禁止使用華語/普通話拼音）。
+         2. 姓氏「陳」必須對應台語發音「Tân」。
+         3. 輸出格式必須為 JSON，包含：
+            - "tl": 台灣閩南語羅馬字 (Tâi-lô)，需含調符。
+            - "bp": 台灣方音符號。
+            - "en": 台灣常用英文譯名（例如 Tan Chi 或 Chen Chi）。
 
-參考發音規則：
-- 陳 → Tân（台語，非普通話 Chen）
-- 林 → Lîm（台語，非普通話 Lin）
-- 黃 → N̂g（台語）
-- 李 → Lí（台語）
-- 齊 → Tsî（台語）
-- 賞 → Síng（台語）
+         請直接輸出 JSON，不要說明：
+         {"tl":"...","bp":"...","en":"..."}`;
 
-只輸出 JSON，格式：{"tl":"台羅拼音"}`
-
-      : `你是台灣閩南語（台語）專家，精通台羅拼音（Taiwan Romanization System, TRS）。
-請將人名漢字「${name}」，依照台灣閩南語（非普通話、非客語）的正確發音，轉換為以下格式。
-
-參考發音規則：
-- 陳 → Tân（台語，非普通話 Chen）
-- 林 → Lîm（台語，非普通話 Lin）
-- 黃 → N̂g（台語）
-- 李 → Lí（台語）
-- 齊 → Tsî（台語）
-- 賞 → Síng（台語）
-- 人名各字之間用空格分開，姓氏首字大寫
-
-只輸出 JSON，格式：
-{
-  "tl": "台羅拼音（含聲調符號，如 Tân Tsî）",
-  "bp": "台灣方音符號（如 ㄉㄢˊㄐㄧˊ）",
-  "en": "台灣護照慣用英文（如 Tan Chi）"
-}`;
-
+    // 使用 v1beta 穩定路徑
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
+    // 3. 呼叫 API
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -91,21 +87,30 @@ exports.handler = async (event) => {
     });
 
     const data = await resp.json();
-
+    
+    // 4. 自動降級邏輯 (萬一 API 參數報錯)
     if (!resp.ok) {
+      console.log("偵測到參數錯誤，啟動降級方案...");
       return await fallbackFetch(url, prompt, API_KEY);
     }
 
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) throw new Error('AI 沒有回傳內容');
+    if (!rawText) throw new Error('AI 回傳內容為空');
+
+    // 5. 解析並回傳給前端
+    const parsed = JSON.parse(rawText.trim());
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify(JSON.parse(rawText.trim()))
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Access-Control-Allow-Origin': '*' 
+      },
+      body: JSON.stringify(parsed)
     };
 
   } catch (e) {
+    console.error('Error:', e);
     return {
       statusCode: 500,
       headers: { 'Access-Control-Allow-Origin': '*' },
