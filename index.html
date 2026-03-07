@@ -318,6 +318,7 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
       <input class="inp" id="ei-code" placeholder="例：CHEN01" maxlength="8"
         style="text-align:center;font-size:24px;font-weight:900;letter-spacing:6px;color:var(--jade);"
         oninput="this.value=this.value.toUpperCase()">
+      <div id="lastCodeHint" style="display:none;font-size:12px;color:#2dd4a0;margin:-8px 0 8px;text-align:center;letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;"></div>
       <input class="inp" id="ei-name" placeholder="您的姓名（選填）">
       <button class="big-btn jade" onclick="enterFamily()">進入族譜 →</button>
     </div>
@@ -394,7 +395,7 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
       <div class="fc-actions">
         <button class="btn sm ghost" onclick="copyCode()">複製代碼</button>
         <button class="btn sm ghost" onclick="openShare()">分享給家人</button>
-        <button class="btn sm danger" onclick="logout()">離開</button>
+        <button class="btn sm" onclick="logout()" style="background:#1a3060;border-color:#2d4a8a;color:#7ab4e8">🔄 切換族譜</button>
       </div>
     </div>
 
@@ -671,9 +672,16 @@ document.addEventListener('fbReady', ()=>{
   // Check localStorage for saved session
   const saved = localStorage.getItem('ltau_session');
   if(saved){
-    const s = JSON.parse(saved);
-    if(s.isAdmin){ isAdmin=true; show('scAdmin'); loadAdmin(); return; }
-    if(s.code){ familyCode=s.code; loadFamily(); return; }
+    try{
+      const s = JSON.parse(saved);
+      if(s.isAdmin){ isAdmin=true; show('scAdmin'); loadAdmin(); return; }
+      // 不自動登入，但預填代碼方便快速進入
+      if(s.code){
+        document.getElementById('ei-code').value = s.code;
+        document.getElementById('lastCodeHint').style.display = 'block';
+        document.getElementById('lastCodeHint').textContent = '👆 上次使用的族譜代碼已預填，直接點「進入族譜」即可';
+      }
+    }catch(e){}
   }
 
   show('scEntry');
