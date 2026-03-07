@@ -34,7 +34,7 @@ exports.handler = async (event) => {
 {"tl":"台羅拼音含調符","bp":"台灣方音符號","en":"護照英文"}`;
 
     // 使用 v1 + gemini-1.5-flash
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 
     const resp = await fetch(url, {
       method: 'POST',
