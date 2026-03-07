@@ -502,7 +502,7 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
     <div class="fg"><label>英文 EN</label><input id="f_en" placeholder="Chen Chi-sen"></div>
     <div class="fg full" style="margin-top:-6px">
       <button class="btn p" id="autoTransBtn" onclick="autoTranslate()" style="width:100%;background:linear-gradient(135deg,#1a4a8a,#1a3060);font-size:13px;padding:10px">
-        🌐 自動翻譯英文（免費）
+        ✨ 自動翻譯台羅／方音／英文
       </button>
       <div id="autoTransStatus" style="font-size:11px;color:#5a8a7a;margin-top:5px;text-align:center;display:none"></div>
     </div>
@@ -1179,31 +1179,42 @@ async function autoTranslate(){
   const btn = document.getElementById('autoTransBtn');
   const status = document.getElementById('autoTransStatus');
   btn.disabled=true; btn.textContent='⏳ 翻譯中...';
-  status.style.display='block'; status.textContent='正在翻譯英文…';
+  status.style.display='block'; status.textContent='正在用 Gemini AI 翻譯…';
   try{
-    // MyMemory 免費翻譯 API（每天5000次，無需Key）
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(name)}&langpair=zh-TW|en-US`;
-    const resp = await fetch(url);
-    const data = await resp.json();
-    if(data.responseStatus===200){
-      const enRaw = data.responseData.translatedText;
-      // 轉成 Title Case
-      const en = enRaw.split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ');
-      document.getElementById('f_en').value = en;
-      status.textContent='✓ 英文翻譯完成！台羅／方音請手動輸入。';
-      status.style.color='#2dd4a0';
-    } else {
-      status.textContent='翻譯失敗，請手動輸入。'; status.style.color='#e07060';
-    }
+    const resp = await fetch('/.netlify/functions/translate', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name })
+    });
+    const parsed = await resp.json();
+    if(parsed.error) throw new Error(parsed.error);
+    if(parsed.tl) document.getElementById('f_tl').value = parsed.tl;
+    if(parsed.bp) document.getElementById('f_bp').value = parsed.bp;
+    if(parsed.en) document.getElementById('f_en').value = parsed.en;
+    status.textContent='✓ 台羅／方音／英文翻譯完成！請確認是否正確。';
+    status.style.color='#2dd4a0';
   }catch(e){
-    status.textContent='網路錯誤，請手動輸入。'; status.style.color='#e07060';
+    status.textContent='翻譯失敗：' + e.message; status.style.color='#e07060';
   }
-  btn.disabled=false; btn.textContent='🌐 自動翻譯英文（免費）';
+  btn.disabled=false; btn.textContent='✨ 自動翻譯台羅／方音／英文';
 }
 
 async function autoTranslateSpouse(){
-  // 配偶台羅需手動輸入，此按鈕改為提示
-  toast('配偶台羅請手動輸入台羅拼音');
+  const name = document.getElementById('f_spouse').value.trim();
+  if(!name){ toast('請先輸入配偶漢字'); return; }
+  const btn = event.target;
+  btn.textContent='⏳'; btn.disabled=true;
+  try{
+    const resp = await fetch('/.netlify/functions/translate', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, type: 'spouse' })
+    });
+    const parsed = await resp.json();
+    if(parsed.tl) document.getElementById('f_spTL').value = parsed.tl;
+    toast('配偶台羅翻譯完成 ✓');
+  }catch(e){ toast('翻譯失敗，請手動輸入'); }
+  btn.textContent='✨'; btn.disabled=false;
 }
 
 async function saveMember(){
