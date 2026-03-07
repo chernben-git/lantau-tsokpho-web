@@ -53,13 +53,13 @@ exports.handler = async (event) => {
       return {
         statusCode: resp.status,
         headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ error: `API 錯誤: ${data.error?.message || '未知錯誤'}` })
+        body: JSON.stringify({ error: `Google API 錯誤: ${data.error?.message || '未知錯誤'}` })
       };
     }
 
     // 手動解析回傳的文字
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    // 移除可能出現的 Markdown 標籤
+    // 移除可能出現的 Markdown 標籤並解析
     const cleanJson = rawText.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(cleanJson);
 
