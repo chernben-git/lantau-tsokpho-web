@@ -1018,7 +1018,7 @@ function renderList(){
         <div class="mmeta">
           <span class="gbadge" style="background:${col};color:${tc}">第${m.gen}代</span>
           ${m.gender==='male'?'♂':'♀'}
-          ${m.order?` · <span style="color:#2dd4a0">${getOrderLabel(m.order,m.gender)}</span>`:''}
+          ${parseInt(m.order)?` · <span style="color:#2dd4a0">${getOrderLabel(parseInt(m.order),m.gender)}</span>`:''}
           ${m.parentId?` · ${pn(m.parentId)}`:''}
           ${m.twLevel?` · <span style="color:${TLC[m.twLevel]}">${m.twLevel}</span>`:''}
         </div>
@@ -1126,7 +1126,7 @@ function viewMember(id){
     </div>
     ${vrow('世代',`<span class="gbadge" style="background:${col};color:${tc}">第${m.gen}代</span>`)}
     ${vrow('性別',m.gender==='male'?'♂ 男':'♀ 女')}
-    ${m.order?vrow('家中排行',`<span style="color:#2dd4a0;font-weight:700">${getOrderLabel(m.order,m.gender)}</span>`):''}
+    ${parseInt(m.order)?vrow('家中排行',`<span style="color:#2dd4a0;font-weight:700">${getOrderLabel(parseInt(m.order),m.gender)}</span>`):''}
     ${m.birth?vrow('出生年',m.birth):''}
     ${m.spouse?vrow('配偶',m.spouse+(m.spTL?` <span style="color:var(--jade);font-size:11px">${m.spTL}</span>`:'')):''}
     ${vrow('上代',par?par.name:'（始祖）')}
