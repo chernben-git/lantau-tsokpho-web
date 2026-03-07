@@ -1008,6 +1008,7 @@ function renderList(){
         <div class="mmeta">
           <span class="gbadge" style="background:${col};color:${tc}">第${m.gen}代</span>
           ${m.gender==='male'?'♂':'♀'}
+          ${m.order?` · <span style="color:#2dd4a0">${getOrderLabel(m.order,m.gender)}</span>`:''}
           ${m.parentId?` · ${pn(m.parentId)}`:''}
           ${m.twLevel?` · <span style="color:${TLC[m.twLevel]}">${m.twLevel}</span>`:''}
         </div>
