@@ -248,11 +248,16 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
 .empty h3{font-size:14px;color:var(--td);letter-spacing:2px;}
 
 /* ── MOBILE ── */
-#mobTabs{display:flex;border-bottom:1px solid var(--br);background:var(--sf);position:sticky;top:56px;z-index:190;overflow-x:auto;}
+#mobTabs{display:flex;border-bottom:1px solid var(--br);background:var(--sf);position:sticky;top:56px;z-index:190;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+#mobTabs::-webkit-scrollbar{display:none;}
 
 @media(max-width:768px){
   nav{padding:0 12px;}
   .nav-center{display:none;}
+  /* 手機版 nav-right 只留新增按鈕和同步狀態 */
+  .nav-right .btn:not(.btn-add){display:none;}
+  .nav-right a.btn{display:none;}
+  .nav-right #syncStatus{display:none;}
   main{padding:12px;}
   .sgrid{grid-template-columns:1fr 1fr;}
   .admin-grid{grid-template-columns:1fr 1fr;}
@@ -395,7 +400,7 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
       <button class="btn ghost" onclick="openShare()">🔗 分享</button>
       <a href="https://chernben-git.github.io/Taigi-Polis/" target="_blank" class="btn" style="text-decoration:none;">🌐 城邦</a>
       <a href="https://line.me/R/ti/p/@509ymzdy" target="_blank" class="btn" style="text-decoration:none;">🔥 咱兜的台語</a>
-      <button class="btn p" onclick="openAdd()">＋ 新增</button>
+      <button class="btn p btn-add" onclick="openAdd()">＋ 新增</button>
     </div>
   </nav>
 
@@ -405,6 +410,7 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
     <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="switchTab('heritage',this)">🗣 台語</div>
     <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="switchTab('stats',this)">📊 統計</div>
     <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="openShare()">🔗 分享</div>
+    <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="openPrint()">🖨️ 列印</div>
     <a href="https://chernben-git.github.io/Taigi-Polis/" target="_blank" class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;text-decoration:none;color:inherit;">🌐 城邦</a>
     <a href="https://line.me/R/ti/p/@509ymzdy" target="_blank" class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;text-decoration:none;color:inherit;">🔥 台語</a>
   </div>
