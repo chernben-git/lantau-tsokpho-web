@@ -318,9 +318,17 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
       <input class="inp" id="ei-code" placeholder="例：CHEN01" maxlength="8"
         style="text-align:center;font-size:24px;font-weight:900;letter-spacing:6px;color:var(--jade);"
         oninput="this.value=this.value.toUpperCase()">
-      <div id="lastCodeHint" style="display:none;font-size:12px;color:#2dd4a0;margin:-8px 0 8px;text-align:center;letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;"></div>
+      <div id="lastCodeHint" style="display:none;font-size:12px;color:#2dd4a0;margin:-8px 0 8px;text-align:center;letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;line-height:1.8;"></div>
       <input class="inp" id="ei-name" placeholder="您的姓名（選填）">
       <button class="big-btn jade" onclick="enterFamily()">進入族譜 →</button>
+      <div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid var(--br);">
+        <div style="font-size:11px;color:var(--td);letter-spacing:1px;margin-bottom:8px;font-family:'Noto Sans TC',sans-serif;">🔑 請妥善保管你的族譜代碼</div>
+        <div style="font-size:11px;color:var(--td);letter-spacing:1px;margin-bottom:10px;font-family:'Noto Sans TC',sans-serif;">忘記代碼？請聯絡你的教會／社團管理員，或透過 LINE Bot 申請：</div>
+        <a href="https://line.me/R/ti/p/@509ymzdy" target="_blank"
+          style="display:block;text-align:center;padding:8px;border-radius:8px;font-size:12px;font-weight:600;letter-spacing:1px;text-decoration:none;background:rgba(45,212,160,.1);border:1px solid rgba(45,212,160,.25);color:var(--jade);font-family:'Noto Sans TC',sans-serif;">
+          🔥 傳訊息給咱兜的台語 申請代碼
+        </a>
+      </div>
     </div>
 
     <!-- 建立新族譜 -->
@@ -345,6 +353,18 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
       <p style="font-size:10px;color:var(--tm);text-align:center;margin-top:10px;letter-spacing:1px;font-family:'Noto Sans TC',sans-serif;">
         預設密碼：lantau2024（可在 Firebase 更改）
       </p>
+    </div>
+
+    <!-- 引流區 -->
+    <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--br);display:flex;flex-direction:column;gap:8px;">
+      <a href="https://chernben-git.github.io/Taigi-Polis/" target="_blank"
+        style="display:block;text-align:center;padding:11px;border-radius:10px;font-size:13px;font-weight:600;letter-spacing:1px;text-decoration:none;background:rgba(45,212,160,.12);border:1px solid rgba(45,212,160,.3);color:var(--jade);font-family:'Noto Sans TC',sans-serif;">
+        🌐 台語數位城邦
+      </a>
+      <a href="https://line.me/R/ti/p/@509ymzdy" target="_blank"
+        style="display:block;text-align:center;padding:11px;border-radius:10px;font-size:13px;font-weight:600;letter-spacing:1px;text-decoration:none;background:linear-gradient(135deg,#1a5c4a,#165c46);border:1px solid rgba(45,212,160,.2);color:#fff;font-family:'Noto Sans TC',sans-serif;">
+        🔥 加入咱兜的台語 LINE Bot
+      </a>
     </div>
 
   </div>
@@ -373,6 +393,8 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
       </span>
       <button class="btn ghost" onclick="openPrint()">🖨️</button>
       <button class="btn ghost" onclick="openShare()">🔗 分享</button>
+      <a href="https://chernben-git.github.io/Taigi-Polis/" target="_blank" class="btn" style="text-decoration:none;">🌐 城邦</a>
+      <a href="https://line.me/R/ti/p/@509ymzdy" target="_blank" class="btn" style="text-decoration:none;">🔥 咱兜的台語</a>
       <button class="btn p" onclick="openAdd()">＋ 新增</button>
     </div>
   </nav>
@@ -383,6 +405,8 @@ main{position:relative;z-index:5;padding:20px;max-width:1600px;margin:0 auto;}
     <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="switchTab('heritage',this)">🗣 台語</div>
     <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="switchTab('stats',this)">📊 統計</div>
     <div class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;" onclick="openShare()">🔗 分享</div>
+    <a href="https://chernben-git.github.io/Taigi-Polis/" target="_blank" class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;text-decoration:none;color:inherit;">🌐 城邦</a>
+    <a href="https://line.me/R/ti/p/@509ymzdy" target="_blank" class="ntab" style="flex:1;text-align:center;border-radius:0;font-size:10px;padding:9px 4px;text-decoration:none;color:inherit;">🔥 台語</a>
   </div>
 
   <main>
@@ -675,11 +699,12 @@ document.addEventListener('fbReady', ()=>{
     try{
       const s = JSON.parse(saved);
       if(s.isAdmin){ isAdmin=true; show('scAdmin'); loadAdmin(); return; }
-      // 不自動登入，但預填代碼方便快速進入
       if(s.code){
         document.getElementById('ei-code').value = s.code;
         document.getElementById('lastCodeHint').style.display = 'block';
-        document.getElementById('lastCodeHint').textContent = '👆 上次使用的族譜代碼已預填，直接點「進入族譜」即可';
+        document.getElementById('lastCodeHint').innerHTML =
+          '👆 上次使用的族譜代碼已預填，直接點「進入族譜」即可' +
+          '　<span onclick="clearSavedCode()" style="cursor:pointer;color:#e05555;font-size:10px;text-decoration:underline;">清除記憶</span>';
       }
     }catch(e){}
   }
@@ -717,6 +742,13 @@ function makeOfflineFB(){
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+}
+
+function clearSavedCode(){
+  localStorage.removeItem('ltau_session');
+  document.getElementById('ei-code').value = '';
+  document.getElementById('lastCodeHint').style.display = 'none';
+  toast('已清除記憶的族譜代碼');
 }
 
 // ════════════════════════════════
