@@ -2,8 +2,8 @@
  * netlify/functions/asr-transcript.js
  *
  * GAS 傳來音檔 base64 (m4a) + token
- * → ffmpeg 轉換 m4a → raw PCM 16kHz 單聲道
- * → 呼叫 NYCU ASR WebSocket (type=raw)
+ * → 同時：取 ticket 建立 WS + ffmpeg 轉換 m4a → raw PCM 16kHz
+ * → WS 連線後立刻送 PCM（ticket 30秒有效，必須搶時間）
  * → 回傳逐字稿 + 時長
  */
 
@@ -39,28 +39,34 @@ exports.handler = async (event) => {
 
   const tmpDir  = os.tmpdir();
   const inFile  = path.join(tmpDir, `asr_in_${Date.now()}.m4a`);
-  const outFile = path.join(tmpDir, `asr_out_${Date.now()}`);
+  const outFile = path.join(tmpDir, `asr_out_${Date.now()}.pcm`);
 
   try {
-    // Step 1：取 ticket
-    const ticket = await getAsrTicket(token);
-    if (!ticket) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Failed to get ASR ticket' }) };
-    console.log('ticket:', ticket.substring(0, 40) + '...');
-
-    // Step 2：m4a → raw PCM 16kHz 單聲道
+    // Step 1：同時進行 ticket 取得 + ffmpeg 轉換（搶在 30 秒內）
     const m4aBuffer = Buffer.from(audioBase64, 'base64');
     fs.writeFileSync(inFile, m4aBuffer);
     console.log('m4a size:', m4aBuffer.length, 'bytes');
 
-    const ffmpegPath = require('ffmpeg-static');
-    execSync(`"${ffmpegPath}" -y -i "${inFile}" -ar 16000 -ac 1 -acodec pcm_s16le "${outFile}.wav"`, {
-      stdio: 'pipe'
-    });
+    // 並行：取 ticket + 轉 PCM
+    const [ticket] = await Promise.all([
+      getAsrTicket(token),
+      new Promise((resolve, reject) => {
+        try {
+          const ffmpegPath = require('ffmpeg-static');
+          execSync(`"${ffmpegPath}" -y -i "${inFile}" -ar 16000 -ac 1 -f s16le "${outFile}"`, { stdio: 'pipe' });
+          console.log('ffmpeg done, pcm size:', fs.statSync(outFile).size, 'bytes');
+          resolve();
+        } catch(e) { reject(e); }
+      })
+    ]);
 
-    const pcmBuffer = fs.readFileSync(outFile + '.wav');
-    console.log('wav size:', pcmBuffer.length, 'bytes');
+    if (!ticket) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Failed to get ASR ticket' }) };
+    console.log('ticket:', ticket.substring(0, 40) + '... (valid 30s)');
 
-    // Step 3：WebSocket 送 raw PCM
+    const pcmBuffer = fs.readFileSync(outFile);
+    console.log('pcm size:', pcmBuffer.length, 'bytes');
+
+    // Step 2：立刻建立 WS 並送 PCM（ticket 剛取到，時間最新鮮）
     const result = await transcribeViaWebSocket(ticket, pcmBuffer);
     console.log('result:', JSON.stringify(result));
 
@@ -75,7 +81,7 @@ exports.handler = async (event) => {
     };
   } finally {
     try { if (fs.existsSync(inFile))  fs.unlinkSync(inFile);  } catch(e) {}
-    try { if (fs.existsSync(outFile + '.wav')) fs.unlinkSync(outFile + '.wav'); } catch(e) {}
+    try { if (fs.existsSync(outFile)) fs.unlinkSync(outFile); } catch(e) {}
   }
 };
 
@@ -108,7 +114,8 @@ function getAsrTicket(token) {
 
 function transcribeViaWebSocket(ticket, pcmBuffer) {
   return new Promise((resolve) => {
-    const wsUrl = `wss://${ASR_HOST}:${ASR_PORT}/ws/v1/transcript?ticket=${encodeURIComponent(ticket)}&type=file`;
+    // type=raw&rate=16000（規格書指定）
+    const wsUrl = `wss://${ASR_HOST}:${ASR_PORT}/ws/v1/transcript?ticket=${encodeURIComponent(ticket)}&type=raw&rate=16000`;
     const ws    = new WebSocket(wsUrl, { rejectUnauthorized: false });
 
     let parts    = [];
@@ -129,13 +136,15 @@ function transcribeViaWebSocket(ticket, pcmBuffer) {
     const timer = setTimeout(() => { console.log('WS timeout'); done(); }, WS_TIMEOUT_MS);
 
     ws.on('open', () => {
-      console.log('WS connected, sending WAV', pcmBuffer.length, 'bytes');
-      const CHUNK = 4096;
+      console.log('WS connected at', Date.now() - t0, 'ms, sending PCM', pcmBuffer.length, 'bytes');
+      // 分塊送出 raw PCM
+      const CHUNK = 8192;
       for (let i = 0; i < pcmBuffer.length; i += CHUNK) {
         ws.send(pcmBuffer.slice(i, i + CHUNK));
       }
-      ws.close();  // 送完 wav 關閉連線
-      console.log('wav sent, ws closed, waiting for transcript...');
+      // 送空 buffer 作為串流結束訊號
+      ws.send(Buffer.alloc(0));
+      console.log('PCM sent, waiting for transcript...');
     });
 
     ws.on('message', (data) => {
@@ -145,9 +154,9 @@ function transcribeViaWebSocket(ticket, pcmBuffer) {
         const text    = msg.transcript || msg.text || msg.result || '';
         const isFinal = msg.type === 'final' || msg.isFinal === true ||
                         msg.is_final === true || msg.type === 'end' ||
-                        msg.status === 'end';
+                        msg.status === 'end' || msg.code === 200;
         if (text) parts.push(text);
-        if (isFinal) done();
+        if (isFinal && text) done();
       } catch(e) {
         const text = data.toString().trim();
         console.log('WS raw:', text);
