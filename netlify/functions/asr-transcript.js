@@ -134,8 +134,8 @@ function transcribeViaWebSocket(ticket, pcmBuffer) {
       for (let i = 0; i < pcmBuffer.length; i += CHUNK) {
         ws.send(pcmBuffer.slice(i, i + CHUNK));
       }
-      ws.send(Buffer.alloc(0));  // 結束訊號
-      console.log('audio sent, waiting...');
+      ws.close();  // 關閉連線通知 ASR 音檔結束
+      console.log('audio sent, ws closing, waiting...');
     });
 
     ws.on('message', (data) => {
