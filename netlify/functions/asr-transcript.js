@@ -1,27 +1,24 @@
 /**
  * netlify/functions/asr-transcript.js
  *
- * GAS 傳來音檔 base64 + token
- * → 呼叫 NYCU ASR WebSocket
+ * GAS 傳來音檔 base64 (m4a) + token
+ * → ffmpeg 轉換 m4a → raw PCM 16kHz 單聲道
+ * → 呼叫 NYCU ASR WebSocket (type=raw)
  * → 回傳逐字稿 + 時長
- *
- * GAS 呼叫：
- *   POST https://familyhistroy-tree.netlify.app/.netlify/functions/asr-transcript
- *   Body: { "audioBase64": "...", "token": "Bearer eyJ..." }
- *
- * 回傳：
- *   { "transcript": "食飽未", "duration_sec": 5.2, "char_count": 3 }
  */
 
-const https     = require('https');
-const WebSocket = require('ws');
+const https        = require('https');
+const WebSocket    = require('ws');
+const { execSync } = require('child_process');
+const fs           = require('fs');
+const os           = require('os');
+const path         = require('path');
 
 const ASR_HOST         = '140.113.30.204';
 const ASR_PORT         = 8451;
 const ACCESS_INFO_PATH = '/api/v1/streaming/transcript/access-info';
-const WS_TIMEOUT_MS    = 20000;  // 20秒逾時
+const WS_TIMEOUT_MS    = 25000;
 
-// ── 主處理函數 ─────────────────────────────────────────────────
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -40,30 +37,49 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing audioBase64 or token' }) };
   }
 
+  const tmpDir  = os.tmpdir();
+  const inFile  = path.join(tmpDir, `asr_in_${Date.now()}.m4a`);
+  const outFile = path.join(tmpDir, `asr_out_${Date.now()}.pcm`);
+
   try {
-    // Step 1：用 token 換取一次性 ticket
+    // Step 1：取 ticket
     const ticket = await getAsrTicket(token);
     if (!ticket) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Failed to get ASR ticket' }) };
     console.log('ticket:', ticket.substring(0, 40) + '...');
 
-    // Step 2：音檔 base64 → Buffer
-    const audioBuffer = Buffer.from(audioBase64, 'base64');
-    console.log('audio size:', audioBuffer.length, 'bytes');
+    // Step 2：m4a → raw PCM 16kHz 單聲道
+    const m4aBuffer = Buffer.from(audioBase64, 'base64');
+    fs.writeFileSync(inFile, m4aBuffer);
+    console.log('m4a size:', m4aBuffer.length, 'bytes');
 
-    // Step 3：WebSocket 送音檔，等逐字稿
-    const result = await transcribeViaWebSocket(ticket, audioBuffer);
+    const ffmpegPath = require('ffmpeg-static');
+    execSync(`"${ffmpegPath}" -y -i "${inFile}" -ar 16000 -ac 1 -f s16le "${outFile}"`, {
+      stdio: 'pipe'
+    });
+
+    const pcmBuffer = fs.readFileSync(outFile);
+    console.log('pcm size:', pcmBuffer.length, 'bytes');
+
+    // Step 3：WebSocket 送 raw PCM
+    const result = await transcribeViaWebSocket(ticket, pcmBuffer);
     console.log('result:', JSON.stringify(result));
 
     return { statusCode: 200, headers, body: JSON.stringify(result) };
 
   } catch (err) {
     console.error('ASR error:', err.message);
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message, transcript: '', duration_sec: 0, char_count: 0 }) };
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: err.message, transcript: '', duration_sec: 0, char_count: 0 })
+    };
+  } finally {
+    try { if (fs.existsSync(inFile))  fs.unlinkSync(inFile);  } catch(e) {}
+    try { if (fs.existsSync(outFile)) fs.unlinkSync(outFile); } catch(e) {}
   }
 };
 
 
-// ── Step 1：取 ticket ──────────────────────────────────────────
 function getAsrTicket(token) {
   return new Promise((resolve, reject) => {
     const req = https.request({
@@ -90,8 +106,7 @@ function getAsrTicket(token) {
 }
 
 
-// ── Step 2：WebSocket 送音檔，等逐字稿 ─────────────────────────
-function transcribeViaWebSocket(ticket, audioBuffer) {
+function transcribeViaWebSocket(ticket, pcmBuffer) {
   return new Promise((resolve) => {
     const wsUrl = `wss://${ASR_HOST}:${ASR_PORT}/ws/v1/transcript?ticket=${encodeURIComponent(ticket)}&type=raw&rate=16000`;
     const ws    = new WebSocket(wsUrl, { rejectUnauthorized: false });
@@ -104,7 +119,7 @@ function transcribeViaWebSocket(ticket, audioBuffer) {
       if (resolved) return;
       resolved = true;
       clearTimeout(timer);
-      ws.terminate();
+      try { ws.terminate(); } catch(e) {}
       const transcript   = parts.length > 0 ? parts[parts.length - 1] : '';
       const duration_sec = Math.round((Date.now() - t0) / 100) / 10;
       const char_count   = transcript.replace(/\s/g, '').length;
@@ -114,28 +129,39 @@ function transcribeViaWebSocket(ticket, audioBuffer) {
     const timer = setTimeout(() => { console.log('WS timeout'); done(); }, WS_TIMEOUT_MS);
 
     ws.on('open', () => {
-      console.log('WS connected, sending audio...');
+      console.log('WS connected, sending PCM', pcmBuffer.length, 'bytes');
       const CHUNK = 4096;
-      for (let i = 0; i < audioBuffer.length; i += CHUNK) {
-        ws.send(audioBuffer.slice(i, i + CHUNK));
+      for (let i = 0; i < pcmBuffer.length; i += CHUNK) {
+        ws.send(pcmBuffer.slice(i, i + CHUNK));
       }
       ws.send(Buffer.alloc(0));  // 結束訊號
+      console.log('audio sent, waiting...');
     });
 
     ws.on('message', (data) => {
       try {
         const msg  = JSON.parse(data.toString());
-        const text = msg.transcript || msg.text || msg.result || '';
-        const isFinal = msg.type === 'final' || msg.isFinal === true || msg.is_final === true || msg.type === 'end';
+        console.log('WS msg:', JSON.stringify(msg));
+        const text    = msg.transcript || msg.text || msg.result || '';
+        const isFinal = msg.type === 'final' || msg.isFinal === true ||
+                        msg.is_final === true || msg.type === 'end' ||
+                        msg.status === 'end';
         if (text) parts.push(text);
         if (isFinal) done();
       } catch(e) {
         const text = data.toString().trim();
+        console.log('WS raw:', text);
         if (text) parts.push(text);
       }
     });
 
-    ws.on('close', done);
-    ws.on('error', (err) => { console.error('WS error:', err.message); done(); });
+    ws.on('close', (code, reason) => {
+      console.log('WS closed:', code, reason ? reason.toString() : '');
+      done();
+    });
+    ws.on('error', (err) => {
+      console.error('WS error:', err.message);
+      done();
+    });
   });
 }
