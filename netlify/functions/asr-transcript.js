@@ -39,7 +39,7 @@ exports.handler = async (event) => {
 
   const tmpDir  = os.tmpdir();
   const inFile  = path.join(tmpDir, `asr_in_${Date.now()}.m4a`);
-  const outFile = path.join(tmpDir, `asr_out_${Date.now()}.pcm`);
+  const outFile = path.join(tmpDir, `asr_out_${Date.now()}`);
 
   try {
     // Step 1：取 ticket
@@ -53,12 +53,12 @@ exports.handler = async (event) => {
     console.log('m4a size:', m4aBuffer.length, 'bytes');
 
     const ffmpegPath = require('ffmpeg-static');
-    execSync(`"${ffmpegPath}" -y -i "${inFile}" -ar 16000 -ac 1 -f s16le "${outFile}"`, {
+    execSync(`"${ffmpegPath}" -y -i "${inFile}" -ar 16000 -ac 1 -acodec pcm_s16le "${outFile}.wav"`, {
       stdio: 'pipe'
     });
 
-    const pcmBuffer = fs.readFileSync(outFile);
-    console.log('pcm size:', pcmBuffer.length, 'bytes');
+    const pcmBuffer = fs.readFileSync(outFile + '.wav');
+    console.log('wav size:', pcmBuffer.length, 'bytes');
 
     // Step 3：WebSocket 送 raw PCM
     const result = await transcribeViaWebSocket(ticket, pcmBuffer);
@@ -75,7 +75,7 @@ exports.handler = async (event) => {
     };
   } finally {
     try { if (fs.existsSync(inFile))  fs.unlinkSync(inFile);  } catch(e) {}
-    try { if (fs.existsSync(outFile)) fs.unlinkSync(outFile); } catch(e) {}
+    try { if (fs.existsSync(outFile + '.wav')) fs.unlinkSync(outFile + '.wav'); } catch(e) {}
   }
 };
 
@@ -108,7 +108,7 @@ function getAsrTicket(token) {
 
 function transcribeViaWebSocket(ticket, pcmBuffer) {
   return new Promise((resolve) => {
-    const wsUrl = `wss://${ASR_HOST}:${ASR_PORT}/ws/v1/transcript?ticket=${encodeURIComponent(ticket)}&type=raw&rate=16000`;
+    const wsUrl = `wss://${ASR_HOST}:${ASR_PORT}/ws/v1/transcript?ticket=${encodeURIComponent(ticket)}&type=file`;
     const ws    = new WebSocket(wsUrl, { rejectUnauthorized: false });
 
     let parts    = [];
@@ -129,13 +129,13 @@ function transcribeViaWebSocket(ticket, pcmBuffer) {
     const timer = setTimeout(() => { console.log('WS timeout'); done(); }, WS_TIMEOUT_MS);
 
     ws.on('open', () => {
-      console.log('WS connected, sending PCM', pcmBuffer.length, 'bytes');
+      console.log('WS connected, sending WAV', pcmBuffer.length, 'bytes');
       const CHUNK = 4096;
       for (let i = 0; i < pcmBuffer.length; i += CHUNK) {
         ws.send(pcmBuffer.slice(i, i + CHUNK));
       }
-      ws.send(JSON.stringify({ type: 'end' }));  // 通知 ASR 音檔結束
-      console.log('audio sent, sent end signal, waiting...');
+      ws.close();  // 送完 wav 關閉連線
+      console.log('wav sent, ws closed, waiting for transcript...');
     });
 
     ws.on('message', (data) => {
