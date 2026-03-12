@@ -5,7 +5,7 @@
 [build.environment]
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 
-[functions]
+[functions."*"]
   timeout = 26
 
 [[headers]]
