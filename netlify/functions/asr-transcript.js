@@ -10,6 +10,11 @@
  * 4. 送 WAV binary chunks
  * 5. 送 "EOS" 文字訊息
  * 6. 等 code:200 result + end:1，或 code:202/204
+ *
+ * 修改紀錄：
+ * - 408逾時：WS_TIMEOUT_MS 拉長至 26s（配合 netlify.toml timeout=26）
+ * - 486無可用資源：加 retry 最多3次，每次重新取 ticket
+ * - done() 回傳 _errorCode 供外層 retry 判斷
  */
 
 const https        = require('https');
@@ -19,11 +24,13 @@ const fs           = require('fs');
 const os           = require('os');
 const path         = require('path');
 
-const ASR_HOST = '140.113.30.204';
-const ASR_PORT = 8451;
-const USERNAME = 'chernben';
-const PASSWORD = 'SRGER#342sd';
-const WS_TIMEOUT_MS = 30000;
+const ASR_HOST      = '140.113.30.204';
+const ASR_PORT      = 8451;
+const USERNAME      = 'chernben';
+const PASSWORD      = 'SRGER#342sd';
+const WS_TIMEOUT_MS = 26000;   // ← 拉長（netlify.toml timeout=26）
+const MAX_RETRY     = 3;        // 486 時最多重試次數
+const RETRY_DELAY   = 2000;     // 重試間隔 ms
 
 exports.handler = async (event) => {
   const headers = {
@@ -69,16 +76,37 @@ exports.handler = async (event) => {
     console.log('login ok, token:', token.substring(0, 30) + '...');
 
     // Step 2：取 ticket
-    const ticket = await getAsrTicket(token);
+    let ticket = await getAsrTicket(token);
     if (!ticket) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Failed to get ASR ticket' }) };
     console.log('ticket:', ticket.substring(0, 40) + '...');
 
     const wavBuffer = fs.readFileSync(outFile);
     console.log('wav size:', wavBuffer.length, 'bytes');
 
-    // Step 3：WebSocket 轉寫
-    const result = await transcribeViaWebSocket(ticket, wavBuffer);
-    console.log('result:', JSON.stringify(result));
+    // Step 3：WebSocket 轉寫（最多 retry MAX_RETRY 次，僅針對 486）
+    let result;
+    for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
+      result = await transcribeViaWebSocket(ticket, wavBuffer);
+      console.log(`attempt ${attempt} result:`, JSON.stringify(result));
+
+      // 成功或非486錯誤 → 直接結束
+      if (result.transcript !== '' || result._errorCode !== 486) break;
+
+      // 486：等待後重新取 ticket 再試
+      if (attempt < MAX_RETRY) {
+        console.log(`486 無可用資源，${RETRY_DELAY}ms 後 retry ${attempt + 1}/${MAX_RETRY}...`);
+        await new Promise(r => setTimeout(r, RETRY_DELAY));
+        const newTicket = await getAsrTicket(token);
+        if (newTicket) {
+          ticket = newTicket;
+          console.log('new ticket:', newTicket.substring(0, 40) + '...');
+        }
+      }
+    }
+
+    // 移除內部用的 _errorCode，不回傳給 GAS
+    delete result._errorCode;
+    console.log('final result:', JSON.stringify(result));
 
     return { statusCode: 200, headers, body: JSON.stringify(result) };
 
@@ -175,20 +203,21 @@ function transcribeViaWebSocket(ticket, wavBuffer) {
     let resolved = false;
     const t0     = Date.now();
 
-    const done = (transcript) => {
+    // ── done：加 _errorCode 供外層 retry 判斷 ──
+    const done = (transcript, errorCode = 0) => {
       if (resolved) return;
       resolved = true;
       clearTimeout(timer);
       try { ws.terminate(); } catch(e) {}
       const duration_sec = Math.round((Date.now() - t0) / 100) / 10;
       const char_count   = (transcript || '').replace(/\s/g, '').length;
-      resolve({ transcript: transcript || '', duration_sec, char_count });
+      resolve({ transcript: transcript || '', duration_sec, char_count, _errorCode: errorCode });
     };
 
     const timer = setTimeout(() => {
       console.log('WS timeout');
       const keys = Object.keys(finalSegments).sort();
-      done(keys.map(k => finalSegments[k]).join('\n').trim());
+      done(keys.map(k => finalSegments[k]).join('\n').trim(), 408);
     }, WS_TIMEOUT_MS);
 
     ws.on('open', () => {
@@ -233,8 +262,9 @@ function transcribeViaWebSocket(ticket, wavBuffer) {
           done(keys.map(k => finalSegments[k]).join('\n').trim());
 
         } else if (code >= 400) {
+          // ← 帶回 errorCode 供外層判斷是否為 486
           console.error('ASR error code:', code, msg.message);
-          done('');
+          done('', code);
         }
 
       } catch(e) {
