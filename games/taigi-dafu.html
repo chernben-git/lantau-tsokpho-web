@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>咱兜的台灣大富翁 · 高速公路版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@700;900&family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:      #06101c;
+  --text:    #eef7ff;
+  --muted:   #7a9ab8;
+  --border:  rgba(89,216,255,.14);
+  --red:     #ff3355;
+  --blue:    #1a7fff;
+  --cyan:    #00e5ff;
+  --green:   #00cc88;
+  --gold:    #f0c040;
+  --purple:  #b87dff;
+  --west:    #34d17b;
+  --east:    #46a8ff;
+  --south:   #ff9b43;
+  --chance:  #ffd34d;
+  --fate:    #b87dff;
+  --hud:     'Orbitron', sans-serif;
+  --mono:    'Share Tech Mono', monospace;
+  --body:    'Noto Sans TC', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  height:100%;overflow:hidden;
+  font-family:var(--body);color:var(--text);
+  background:radial-gradient(1200px 800px at 50% 10%,#13325d 0%,#081424 32%,#050b14 78%,#02060b 100%);
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 15% 18%,rgba(89,216,255,.08),transparent 18%),
+    radial-gradient(circle at 82% 12%,rgba(255,211,77,.06),transparent 16%),
+    radial-gradient(circle at 80% 75%,rgba(184,125,255,.08),transparent 14%);
+  filter:blur(12px);
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;
+  background-image:linear-gradient(rgba(120,180,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(120,180,255,.08) 1px,transparent 1px);
+  background-size:28px 28px;
+  mask-image:radial-gradient(circle at center,#000 42%,transparent 92%);
+}
+
+/* ── STARS ── */
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d,3s) var(--dl,0s) ease-in-out infinite alternate}
+@keyframes twinkle{0%{opacity:.08}100%{opacity:.5}}
+#scan{position:fixed;inset:0;pointer-events:none;z-index:1;background:repeating-linear-gradient(to bottom,transparent 0,transparent 2px,rgba(0,0,0,.06) 3px,transparent 4px)}
+#vig{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(circle at center,transparent 38%,rgba(0,0,0,.6) 100%)}
+
+/* ── CORNERS ── */
+.corner{position:fixed;width:24px;height:24px;z-index:50}
+#ctlc{top:12px;left:12px;border-top:2px solid var(--border);border-left:2px solid var(--border);border-top-left-radius:6px}
+#ctrc{top:12px;right:12px;border-top:2px solid var(--border);border-right:2px solid var(--border);border-top-right-radius:6px}
+#cblc{bottom:12px;left:12px;border-bottom:2px solid var(--border);border-left:2px solid var(--border);border-bottom-left-radius:6px}
+#cbrc{bottom:12px;right:12px;border-bottom:2px solid var(--border);border-right:2px solid var(--border);border-bottom-right-radius:6px}
+
+/* ── TOP HUD ── */
+#topBar{
+  position:fixed;top:0;left:0;right:0;height:64px;z-index:40;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  background:linear-gradient(180deg,rgba(6,16,28,.95),rgba(6,16,28,.82));
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);
+}
+.phud{display:flex;align-items:center;gap:10px;min-width:190px}
+.phud-r{flex-direction:row-reverse}
+.live-dot{width:7px;height:7px;border-radius:50%;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.phud-avatar{font-size:26px;line-height:1}
+.phud-name{font-family:var(--hud);font-size:9px;letter-spacing:.15em;margin-bottom:2px}
+.phud-cash{font-family:var(--mono);font-size:16px;color:var(--green);letter-spacing:.04em}
+.phud-loc{font-size:9px;color:var(--muted);margin-top:2px;white-space:nowrap}
+#hudCenter{text-align:center;flex:1}
+.logo-main{font-family:var(--hud);font-size:15px;font-weight:900;letter-spacing:.18em;
+  background:linear-gradient(90deg,var(--cyan),var(--gold),var(--cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:.18em;margin-top:2px}
+.turn-badge{display:inline-flex;align-items:center;gap:6px;margin-top:5px;
+  padding:3px 10px;border-radius:99px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.turn-dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:blink 1s infinite}
+#turnTxt{font-family:var(--hud);font-size:8px;letter-spacing:.12em;color:var(--cyan)}
+
+/* ── LAYOUT ── */
+#main{
+  position:fixed;top:64px;left:0;right:0;bottom:0;
+  display:grid;
+  grid-template-columns: 1fr 280px;
+  grid-template-rows: 1fr;
+  z-index:10;
+  overflow:hidden;
+}
+
+/* ── 地圖欄 ── */
+#mapWrap{
+  position:relative;
+  width:100%;height:100%;
+  overflow:hidden;
+}
+#mapWrap svg{
+  width:100%;height:100%;
+  display:block;
+}
+
+/* ── 右欄：骰子 + 記錄 ── */
+#rightPanel{
+  display:flex;flex-direction:column;
+  padding:12px 14px 8px;
+  gap:10px;overflow:hidden;
+  border-left:1px solid var(--border);
+  background:rgba(4,10,20,.6);
+}
+
+/* ── 路線說明（浮在地圖左上角）── */
+#legendFloat{
+  position:absolute;top:10px;left:10px;z-index:20;
+}
+#legendBtn{
+  font-family:var(--hud);font-size:8px;letter-spacing:.1em;
+  padding:5px 11px;border-radius:8px;cursor:pointer;
+  background:rgba(8,18,36,.88);color:var(--muted);
+  border:1px solid var(--border);backdrop-filter:blur(8px);
+  display:flex;align-items:center;gap:6px;
+}
+#legendBtn .leg-arrow{transition:transform .3s;font-size:9px;}
+#legendDrop{
+  display:none;margin-top:6px;
+  background:rgba(6,14,28,.94);border:1px solid var(--border);
+  border-radius:12px;padding:10px 14px;min-width:200px;
+  box-shadow:0 12px 36px rgba(0,0,0,.5);backdrop-filter:blur(12px);
+}
+#legendDrop.open{display:block;}
+
+/* ── DICE ── */
+#diceRow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.die{
+  width:44px;height:44px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  background:linear-gradient(145deg,rgba(20,40,70,.9),rgba(10,22,42,.9));
+  border:1px solid rgba(89,216,255,.25);
+  box-shadow:0 4px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+  user-select:none;
+}
+.die.roll{animation:diceRoll .45s ease-in-out}
+@keyframes diceRoll{0%,100%{transform:rotate(0)}25%{transform:rotate(-15deg) scale(1.12)}75%{transform:rotate(12deg) scale(1.08)}}
+#rollBtn{
+  font-family:var(--hud);font-size:11px;font-weight:700;letter-spacing:.22em;
+  padding:11px 22px;border-radius:10px;cursor:pointer;
+  background:linear-gradient(135deg,rgba(0,229,255,.18),rgba(0,150,255,.22));
+  color:var(--cyan);border:1px solid rgba(0,229,255,.35);
+  box-shadow:0 0 18px rgba(0,229,255,.15),inset 0 1px 0 rgba(255,255,255,.06);
+  transition:all .2s;
+}
+#rollBtn:hover:not(:disabled){background:linear-gradient(135deg,rgba(0,229,255,.28),rgba(0,150,255,.32));box-shadow:0 0 28px rgba(0,229,255,.3)}
+#rollBtn:disabled{opacity:.35;cursor:not-allowed}
+#diceSum{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* ── LOG ── */
+#logWrap{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;
+  background:rgba(8,18,34,.7);border:1px solid var(--border);border-radius:14px;
+  transition:flex .3s ease;}
+#logWrap.collapsed{flex:0 0 36px;}
+#logTitle{
+  font-family:var(--hud);font-size:8px;letter-spacing:.15em;color:var(--muted);
+  padding:10px 12px 6px;
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;user-select:none;flex-shrink:0;
+  border-radius:14px;
+  transition:background .2s;
+}
+#logTitle:hover{background:rgba(89,216,255,.06);}
+#logTitle .log-arrow{font-size:10px;color:var(--muted);transition:transform .3s;}
+#logWrap.collapsed #logTitle .log-arrow{transform:rotate(-90deg);}
+#logBody{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:0 10px 8px;
+  transition:opacity .25s;}
+#logWrap.collapsed #logBody{opacity:0;pointer-events:none;}
+#logList{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+#logList::-webkit-scrollbar{width:3px}
+#logList::-webkit-scrollbar-thumb{background:rgba(89,216,255,.2);border-radius:99px}
+.lm{font-size:11px;color:var(--muted);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.lmn{font-size:11px;color:var(--green);padding:3px 0;border-bottom:1px solid rgba(0,200,136,.08)}
+.lt{font-size:11px;color:var(--red);padding:3px 0;border-bottom:1px solid rgba(255,50,80,.08)}
+.lc{font-size:11px;color:var(--gold);padding:3px 0;border-bottom:1px solid rgba(240,192,64,.08)}
+.lp{font-size:11px;color:var(--purple);padding:3px 0;border-bottom:1px solid rgba(184,125,255,.08)}
+
+/* ── LEGEND ── */
+#legendBtn{
+  font-family:var(--hud);font-size:8px;letter-spacing:.12em;
+  padding:5px 11px;border-radius:8px;cursor:pointer;
+  background:rgba(14,26,48,.85);color:var(--muted);
+  border:1px solid var(--border);backdrop-filter:blur(8px);
+}
+#legendDrop{
+  display:none;margin-top:6px;
+  background:rgba(8,18,34,.92);border:1px solid var(--border);
+  border-radius:12px;padding:10px 14px;
+  box-shadow:0 12px 36px rgba(0,0,0,.4);
+}
+#legendDrop.open{display:block}
+.leg-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;color:#c8dff4}
+.leg-ln{width:22px;height:4px;border-radius:99px;flex-shrink:0}
+.leg-sp{display:flex;gap:14px;padding:4px 0;font-size:11px}
+.leg-hr{border:none;border-top:1px solid var(--border);margin:4px 0}
+
+/* ── CITY POPUP ── */
+#cpop{
+  position:fixed;z-index:60;width:180px;
+  background:rgba(6,16,28,.92);border:1px solid var(--border);
+  border-radius:14px;padding:12px;display:none;
+  box-shadow:0 14px 40px rgba(0,0,0,.5);backdrop-filter:blur(14px);
+}
+.cp-t{font-family:var(--hud);font-size:12px;letter-spacing:.1em;margin-bottom:4px}
+.cp-h{font-size:10px;color:var(--muted);margin-bottom:8px}
+.cp-g{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.cp-l{font-size:8px;letter-spacing:.1em;color:var(--muted);font-family:var(--hud)}
+.cp-v{font-family:var(--mono);font-size:12px}
+
+/* ── MODALS ── */
+.mbg{
+  position:fixed;inset:0;z-index:80;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(2,6,12,.75);backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;transition:opacity .28s;
+}
+.mbg.show{opacity:1;pointer-events:all}
+.mbox{
+  background:linear-gradient(145deg,rgba(10,22,40,.97),rgba(6,14,28,.97));
+  border:1px solid var(--border);border-radius:20px;
+  padding:24px 22px;min-width:280px;max-width:340px;width:90vw;
+  box-shadow:0 24px 64px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+.mbox.opportunity{border-color:rgba(255,211,77,.4);box-shadow:0 0 40px rgba(255,211,77,.12),0 24px 64px rgba(0,0,0,.6)}
+.mbox.destiny{border-color:rgba(184,125,255,.4);box-shadow:0 0 40px rgba(184,125,255,.14),0 24px 64px rgba(0,0,0,.6)}
+.mbox.buy-opt{border-color:rgba(0,204,136,.4)}
+.mbox.build-opt{border-color:rgba(255,170,0,.4)}
+.mc-tp{font-family:var(--hud);font-size:10px;letter-spacing:.2em}
+.mc-ic{font-size:46px;line-height:1.2}
+.mc-ti{font-size:16px;font-weight:900;font-family:'Noto Serif TC',serif;text-align:center}
+.mc-ds{font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
+.mc-ef{font-family:var(--mono);font-size:16px;font-weight:700}
+.cbtn,.mbtn{
+  margin-top:4px;padding:9px 22px;border-radius:10px;cursor:pointer;
+  background:linear-gradient(135deg,rgba(0,229,255,.14),rgba(0,150,255,.18));
+  color:var(--cyan);border:1px solid rgba(0,229,255,.3);
+  font-family:var(--body);font-size:13px;font-weight:700;
+  transition:all .2s;
+}
+.cbtn:hover,.mbtn:hover{background:linear-gradient(135deg,rgba(0,229,255,.24),rgba(0,150,255,.28))}
+#cardAct{display:flex;gap:8px;margin-top:6px;justify-content:center;flex-wrap:wrap}
+.act-btn{padding:9px 18px;border-radius:9px;border:none;cursor:pointer;font-size:13px;font-family:var(--body);font-weight:700;transition:all .2s}
+.act-btn.buy{background:linear-gradient(135deg,#00cc88,#00aa66);color:#fff;box-shadow:0 0 14px rgba(0,204,136,.35)}
+.act-btn.buy:hover{transform:scale(1.04);box-shadow:0 0 22px rgba(0,204,136,.55)}
+.act-btn.pass{background:rgba(100,120,150,.25);color:#99bbcc;border:1px solid rgba(100,150,200,.2)}
+.act-btn.pass:hover{background:rgba(100,120,150,.4)}
+
+/* ── PROVERB MODAL ── */
+.mp-reg{font-family:var(--hud);font-size:9px;letter-spacing:.15em;color:var(--muted)}
+.mp-icon{font-size:40px;line-height:1.3}
+.mp-tw{font-size:20px;font-weight:900;font-family:'Noto Serif TC',serif;color:var(--gold);text-align:center;letter-spacing:.06em}
+.mp-zh{font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
+.mp-mn{font-size:11px;color:rgba(120,180,220,.7);text-align:center;line-height:1.5;font-style:italic}
+.prov-btns{display:flex;gap:8px;margin-top:4px}
+
+/* ══ 圖卡設計 ══ */
+.card-scene{
+  width:300px;max-width:90vw;
+  border-radius:20px;overflow:hidden;
+  animation:cardIn .35s ease;
+}
+@keyframes cardIn{
+  from{transform:scale(.8) translateY(20px);opacity:0;}
+  to{transform:scale(1) translateY(0);opacity:1;}
+}
+.card-front-inner{
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 0 18px;width:100%;
+  border-radius:20px;overflow:hidden;
+}
+/* 命運卡：紫色 */
+.card-front-inner.destiny{
+  background:linear-gradient(160deg,#2a0d5e 0%,#1a0a3a 40%,#0d0820 100%);
+  border:2px solid rgba(180,100,255,.5);
+  box-shadow:0 0 50px rgba(150,80,255,.2),0 20px 60px rgba(0,0,0,.7);
+}
+/* 機會卡：金色 */
+.card-front-inner.opportunity{
+  background:linear-gradient(160deg,#3d2a00 0%,#1e1400 40%,#0a0800 100%);
+  border:2px solid rgba(255,200,60,.45);
+  box-shadow:0 0 50px rgba(255,180,40,.18),0 20px 60px rgba(0,0,0,.7);
+}
+.cf-header{
+  width:100%;padding:14px 18px 10px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;
+}
+.destiny   .cf-header{background:linear-gradient(90deg,rgba(150,80,255,.25),transparent);}
+.opportunity .cf-header{background:linear-gradient(90deg,rgba(255,180,40,.2),transparent);}
+.cf-tag{
+  font-family:var(--hud);font-size:9px;letter-spacing:.2em;font-weight:700;
+  padding:3px 10px;border-radius:99px;
+}
+.destiny   .cf-tag{color:#e8b4ff;background:rgba(180,100,255,.2);border:1px solid rgba(180,100,255,.35);}
+.opportunity .cf-tag{color:#ffe97a;background:rgba(255,200,60,.15);border:1px solid rgba(255,200,60,.3);}
+.cf-corner-deco{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+.destiny   .cf-corner-deco::after{content:"✦";color:rgba(200,140,255,.5);}
+.opportunity .cf-corner-deco::after{content:"✦";color:rgba(255,210,80,.5);}
+.cf-icon{font-size:52px;line-height:1;margin:6px 0 10px;filter:drop-shadow(0 0 12px rgba(255,255,255,.3));}
+.cf-title{
+  font-size:18px;font-weight:900;font-family:'Noto Serif TC',serif;
+  text-align:center;padding:0 16px;line-height:1.3;
+}
+.destiny   .cf-title{color:#f0d8ff;text-shadow:0 0 20px rgba(180,100,255,.5);}
+.opportunity .cf-title{color:#fff8d0;text-shadow:0 0 20px rgba(255,200,60,.4);}
+.cf-desc{
+  font-size:11px;text-align:center;line-height:1.6;
+  padding:8px 18px;color:rgba(200,220,255,.6);
+}
+.cf-effect-wrap{
+  margin:8px 16px 10px;width:calc(100% - 32px);
+  border-radius:12px;padding:10px 14px;text-align:center;
+}
+.destiny   .cf-effect-wrap{background:rgba(180,100,255,.12);border:1px solid rgba(180,100,255,.25);}
+.opportunity .cf-effect-wrap{background:rgba(255,200,60,.1);border:1px solid rgba(255,200,60,.22);}
+.cf-effect{
+  font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:.05em;
+}
+
+/* ── V2 MAP STYLES ── */
+.mapGlow{fill:none;stroke:rgba(89,216,255,.12);stroke-width:22;filter:blur(8px)}
+.taiwan-shadow{fill:rgba(0,0,0,.25);transform:translate(8px,14px);filter:blur(10px)}
+.taiwan-shape{fill:url(#islandGrad);stroke:url(#coastGrad);stroke-width:2.4}
+.taiwan-rim{fill:none;stroke:rgba(160,230,255,.26);stroke-width:1.1}
+.mountain-ridge{fill:none;stroke:rgba(255,255,255,.14);stroke-width:14;stroke-linecap:round;stroke-dasharray:1 14}
+.mountain-light{fill:none;stroke:rgba(160,220,255,.12);stroke-width:26;stroke-linecap:round}
+.highway{fill:none;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;opacity:.96;filter:url(#glow)}
+.h-national{stroke:var(--west);stroke-dasharray:14 10;animation:roadFlow 7s linear infinite}
+.h-east{stroke:var(--east);stroke-dasharray:12 8;animation:roadFlow 8s linear infinite reverse}
+.h-south{stroke:var(--south);stroke-dasharray:14 10;animation:roadFlow 6.5s linear infinite}
+.road-under{fill:none;stroke:rgba(255,255,255,.07);stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
+.node{cursor:pointer}
+.node .pulse{fill:none;stroke:rgba(255,255,255,.18);stroke-width:1.5;animation:pulse 2.8s ease-out infinite;transform-origin:center}
+.node .dot{fill:#163357;stroke:#fff;stroke-width:2;transition:transform .2s ease}
+.node .core{fill:#ff5f72;opacity:.94}
+.node:hover .dot{transform:scale(1.18)}
+.node-special .dot{stroke-width:2.6}
+.node-chance .dot{fill:#5e4800;stroke:#fff3c3}
+.node-chance .core{fill:var(--chance)}
+.node-fate .dot{fill:#3a1b56;stroke:#eedaff}
+.node-fate .core{fill:var(--fate)}
+.label{fill:#fff;font-size:13px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.9);letter-spacing:.03em;pointer-events:none;font-family:'Noto Sans TC',sans-serif}
+.label-major{fill:#fff;font-size:15px;font-weight:900;text-shadow:0 0 12px rgba(0,229,255,.4),0 2px 8px rgba(0,0,0,.9);pointer-events:none;font-family:'Noto Serif TC',serif}
+.own-ring{fill:none;stroke-width:2.5;stroke-dasharray:3,2;animation:ownSpin 4s linear infinite;transform-origin:center}
+@keyframes ownSpin{from{stroke-dashoffset:0}to{stroke-dashoffset:-30}}
+.tok{transition:cx .3s ease,cy .3s ease;filter:drop-shadow(0 0 6px currentColor)}
+
+@keyframes roadFlow{from{stroke-dashoffset:0}to{stroke-dashoffset:-240}}
+@keyframes pulse{0%{transform:scale(.9);opacity:.65}75%{transform:scale(1.85);opacity:0}100%{transform:scale(1.85);opacity:0}}
+@keyframes floatCard{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+/* ── COORD ── */
+#coord{
+  position:fixed;bottom:8px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:9px;color:rgba(89,216,255,.25);
+  letter-spacing:.18em;pointer-events:none;z-index:5;white-space:nowrap;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(89,216,255,.2);border-radius:99px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  #main{grid-template-columns:1fr;grid-template-rows:1fr auto;}
+  #mapWrap{min-height:55vh;}
+  #rightPanel{
+    flex-direction:row;flex-wrap:wrap;align-items:flex-start;
+    max-height:44vh;border-left:none;border-top:1px solid var(--border);
+    padding:8px 10px;
+  }
+  #diceRow{flex-wrap:nowrap;}
+  #logWrap{flex:1;min-width:180px;}
+  .logo-main{font-size:13px;}
+  .phud-cash{font-size:13px;}
+}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="scan"></div>
+<div id="vig"></div>
+<div class="corner" id="ctlc"></div>
+<div class="corner" id="ctrc"></div>
+<div class="corner" id="cblc"></div>
+<div class="corner" id="cbrc"></div>
+
+<!-- ══ TOP HUD ══ -->
+<div id="topBar">
+  <div class="phud" id="phud0">
+    <div class="live-dot" id="ldot0" style="background:var(--red)"></div>
+    <div class="phud-avatar" id="pav0">🚗</div>
+    <div class="phud-info">
+      <div class="phud-name" id="pname0" style="color:var(--red)">玩家 一</div>
+      <div class="phud-cash" id="pcash0">$15,000</div>
+      <div class="phud-loc" id="ploc0">📍 基隆 · 北部</div>
+    </div>
+  </div>
+  <div id="hudCenter">
+    <div class="logo-main">🛣 台灣大富翁</div>
+    <div class="logo-sub">高速公路環島版</div>
+    <div class="turn-badge"><div class="turn-dot"></div><span id="turnTxt">準備開始</span></div>
+  </div>
+  <div class="phud phud-r" id="phud1">
+    <div class="phud-info">
+      <div class="phud-name" id="pname1" style="color:var(--blue);text-align:right">電腦</div>
+      <div class="phud-cash" id="pcash1" style="text-align:right">$15,000</div>
+      <div class="phud-loc" id="ploc1" style="text-align:right">📍 基隆 · 北部</div>
+    </div>
+    <div class="phud-avatar" id="pav1">🤖</div>
+    <div class="live-dot" id="ldot1" style="background:var(--blue)"></div>
+  </div>
+</div>
+
+<!-- ══ MAIN LAYOUT ══ -->
+<div id="main">
+
+  <!-- 地圖欄（含浮動路線說明）-->
+  <div id="mapWrap">
+    <!-- 路線說明浮窗（地圖左上角）-->
+    <div id="legendFloat">
+      <button id="legendBtn" onclick="toggleLegend()">
+        🗺 路線說明 <span class="leg-arrow">▾</span>
+      </button>
+      <div id="legendDrop">
+        <div class="leg-row"><div class="leg-ln" style="background:var(--west)"></div>國道1號 中山高速公路</div>
+        <div class="leg-row"><div class="leg-ln" style="background:var(--east)"></div>蘇花改 + 花東縱谷</div>
+        <div class="leg-row"><div class="leg-ln" style="background:var(--south)"></div>南迴公路</div>
+        <hr class="leg-hr">
+        <div class="leg-sp"><span style="color:var(--chance)">◇ 基隆 — 機會卡</span></div>
+        <div class="leg-sp"><span style="color:var(--fate)">◆ 南投 — 命運卡</span></div>
+      </div>
+    </div>
+    <svg viewBox="0 0 400 650" style="width:100%;height:100%">
+      <defs>
+        <linearGradient id="islandGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%"   stop-color="#1e2e47"/>
+          <stop offset="35%"  stop-color="#1b2940"/>
+          <stop offset="70%"  stop-color="#101d31"/>
+          <stop offset="100%" stop-color="#0a1423"/>
+        </linearGradient>
+        <linearGradient id="coastGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%"   stop-color="#9ae4ff"/>
+          <stop offset="55%"  stop-color="#7f95ff"/>
+          <stop offset="100%" stop-color="#67d8ff"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2.8" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow2">
+          <feGaussianBlur stdDeviation="5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="waterGlow" cx="50%" cy="45%" r="58%">
+          <stop offset="0%"   stop-color="rgba(89,216,255,.16)"/>
+          <stop offset="100%" stop-color="rgba(89,216,255,0)"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Water glow -->
+      <ellipse cx="205" cy="325" rx="150" ry="275" fill="url(#waterGlow)" opacity=".8"/>
+
+      <!-- Taiwan shape -->
+      <path class="mapGlow"      d="M210,28 L246,36 L267,72 L282,113 L292,162 L306,232 L317,332 L327,430 L307,512 L277,563 L242,623 L226,648 L210,652 L199,626 L144,601 L98,547 L58,451 L48,330 L63,210 L88,109 L124,58 L170,33 Z"/>
+      <path class="taiwan-shadow" d="M210,30 L245,35 L265,70 L280,110 L290,160 L305,230 L315,330 L325,430 L305,510 L275,560 L240,620 L225,645 L210,650 L200,625 L145,600 L100,545 L60,450 L50,330 L65,210 L90,110 L125,60 L170,35 Z"/>
+      <path class="taiwan-shape"  d="M210,30 L245,35 L265,70 L280,110 L290,160 L305,230 L315,330 L325,430 L305,510 L275,560 L240,620 L225,645 L210,650 L200,625 L145,600 L100,545 L60,450 L50,330 L65,210 L90,110 L125,60 L170,35 Z"/>
+      <path class="taiwan-rim"    d="M206,48 L234,55 L255,86 L269,129 L280,188 L292,258 L300,338 L306,425 L293,493 L265,553 L236,606 L222,629"/>
+      <path class="mountain-light" d="M205,75 C222,128 237,208 244,298 C251,390 248,481 237,565"/>
+      <path class="mountain-ridge" d="M200,80 C218,138 230,214 236,304 C241,392 238,486 226,578"/>
+
+      <!-- Road under-glow -->
+      <path class="road-under" d="M 235,45 L 210,55 L 195,70 L 175,90 L 155,125 L 135,170 L 125,240 L 115,300 L 110,360 L 108,410 L 115,470 L 130,520 L 190,580"/>
+      <path class="road-under" d="M210,55 Q245,75 265,115 Q305,280 295,380 L285,505"/>
+      <path class="road-under" d="M285,505 Q240,610 190,580"/>
+
+      <!-- Highways animated -->
+      <path class="highway h-national" d="M 235,45 L 210,55 L 195,70 L 175,90 L 155,125 L 135,170 L 125,240 L 115,300 L 110,360 L 108,410 L 115,470 L 130,520 L 190,580"/>
+      <path class="highway h-east"     d="M210,55 Q245,75 265,115 Q305,280 295,380 L285,505"/>
+      <path class="highway h-south"    d="M285,505 Q240,610 190,580"/>
+
+      <!-- Special: 基隆 CHANCE -->
+      <g class="node node-special node-chance" onclick="nodeClick(0,235,45,event)">
+        <circle class="pulse" r="10"></circle>
+        <circle class="dot"  r="8"></circle>
+        <circle class="core" r="3.5"></circle>
+      </g>
+      <text class="label" x="249" y="48">基隆</text>
+      <text class="label" x="249" y="61" style="font-size:10px;fill:var(--chance);font-weight:700">◇ 機會</text>
+
+      <!-- Special: 南投 FATE -->
+      <g class="node node-special node-fate" onclick="nodeClick(10,180,300,event)" style="animation-delay:.7s">
+        <circle class="pulse" r="10" style="animation-delay:.7s"></circle>
+        <circle class="dot"  r="8"></circle>
+        <circle class="core" r="3.5"></circle>
+      </g>
+      <text class="label" x="193" y="303">南投</text>
+      <text class="label" x="193" y="316" style="font-size:10px;fill:var(--fate);font-weight:700">◆ 命運</text>
+
+      <!-- 台北 #1 major -->
+      <g class="node" data-ci="1" onclick="nodeClick(1,210,55,event)" filter="url(#glow2)">
+        <circle class="pulse" r="10"></circle>
+        <circle class="dot" r="9" style="fill:#1a2e50;stroke:var(--red);stroke-width:2.5"></circle>
+        <circle class="core" r="4" style="fill:var(--red)"></circle>
+      </g>
+      <text class="label-major" x="186" y="52">台北</text>
+
+      <!-- 新北 #2 -->
+      <g class="node" data-ci="2" onclick="nodeClick(2,195,70,event)">
+        <circle class="pulse" r="8" style="animation-delay:.2s"></circle>
+        <circle class="dot"  r="6.5"></circle>
+        <circle class="core" r="2.8"></circle>
+      </g>
+      <text class="label" x="202" y="83">新北</text>
+
+      <!-- 桃園 #4 -->
+      <g class="node" data-ci="4" onclick="nodeClick(4,175,90,event)">
+        <circle class="pulse" r="8" style="animation-delay:.4s"></circle>
+        <circle class="dot"  r="6.5"></circle>
+        <circle class="core" r="2.8"></circle>
+      </g>
+      <text class="label" x="134" y="92">桃園</text>
+
+      <!-- 新竹 #5 -->
+      <g class="node" data-ci="5" onclick="nodeClick(5,155,125,event)">
+        <circle class="pulse" r="8" style="animation-delay:.6s"></circle>
+        <circle class="dot"  r="6.5"></circle>
+        <circle class="core" r="2.8"></circle>
+      </g>
+      <text class="label" x="115" y="128">新竹</text>
+
+      <!-- 苗栗 #6 -->
+      <g class="node" data-ci="6" onclick="nodeClick(6,135,170,event)">
+        <circle class="pulse" r="8" style="animation-delay:.8s"></circle>
+        <circle class="dot"  r="6.5"></circle>
+        <circle class="core" r="2.8"></circle>
+      </g>
+      <text class="label" x="95" y="173">苗栗</text>
+
+      <!-- 台中 #7 major -->
+      <g class="node" data-ci="7" onclick="nodeClick(7,125,240,event)" filter="url(#glow2)">
+        <circle class="pulse" r="10" style="animation-delay:1s"></circle>
+        <circle class="dot" r="9" style="fill:#1a2e50;stroke:var(--west);stroke-width:2.5"></circle>
+        <circle class="core" r="4" style="fill:var(--west)"></circle>
+      </g>
+      <text class="label-major" x="85" y="243">台中</text>
+
+      <!-- 彰化 #9 -->
+      <g class="node" data-ci="9" onclick="nodeClick(9,115,300,event)">
+        <circle class="pulse" r="8" style="animation-delay:1.2s"></circle>
+        <circle class="dot"  r="6.5"></circle>
+        <circle class="core" r="2.8"></circle>
+      </g>
+      <text class="label" x="75" y="303">彰化</text>
+
+      <!-- 雲林 #12 -->
+      <g class="node" data-ci="12" onclick="nodeClick(12,110,360,event)">
+        <circle class="pulse" r="8" style="animation-delay:1.4s"></circle>
+        <circle class="dot"  r="6.5"></circle>
+        <circle class="core" r="2.8"></circle>
+      </g>
+      <text class="label" x="70" y="363">雲林</text>
+
+      <!-- 嘉義 #13 -->
+      <g class="node" data-ci="13" onclick="nodeClick(13,108,410,event)">
+        <circle class="pulse" r="8" style="animation-delay:1.6s"></circle>
+        <circle class="dot"  r="6.5"></circle>
+        <circle class="core" r="2.8"></circle>
+      </g>
+      <text class="label" x="68" y="413">嘉義</text>
+
+      <!-- 台南 #14 major -->
+      <g class="node" data-ci="14" onclick="nodeClick(14,115,470,event)" filter="url(#glow2)">
+        <circle class="pulse" r="10" style="animation-delay:1.8s"></circle>
+        <circle class="dot" r="9" style="fill:#1a2e50;stroke:var(--west);stroke-width:2.5"></circle>
+        <circle class="core" r="4" style="fill:var(--west)"></circle>
+      </g>
+      <text class="label-major" x="75" y="473">台南</text>
+
+      <!-- 高雄 #15 capital -->
+      <g class="node" data-ci="15" onclick="nodeClick(15,130,520,event)" filter="url(#glow2)">
+        <circle class="pulse" r="13" style="animation-delay:2s;stroke:rgba(0,229,255,.3)"></circle>
+        <circle class="dot" r="11" style="fill:#0a1e38;stroke:var(--cyan);stroke-width:3"></circle>
+        <circle class="core" r="5" style="fill:var(--cyan)"></circle>
+      </g>
+      <text class="label-major" x="88" y="523" style="fill:var(--cyan);text-shadow:0 0 14px rgba(0,229,255,.6)">高雄</text>
+
+      <!-- 屏東 #16 -->
+      <g class="node" data-ci="16" onclick="nodeClick(16,190,580,event)">
+        <circle class="pulse" r="8" style="animation-delay:2.2s"></circle>
+        <circle class="dot"  r="6.5"></circle>
+        <circle class="core" r="2.8" style="fill:var(--south)"></circle>
+      </g>
+      <text class="label" x="202" y="593">屏東</text>
+
+      <!-- 宜蘭 #3 -->
+      <g class="node" data-ci="3" onclick="nodeClick(3,265,115,event)">
+        <circle class="pulse" r="8" style="animation-delay:2.4s"></circle>
+        <circle class="dot"  r="6.5" style="stroke:var(--east)"></circle>
+        <circle class="core" r="2.8" style="fill:var(--east)"></circle>
+      </g>
+      <text class="label" x="278" y="118">宜蘭</text>
+
+      <!-- 花蓮 #8 -->
+      <g class="node" data-ci="8" onclick="nodeClick(8,295,380,event)">
+        <circle class="pulse" r="8" style="animation-delay:2.6s"></circle>
+        <circle class="dot"  r="6.5" style="stroke:var(--east)"></circle>
+        <circle class="core" r="2.8" style="fill:var(--east)"></circle>
+      </g>
+      <text class="label" x="308" y="383">花蓮</text>
+
+      <!-- 台東 #11 -->
+      <g class="node" data-ci="11" onclick="nodeClick(11,285,505,event)">
+        <circle class="pulse" r="8" style="animation-delay:2.8s"></circle>
+        <circle class="dot"  r="6.5" style="stroke:var(--south)"></circle>
+        <circle class="core" r="2.8" style="fill:var(--south)"></circle>
+      </g>
+      <text class="label" x="298" y="508">台東</text>
+
+      <!-- Tokens layer -->
+      <g id="tokLayer"></g>
+    </svg>
+  </div><!-- mapWrap -->
+
+  <!-- 右欄：骰子 + 記錄 -->
+  <div id="rightPanel">
+    <div id="diceRow">
+      <div class="die" id="die1">⚀</div>
+      <div class="die" id="die2">⚀</div>
+      <div style="width:1px;height:36px;background:var(--border)"></div>
+      <div style="flex:1">
+        <button id="rollBtn" onclick="rollDice()" style="width:100%">擲骰</button>
+        <div id="diceSum" style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px;text-align:center"></div>
+      </div>
+    </div>
+    <div id="logWrap">
+      <div id="logTitle" onclick="toggleLog()">
+        <span>📋 遊戲記錄</span>
+        <span class="log-arrow">▼</span>
+      </div>
+      <div id="logBody">
+        <div id="logList"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- main -->
+
+<div id="coord">25°02'N &nbsp;121°31'E &nbsp;·&nbsp; 台灣環島</div>
+
+<!-- CITY POPUP -->
+<div id="cpop">
+  <div class="cp-t" id="cpt">—</div>
+  <div class="cp-h" id="cph">—</div>
+  <div class="cp-g">
+    <div><div class="cp-l">地價</div><div class="cp-v" id="cppr" style="color:var(--green)">—</div></div>
+    <div><div class="cp-l">過路費</div><div class="cp-v" id="cptl" style="color:var(--red)">—</div></div>
+    <div><div class="cp-l">路線</div><div class="cp-v" id="cprt" style="color:var(--cyan)">—</div></div>
+    <div><div class="cp-l">地區</div><div class="cp-v" id="cprg" style="color:var(--gold)">—</div></div>
+  </div>
+</div>
+
+<!-- PROVERB MODAL -->
+<div class="mbg" id="mProv">
+  <div class="mbox">
+    <div class="mp-reg" id="mpReg">—</div>
+    <div class="mp-icon" id="mpIc">🏮</div>
+    <div class="mp-tw" id="mpTw">—</div>
+    <div class="mp-zh" id="mpZh">—</div>
+    <div class="mp-mn" id="mpMn">—</div>
+    <div class="prov-btns">
+      <button class="mbtn" onclick="closeProverb()">✓ 知矣，繼續前行</button>
+      <button class="mbtn" style="padding:9px 14px;font-size:18px" onclick="speakProv(document.getElementById('mProv').dataset.tts)" title="重播台語">🔊</button>
+      <button class="mbtn" style="padding:6px 10px;font-size:10px;opacity:.5" onclick="listVoices()" title="查看語音清單">⚙</button>
+    </div>
+    <div id="ttsLangBadge" style="font-size:9px;color:rgba(89,216,255,.35);font-family:'Share Tech Mono',monospace;letter-spacing:.1em;margin-top:2px">🗣 偵測語音中...</div>
+  </div>
+</div>
+
+<!-- CARD MODAL -->
+<div class="mbg" id="mCard">
+  <div class="card-scene" id="cardFrame">
+    <div class="card-front-inner" id="cardInner">
+      <div class="cf-header">
+        <div class="cf-tag" id="cardTp">—</div>
+        <div class="cf-corner-deco"></div>
+      </div>
+      <div class="cf-icon" id="cardIc">🃏</div>
+      <div class="cf-title" id="cardTi">—</div>
+      <div class="cf-desc" id="cardDs">—</div>
+      <div class="cf-effect-wrap">
+        <div class="cf-effect" id="cardEf">—</div>
+      </div>
+      <div id="cardAct">
+        <button class="cbtn" onclick="afterCard()">✕ 確認</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STARS ──
+(()=>{
+  const s=document.getElementById('stars');
+  for(let i=0;i<120;i++){
+    const e=document.createElement('div');
+    const z=Math.random()<.04?3:Math.random()<.18?2:1;
+    e.className='star';
+    e.style.cssText=`width:${z}px;height:${z}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--dl:${Math.random()*4}s;opacity:${Math.random()*.35};`;
+    s.appendChild(e);
+  }
+})();
+
+// ── CITY DATA ──
+const C={
+  0:{n:'基隆',ic:'⚓',h:'國道1號起點·機會卡站',p:0,t:0,r:'特殊',rg:'北部'},
+  1:{n:'台北',ic:'🏙️',h:'國道1/3號·首都',p:2000,t:200,r:'中山高',rg:'北部'},
+  2:{n:'新北',ic:'🌉',h:'國道3號·環狀線',p:1400,t:140,r:'福爾摩沙高',rg:'北部'},
+  3:{n:'宜蘭',ic:'🦢',h:'蘇花公路起點',p:900,t:90,r:'蘇花改',rg:'東北'},
+  4:{n:'桃園',ic:'✈️',h:'國道1號·桃園機場',p:1200,t:120,r:'中山高',rg:'北部'},
+  5:{n:'新竹',ic:'💨',h:'國道1號·科技廊道',p:1400,t:140,r:'中山高',rg:'中北'},
+  6:{n:'苗栗',ic:'🌾',h:'國道1/3號交匯',p:700,t:70,r:'中山高',rg:'中部'},
+  7:{n:'台中',ic:'🌇',h:'國道1/4號·中部核心',p:1800,t:180,r:'中山高',rg:'中部'},
+  8:{n:'花蓮',ic:'🏔️',h:'蘇花改·花東縱谷',p:1000,t:100,r:'蘇花改',rg:'東部'},
+  9:{n:'彰化',ic:'🐂',h:'國道1/3號·彰濱',p:800,t:80,r:'中山高',rg:'中部'},
+  10:{n:'南投',ic:'🌲',h:'國道6號·日月潭·命運卡站',p:0,t:0,r:'特殊',rg:'中部'},
+  11:{n:'台東',ic:'🌊',h:'南迴·花東縱谷南端',p:850,t:85,r:'南迴',rg:'東部'},
+  12:{n:'雲林',ic:'🌽',h:'國道1/3號·農業重鎮',p:650,t:65,r:'中山高',rg:'中南'},
+  13:{n:'嘉義',ic:'🌲',h:'國道1/3號·阿里山門戶',p:800,t:80,r:'中山高',rg:'南部'},
+  14:{n:'台南',ic:'🏛️',h:'國道1號·古都',p:1600,t:160,r:'中山高',rg:'南部'},
+  15:{n:'高雄',ic:'🚢',h:'國道1/10號·南方大港',p:1900,t:190,r:'中山高',rg:'南部'},
+  16:{n:'屏東',ic:'🌴',h:'南迴公路·恆春半島',p:700,t:70,r:'南迴',rg:'南端'},
+};
+
+// Route order (基隆=0 & 南投=10 are special tiles, still in route for landing)
+const RO=[0,1,4,5,6,7,9,12,13,14,15,16,11,8,3,2,10];
+
+// Token positions mapped to V2 SVG coords [x,y] in 400×650 viewBox
+const NP={
+  0:{x:235,y:45},  // 基隆
+  1:{x:210,y:55},  // 台北
+  2:{x:195,y:70},  // 新北
+  3:{x:265,y:115}, // 宜蘭
+  4:{x:175,y:90},  // 桃園
+  5:{x:155,y:125}, // 新竹
+  6:{x:135,y:170}, // 苗栗
+  7:{x:125,y:240}, // 台中
+  8:{x:295,y:380}, // 花蓮
+  9:{x:115,y:300}, // 彰化
+  10:{x:180,y:300},// 南投
+  11:{x:285,y:505},// 台東
+  12:{x:110,y:360},// 雲林
+  13:{x:108,y:410},// 嘉義
+  14:{x:115,y:470},// 台南
+  15:{x:130,y:520},// 高雄
+  16:{x:190,y:580},// 屏東
+};
+
+const PROPS={};
+const BUILD={};
+
+// ── PROVERBS (5 per city) ──
+const PROV={
+  0:[
+    {tw:'基隆雨，無停時',zh:'基隆的雨，沒有停的時候',mn:'形容基隆四季多雨的氣候特色',ic:'🌧️'},
+    {tw:'港邊魚仔，逐日新',zh:'港邊的魚每天都是新鮮的',mn:'讚美基隆港漁獲豐富新鮮',ic:'🐟'},
+    {tw:'基隆港，食四方',zh:'基隆港口連接四方，帶來各地物產',mn:'形容基隆作為貿易港口的重要地位',ic:'⚓'},
+    {tw:'雨港人，心肝熱',zh:'雨港基隆的人，心腸特別熱情',mn:'讚美基隆人在多雨環境中熱情好客',ic:'❤️'},
+    {tw:'廟口夜市，食透暝',zh:'廟口夜市的美食，讓人吃到天亮',mn:'基隆廟口夜市是全台最著名夜市之一',ic:'🏮'},
+  ],
+  1:[
+    {tw:'台北人，錢袋深',zh:'台北人口袋深，不易掏出錢',mn:'形容都市人精打細算的性格',ic:'💰'},
+    {tw:'大稻埕茶香，飄過海',zh:'大稻埕的茶香，飄過了海洋',mn:'台灣茶文化聞名於世界',ic:'🍵'},
+    {tw:'總統府前，風光無限',zh:'總統府前，氣象萬千',mn:'台北是台灣政治文化中心',ic:'🏛️'},
+    {tw:'西門町少年，青春無悔',zh:'西門町的年輕人，青春無悔',mn:'西門町是台北年輕人的聚集地',ic:'🎭'},
+    {tw:'台北101，頂天立地',zh:'台北101大樓，頂天立地威風凜凜',mn:'台北101是台灣的地標與驕傲',ic:'🗼'},
+  ],
+  2:[
+    {tw:'淡水夕照，天下無雙',zh:'淡水的夕陽美景，天下無雙',mn:'讚美淡水黃昏絕美的景色',ic:'🌅'},
+    {tw:'三峽染布，色色鮮',zh:'三峽的染布，色彩各個鮮艷',mn:'稱讚三峽傳統藍染工藝精美',ic:'🎨'},
+    {tw:'九份山城，霧中燈火迷',zh:'九份山城，霧中的燈火迷人',mn:'九份是新北著名的山城景點',ic:'🏮'},
+    {tw:'平溪天燈，願望飛上天',zh:'平溪的天燈，帶著願望飛上天',mn:'平溪天燈節是台灣最浪漫的節慶',ic:'🏮'},
+    {tw:'碧潭水清，映青山',zh:'碧潭的水清澈，映著青翠的山',mn:'讚美新北碧潭的美麗自然景觀',ic:'🏞️'},
+  ],
+  3:[
+    {tw:'宜蘭三寶：米、鴨、蔥',zh:'宜蘭三樣寶：稻米、鴨子、青蔥',mn:'形容宜蘭農產豐富多樣',ic:'🧅'},
+    {tw:'龜山島守護，蘭陽平安',zh:'龜山島守護著蘭陽平原平安',mn:'龜山島被視為宜蘭的守護神',ic:'🐢'},
+    {tw:'宜蘭牛舌餅，香甜入口',zh:'宜蘭牛舌餅，香甜可口人人愛',mn:'宜蘭牛舌餅是著名伴手禮',ic:'🍪'},
+    {tw:'礁溪溫泉，泡湯解疲勞',zh:'礁溪溫泉，泡湯能解除疲勞',mn:'礁溪是全台少有的平地溫泉',ic:'♨️'},
+    {tw:'蘭陽平原，稻浪滾滾',zh:'蘭陽平原的稻田，稻浪滾滾',mn:'讚美宜蘭廣闊平原的農業盛況',ic:'🌾'},
+  ],
+  4:[
+    {tw:'桃園機場，出入平安',zh:'桃園機場，進出都要平平安安',mn:'祝福所有出入境旅人平安順遂',ic:'✈️'},
+    {tw:'大溪豆干，香Q好食',zh:'大溪豆乾，香又Q彈好吃',mn:'讚美大溪著名特產豆乾的美味',ic:'🧀'},
+    {tw:'中壢夜市，熱鬧滾滾',zh:'中壢夜市，人聲鼎沸熱鬧極了',mn:'中壢是桃園重要的商業中心',ic:'🎪'},
+    {tw:'石門水庫，蓄水養民',zh:'石門水庫，蓄積水源養活人民',mn:'石門水庫是桃園重要的水資源',ic:'💧'},
+    {tw:'桃園航空城，前途無量',zh:'桃園航空城，前途一片光明',mn:'桃園航空城是台灣重要的發展計畫',ic:'🏗️'},
+  ],
+  5:[
+    {tw:'新竹風，吹透天',zh:'新竹的風，一直吹到天邊',mn:'形容新竹強勁的東北季風特色',ic:'💨'},
+    {tw:'竹塹米粉，細又Q',zh:'新竹米粉，又細又Q彈滑順',mn:'新竹米粉是馳名全台的名產',ic:'🍜'},
+    {tw:'科學園區，才子聚',zh:'新竹科學園區，人才濟濟',mn:'新竹科學園區是台灣科技業重鎮',ic:'💻'},
+    {tw:'城隍廟前，香火旺',zh:'新竹城隍廟前，香火鼎盛興旺',mn:'城隍廟是新竹最重要的信仰中心',ic:'🙏'},
+    {tw:'內灣老街，舊情綿綿',zh:'內灣老街，充滿懷舊的情感',mn:'內灣是新竹著名的客家老街',ic:'🏘️'},
+  ],
+  6:[
+    {tw:'苗栗客家，義氣深',zh:'苗栗客家人，情義深重',mn:'稱讚苗栗客家人重情重義',ic:'🤝'},
+    {tw:'通霄海邊，風大人勇',zh:'通霄海邊風大，人也要勇敢',mn:'形容通霄人民堅毅的性格',ic:'🌬️'},
+    {tw:'三義木雕，巧奪天工',zh:'三義的木雕工藝，精巧無比',mn:'三義木雕是苗栗重要的工藝文化',ic:'🪵'},
+    {tw:'獅頭山廟宇，靈氣逼人',zh:'獅頭山廟宇群，靈氣十足',mn:'獅頭山是苗栗著名的佛道聖地',ic:'⛩️'},
+    {tw:'南庄老街，客家風情濃',zh:'南庄老街，客家風情十分濃厚',mn:'南庄是保存客家文化最完整的地方',ic:'🎎'},
+  ],
+  7:[
+    {tw:'台中好所在，天氣好過冬',zh:'台中是好地方，天氣宜人好過冬',mn:'台中氣候溫和舒適，是宜居之城',ic:'☀️'},
+    {tw:'逢甲夜市，食到天光',zh:'逢甲夜市美食多，一直吃到天亮',mn:'逢甲夜市是全台最知名的夜市',ic:'🌙'},
+    {tw:'霧峰林家，文化千秋',zh:'霧峰林家大宅，文化傳承千秋',mn:'霧峰林家是台灣最重要的文化古蹟',ic:'🏯'},
+    {tw:'太陽餅，甜蜜好滋味',zh:'台中太陽餅，甜蜜滋味人人愛',mn:'台中太陽餅是最著名的伴手禮',ic:'🌞'},
+    {tw:'大甲溪水，育萬民',zh:'大甲溪的水源，滋養萬民生活',mn:'大甲溪是台中重要的水資源',ic:'💧'},
+  ],
+  8:[
+    {tw:'太魯閣，鬼斧神工',zh:'太魯閣的山谷，真是鬼斧神工',mn:'讚美太魯閣地形壯觀如神靈雕刻',ic:'⛰️'},
+    {tw:'花蓮山清水秀，福地洞天',zh:'花蓮山明水秀，是人間福地',mn:'讚美花蓮自然景色優美如仙境',ic:'🏔️'},
+    {tw:'花蓮麻糬，Q彈好食',zh:'花蓮麻糬，Q彈香甜美味',mn:'花蓮麻糬是最受歡迎的花蓮特產',ic:'🍡'},
+    {tw:'秀姑巒溪，漂流天下聞',zh:'秀姑巒溪泛舟，天下聞名',mn:'秀姑巒溪是全台最著名的泛舟地點',ic:'🛶'},
+    {tw:'吉安慶豐年，阿美族歌聲揚',zh:'吉安豐年祭，阿美族的歌聲飛揚',mn:'花蓮阿美族豐年祭是重要文化活動',ic:'🎵'},
+  ],
+  9:[
+    {tw:'彰化肉圓，大粒閣Q',zh:'彰化肉圓，粒大又Q彈',mn:'讚美彰化肉圓外皮Q彈餡料豐富',ic:'🥟'},
+    {tw:'八卦山大佛，庇蔭眾生',zh:'八卦山大佛，保佑眾生平安',mn:'八卦山大佛是彰化重要守護神',ic:'🗿'},
+    {tw:'鹿港古鎮，百年風華',zh:'鹿港古鎮，保存百年歷史風華',mn:'鹿港是台灣保存最完整的古鎮',ic:'🏘️'},
+    {tw:'彰化平原，米倉天下',zh:'彰化平原是台灣重要的米倉',mn:'彰化平原農業發達稻米品質優良',ic:'🌾'},
+    {tw:'溪湖糖廠，甘蔗香飄',zh:'溪湖糖廠，甘蔗的香味飄四方',mn:'彰化溪湖糖廠是重要的糖業文化遺址',ic:'🍬'},
+  ],
+  10:[
+    {tw:'日月潭，清如鏡',zh:'日月潭的水，清澈如鏡子',mn:'讚美日月潭水清見底的美景',ic:'🌊'},
+    {tw:'竹山竹材，天下第一',zh:'竹山的竹子品質，天下第一',mn:'南投竹山竹材品質優良著名',ic:'🎋'},
+    {tw:'合歡山雪，台灣奇景',zh:'合歡山的雪，是台灣的奇景',mn:'合歡山是台灣本島最容易賞雪的地方',ic:'❄️'},
+    {tw:'集集小站，百年情懷',zh:'集集小火車站，有百年的情懷',mn:'集集車站是南投著名的歷史景點',ic:'🚂'},
+    {tw:'埔里紹興，醇香萬家',zh:'埔里的紹興酒，醇香飄萬家',mn:'埔里是全台最重要的紹興酒產地',ic:'🍶'},
+  ],
+  11:[
+    {tw:'池上米，白如玉',zh:'池上的米，白得像玉石一樣',mn:'讚美台東池上米品質如玉',ic:'🍚'},
+    {tw:'卑南族人，勇武有名',zh:'卑南族人，勇武善戰聞名遠播',mn:'讚美台東卑南族的英雄精神',ic:'🏹'},
+    {tw:'知本溫泉，泡湯天堂',zh:'知本溫泉，是泡湯的天堂',mn:'知本是台東著名的溫泉勝地',ic:'♨️'},
+    {tw:'台東縱谷，稻田連天',zh:'台東縱谷的稻田，一望無際',mn:'台東縱谷是台灣最美的農業景觀',ic:'🌾'},
+    {tw:'蘭嶼飛魚，招財進寶',zh:'蘭嶼的飛魚，象徵財富的到來',mn:'蘭嶼達悟族的飛魚文化獨特珍貴',ic:'🐟'},
+  ],
+  12:[
+    {tw:'北港媽祖，聖跡顯',zh:'北港媽祖，聖跡顯靈保平安',mn:'雲林北港媽祖信仰靈驗著名',ic:'🙏'},
+    {tw:'虎尾糖廠，甜蜜滿人間',zh:'虎尾糖廠，甜蜜遍佈人間',mn:'虎尾製糖為台灣帶來甜蜜生活',ic:'🍬'},
+    {tw:'西螺大橋，氣勢如虹',zh:'西螺大橋，氣勢磅礡如彩虹',mn:'西螺大橋曾是全亞洲最長橋梁',ic:'🌉'},
+    {tw:'雲林蒜頭，全台第一',zh:'雲林的大蒜，是全台灣第一名',mn:'雲林是台灣最重要的蒜頭產地',ic:'🧄'},
+    {tw:'古坑咖啡，台灣之光',zh:'古坑的咖啡，是台灣之光',mn:'雲林古坑是台灣本土咖啡的發源地',ic:'☕'},
+  ],
+  13:[
+    {tw:'阿里山雲海，如夢似幻',zh:'阿里山的雲海，如夢如幻美麗',mn:'讚美阿里山雲海飄渺的絕美景色',ic:'🌄'},
+    {tw:'嘉義雞肉飯，食一碗閣要',zh:'嘉義雞肉飯，吃一碗還想再吃',mn:'嘉義雞肉飯美味令人一再回味',ic:'🍗'},
+    {tw:'奮起湖便當，山林好滋味',zh:'奮起湖的便當，有山林的好滋味',mn:'奮起湖鐵路便當是阿里山必嚐美食',ic:'🍱'},
+    {tw:'嘉義城，文化古都',zh:'嘉義城是台灣重要的文化古都',mn:'嘉義有深厚的漢人移民文化歷史',ic:'🏯'},
+    {tw:'太保農業，豐收年年',zh:'太保農業發達，年年豐收',mn:'嘉義太保是台灣重要農業生產地區',ic:'🌽'},
+  ],
+  14:[
+    {tw:'台南人，愛食甜',zh:'台南人，天生喜歡吃甜的東西',mn:'形容台南人口味偏甜的飲食文化',ic:'🍮'},
+    {tw:'赤崁樓，四百年風華',zh:'赤崁樓，四百年的歷史風華',mn:'讚美台南赤崁樓悠久的歷史底蘊',ic:'🏯'},
+    {tw:'安平古堡，荷蘭留跡',zh:'安平古堡，留下荷蘭人的足跡',mn:'安平是台灣歷史的起點之一',ic:'🏰'},
+    {tw:'擔仔麵，台南第一味',zh:'擔仔麵是台南最具代表的第一味',mn:'台南擔仔麵是最具代表性的台灣小吃',ic:'🍜'},
+    {tw:'府城廟宇，神明庇護',zh:'台南府城廟宇眾多，神明庇護人民',mn:'台南廟宇密度全台最高，信仰深厚',ic:'⛩️'},
+  ],
+  15:[
+    {tw:'高雄港，船來船往真熱鬧',zh:'高雄港裡，船隻進進出出熱鬧非凡',mn:'形容高雄港口繁忙熱絡的景象',ic:'🚢'},
+    {tw:'愛河風光，情深義重',zh:'愛河的風光美麗，情深義重',mn:'讚美高雄愛河浪漫迷人的景色',ic:'💕'},
+    {tw:'旗山香蕉，甜蜜全台',zh:'旗山的香蕉，甜蜜傳遍全台灣',mn:'高雄旗山是台灣最著名的香蕉產地',ic:'🍌'},
+    {tw:'六合夜市，美食大本營',zh:'六合夜市，是美食的大本營',mn:'高雄六合夜市是南台灣最知名夜市',ic:'🌃'},
+    {tw:'美濃紙傘，手工藝精',zh:'美濃的油紙傘，手工精細美麗',mn:'高雄美濃油紙傘是重要文化工藝品',ic:'☂️'},
+  ],
+  16:[
+    {tw:'恆春落山風，吹出英雄漢',zh:'恆春的落山風，吹出英雄好漢',mn:'屏東恆春強風磨練出堅韌性格',ic:'🌬️'},
+    {tw:'墾丁海水藍，美麗寶島情',zh:'墾丁的海水湛藍，是美麗寶島的情懷',mn:'讚美屏東墾丁的藍色大海美景',ic:'🌊'},
+    {tw:'東港黑鮪，鮮味第一',zh:'東港的黑鮪魚，鮮美是第一名',mn:'屏東東港是全台最重要的黑鮪魚產地',ic:'🐟'},
+    {tw:'琉球小島，珊瑚海底',zh:'小琉球的海底，有美麗的珊瑚',mn:'屏東小琉球是台灣珊瑚礁潛水天堂',ic:'🐠'},
+    {tw:'排灣族珠寶，藝術傳承',zh:'排灣族的珠寶工藝，是藝術傳承',mn:'屏東排灣族琉璃珠工藝聞名全球',ic:'💎'},
+  ],
+};
+
+// ── CARDS ──
+const DEST=[
+  {ic:'🎉',ti:'豐年祭來臨',ds:'全台歡慶原住民豐年祭，百業興旺',ef:'+$800',v:800},
+  {ic:'🌪️',ti:'颱風來襲',ds:'強颱橫掃全台，農業受損嚴重',ef:'-$600',v:-600},
+  {ic:'🏆',ti:'台灣之光',ds:'台灣運動員奪金，舉國同慶！',ef:'+$1200',v:1200},
+  {ic:'🦠',ti:'流行疫情',ds:'傳染病爆發，各地管制出行',ef:'-$400',v:-400},
+  {ic:'🌈',ti:'觀光大爆發',ds:'國際旅客大增，觀光業空前盛況',ef:'+$1000',v:1000},
+  {ic:'💸',ti:'年度繳稅',ds:'年度報稅季節到來，依法納稅',ef:'-$500',v:-500},
+  {ic:'🎊',ti:'農曆新年',ds:'過年了！親戚給紅包，喜氣洋洋',ef:'+$1500',v:1500},
+  {ic:'🏗️',ti:'重大建設',ds:'政府宣布重大基礎建設，地方發展',ef:'+$600',v:600},
+];
+const CHAN=[
+  {ic:'🚀',ti:'高鐵快速通行',ds:'搭高鐵前進！立即移動到台北',ef:'移動至台北',sp:'moveTo',tg:1},
+  {ic:'🎲',ti:'幸運之神降臨',ds:'運氣爆棚，獲得再擲一次的機會！',ef:'再擲一次',sp:'reroll'},
+  {ic:'💰',ti:'挖到清代銀幣',ds:'在舊街道古厝挖到清代銀幣！',ef:'+$2000',v:2000},
+  {ic:'🚧',ti:'道路施工封閉',ds:'前方正在施工，請倒退三格',ef:'後退 3 格',sp:'back3'},
+  {ic:'🎫',ti:'免費通行券',ds:'本回合完全免繳任何過路費！',ef:'免費通行',sp:'freetoll'},
+  {ic:'💎',ti:'稀土礦藏發現',ds:'台灣深山發現稀土礦藏，投資大獲利',ef:'+$1800',v:1800},
+  {ic:'🌊',ti:'地震預警',ds:'花東強震，部分基礎設施受損',ef:'-$700',v:-700},
+  {ic:'🏠',ti:'地主好心優惠',ds:'遇到好心地主，本回合過路費減半',ef:'過路費減半',sp:'halftoll'},
+];
+
+// ── GAME STATE ──
+const PL=[
+  {id:0,n:'玩家一',pi:0,mo:15000,ai:false},
+  {id:1,n:'電腦',  pi:0,mo:15000,ai:true},
+];
+let cur=0,wm=false,ft=false,ht=false,reroll=false;
+const F=['⚀','⚁','⚂','⚃','⚄','⚅'];
+const BUYABLE=[1,3,5,7,8,9,12,13,14,15];
+
+// ── TOKENS ──
+function rTok(){
+  const layer=document.getElementById('tokLayer');
+  layer.innerHTML='';
+  PL.forEach((p,i)=>{
+    const ci=RO[p.pi],pos=NP[ci];
+    const col=i===0?'#ff3355':'#1a7fff';
+    const em=i===0?'🚗':'🤖';
+    const offset=i===0?-10:10;
+    const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x',pos.x+offset);
+    txt.setAttribute('y',pos.y-14);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('font-size','18');
+    txt.setAttribute('class','tok');
+    txt.style.filter=`drop-shadow(0 0 6px ${col})`;
+    txt.textContent=em;
+    layer.appendChild(txt);
+  });
+}
+
+// ── HUD ──
+function rHud(){
+  PL.forEach((p,i)=>{
+    const ci=RO[p.pi],ct=C[ci];
+    document.getElementById('pcash'+i).textContent='$'+p.mo.toLocaleString();
+    document.getElementById('ploc'+i).textContent=ct.ic+' '+ct.n+' · '+ct.rg;
+    document.getElementById('phud'+i).style.opacity=i===cur?'1':'0.55';
+    document.getElementById('ldot'+i).style.animationPlayState=i===cur?'running':'paused';
+  });
+  const p=PL[cur];
+  document.getElementById('turnTxt').textContent=(p.ai?'電腦':'玩家')+'回合';
+}
+
+// ── LOG ──
+function addLog(msg,cls){
+  const li=document.createElement('div');
+  li.className=cls||'lm';li.textContent=msg;
+  const lb=document.getElementById('logList');
+  lb.appendChild(li);
+  // 自動展開 log（有新訊息時）
+  const lw=document.getElementById('logWrap');
+  if(lw.classList.contains('collapsed')) lw.classList.remove('collapsed');
+  lb.scrollTop=lb.scrollHeight;
+  // 計數 badge
+  _logCount++;
+  const title=document.querySelector('#logTitle span:first-child');
+  if(title) title.textContent='📋 遊戲記錄 ('+_logCount+')';
+}
+
+let _logCount=0;
+
+function toggleLog(){
+  const lw=document.getElementById('logWrap');
+  lw.classList.toggle('collapsed');
+}
+
+// ── LEGEND ──
+function toggleLegend(){
+  const d=document.getElementById('legendDrop');
+  const a=document.querySelector('#legendBtn .leg-arrow');
+  d.classList.toggle('open');
+  if(a) a.style.transform=d.classList.contains('open')?'rotate(180deg)':'';
+}
+
+// ── NODE CLICK (city info popup) ──
+function nodeClick(ci,nx,ny,ev){
+  ev&&ev.stopPropagation();
+  const ct=C[ci];
+  document.getElementById('cpt').textContent=ct.ic+' '+ct.n;
+  document.getElementById('cph').textContent=ct.h;
+  document.getElementById('cppr').textContent=ct.p?'$'+ct.p.toLocaleString():'特殊';
+  document.getElementById('cptl').textContent=ct.t?'$'+ct.t:'—';
+  document.getElementById('cprt').textContent=ct.r;
+  document.getElementById('cprg').textContent=ct.rg;
+  // Position popup near node
+  const mw=document.getElementById('mapWrap').getBoundingClientRect();
+  const svgW=400,svgH=650;
+  let px=mw.left+(nx/svgW)*mw.width+14;
+  let py=mw.top+(ny/svgH)*mw.height-14;
+  if(px+185>window.innerWidth)px-=200;
+  if(py+140>window.innerHeight)py-=150;
+  const cp=document.getElementById('cpop');
+  cp.style.left=px+'px';cp.style.top=py+'px';cp.style.display='block';
+  setTimeout(()=>document.addEventListener('click',()=>{cp.style.display='none'},{once:true}),100);
+}
+
+// ── DICE ──
+function rollDice(){
+  if(wm)return;
+  // Pre-warm TTS on first user gesture (iOS fix)
+  if('speechSynthesis' in window && speechSynthesis.getVoices().length===0){
+    speechSynthesis.getVoices();
+  }
+  document.getElementById('rollBtn').disabled=true;
+  const d1=document.getElementById('die1'),d2=document.getElementById('die2');
+  d1.classList.add('roll');d2.classList.add('roll');
+  setTimeout(()=>{
+    const v1=1+Math.floor(Math.random()*6),v2=1+Math.floor(Math.random()*6);
+    d1.textContent=F[v1-1];d2.textContent=F[v2-1];
+    d1.classList.remove('roll');d2.classList.remove('roll');
+    document.getElementById('diceSum').textContent='合計：'+(v1+v2);
+    addLog('🎲 '+(PL[cur].ai?'電腦':'玩家一')+' 擲出 '+(v1+v2),'lm');
+    movePl(cur,v1+v2);
+  },500);
+}
+
+function movePl(pi,steps){
+  const p=PL[pi];let lft=steps;
+  function s(){
+    if(lft<=0){arrive(pi);return;}
+    p.pi=(p.pi+1)%RO.length;
+    rTok();lft--;
+    setTimeout(s,180);
+  }
+  s();
+}
+
+function arrive(pi){
+  const p=PL[pi],ci=RO[p.pi],ct=C[ci];
+  addLog('📍 '+p.n+' → '+ct.ic+' '+ct.n,'lm');
+  rHud();
+  // Check proverb chance first, then land event
+  wm=true;
+  landEv();
+}
+
+// ── LAND EVENT ──
+function landEv(){
+  const p=PL[cur],ci=RO[p.pi],ct=C[ci];
+  // Special tiles
+  if(ci===0){addLog('◇ '+p.n+' 抽機會卡！','lc');setTimeout(()=>drawCard('opportunity'),400);return;}
+  if(ci===10){addLog('◆ '+p.n+' 抽命運卡！','lp');setTimeout(()=>drawCard('destiny'),400);return;}
+  if(ft){addLog('🎫 '+p.n+' 免費通過 '+ct.n,'lmn');ft=false;showProvThenNext(ci,p);return;}
+  // Check ownership
+  const ow=PROPS[ci];
+  if(ow!==undefined && ow!==p.id){
+    const owner=PL[ow],lvl=BUILD[ci]||0;
+    const toll=Math.floor(ct.t*Math.pow(2,lvl));
+    const pay=ht?Math.floor(toll/2):toll;
+    p.mo=Math.max(0,p.mo-pay);
+    owner.mo+=pay;
+    if(ht){ht=false;addLog('💸 '+p.n+' 半價過路費 -$'+pay+' → '+owner.n,'lt');}
+    else{addLog('💸 '+p.n+' 過路費 -$'+pay+(lvl>0?' (Lv'+lvl+'×'+Math.pow(2,lvl)+'倍)':'')+' → '+owner.n,'lt');}
+    rHud();showProvThenNext(ci,p);return;
+  }
+  if(ow===p.id){
+    addLog('🏠 '+p.n+' 回到自己的 '+ct.n,'lm');
+    showBuildOpt(ci,p);return;
+  }
+  // Unowned
+  if(BUYABLE.includes(ci)){
+    showBuyOpt(ci,p);
+  } else {
+    const r=Math.random();
+    if(r<0.35){const g=150+Math.floor(Math.random()*400);p.mo+=g;addLog('💰 '+p.n+' 獲得 +$'+g,'lmn');rHud();}
+    else{addLog('✅ '+p.n+' 平安通過 '+ct.n,'lm');}
+    showProvThenNext(ci,p);
+  }
+}
+
+// ── BUY ──
+function showBuyOpt(ci,p){
+  const ct=C[ci];
+  const fr=document.getElementById('cardFrame');
+  document.getElementById('cardInner').className='card-front-inner buy-opt';
+  document.getElementById('cardTp').textContent='🏡 購買土地';
+  document.getElementById('cardTp').style.color='var(--green)';
+  document.getElementById('cardIc').textContent=ct.ic;
+  document.getElementById('cardTi').textContent=ct.n+' · '+ct.rg;
+  document.getElementById('cardDs').textContent=ct.h;
+  document.getElementById('cardEf').textContent='地價 $'+ct.p.toLocaleString()+'　過路費 $'+ct.t;
+  document.getElementById('cardEf').style.color='var(--green)';
+  document.getElementById('cardAct').innerHTML=
+    '<button class="act-btn buy" onclick="doBuy('+ci+','+p.id+')">💰 購買 $'+ct.p.toLocaleString()+'</button>'+
+    '<button class="act-btn pass" onclick="skipCard()">⏭ 不買</button>';
+  document.getElementById('mCard').classList.add('show');
+  if(p.ai){setTimeout(()=>{p.mo>=ct.p?doBuy(ci,p.id):skipCard();},900);}
+}
+
+function doBuy(ci,pid){
+  const p=PL[pid],ct=C[ci];
+  if(p.mo>=ct.p){
+    p.mo-=ct.p;PROPS[ci]=pid;BUILD[ci]=0;
+    addLog('🏡 '+p.n+' 購買 '+ct.n+' -$'+ct.p,'lmn');
+    markOwned(ci,pid);
+  } else {
+    addLog('❌ 資金不足，無法購買 '+C[ci].n,'lt');
+  }
+  closeCardModal();showProvThenNext(ci,PL[pid]);
+}
+
+// ── BUILD ──
+function showBuildOpt(ci,p){
+  const ct=C[ci],lvl=BUILD[ci]||0;
+  if(lvl>=3){addLog('🏢 '+ct.n+' 已達最高建設等級','lm');closeCardModal();showProvThenNext(ci,p);return;}
+  const cost=Math.floor(ct.p*0.5*(lvl+1));
+  const fr=document.getElementById('cardFrame');
+  document.getElementById('cardInner').className='card-front-inner build-opt';
+  document.getElementById('cardTp').textContent='🏗️ 建設升級';
+  document.getElementById('cardTp').style.color='var(--gold)';
+  document.getElementById('cardIc').textContent=['🏠','🏘️','🏢','🏙️'][lvl];
+  document.getElementById('cardTi').textContent=ct.n+' 建設 Lv.'+(lvl+1)+' → Lv.'+(lvl+2);
+  document.getElementById('cardDs').textContent='建設後過路費翻倍！目前基礎過路費 $'+ct.t+' × '+Math.pow(2,lvl)+'＝$'+Math.floor(ct.t*Math.pow(2,lvl));
+  document.getElementById('cardEf').textContent='建設費 $'+cost+' → 過路費 $'+Math.floor(ct.t*Math.pow(2,lvl+1));
+  document.getElementById('cardEf').style.color='var(--gold)';
+  document.getElementById('cardAct').innerHTML=
+    '<button class="act-btn buy" onclick="doBuild('+ci+','+p.id+')">🏗️ 建設 $'+cost+'</button>'+
+    '<button class="act-btn pass" onclick="skipCard()">⏭ 跳過</button>';
+  document.getElementById('mCard').classList.add('show');
+  if(p.ai){setTimeout(()=>{p.mo>=cost?doBuild(ci,p.id):skipCard();},900);}
+}
+
+function doBuild(ci,pid){
+  const p=PL[pid],ct=C[ci],lvl=BUILD[ci]||0;
+  const cost=Math.floor(ct.p*0.5*(lvl+1));
+  if(p.mo>=cost){
+    p.mo-=cost;BUILD[ci]=lvl+1;
+    addLog('🏗️ '+p.n+' '+ct.n+' 升至 Lv.'+(lvl+2)+' 過路費 $'+Math.floor(ct.t*Math.pow(2,lvl+1)),'lmn');
+  } else {
+    addLog('❌ 資金不足，無法建設','lt');
+  }
+  closeCardModal();showProvThenNext(ci,p);
+}
+
+function markOwned(ci,pid){
+  // Add SVG ownership indicator on matching node
+  const gs=document.querySelectorAll('[data-ci="'+ci+'"]');
+  gs.forEach(g=>{
+    const ex=g.querySelector('.own-ring');if(ex)ex.remove();
+    const existing=g.querySelector('circle.dot');
+    if(!existing)return;
+    const cx=parseFloat(existing.getAttribute('cx'));
+    const cy=parseFloat(existing.getAttribute('cy'));
+    const r=parseFloat(existing.getAttribute('r'));
+    const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    ring.setAttribute('class','own-ring');
+    ring.setAttribute('cx',cx);ring.setAttribute('cy',cy);
+    ring.setAttribute('r',r+4);
+    ring.setAttribute('stroke',pid===0?'#ff3355':'#1a7fff');
+    g.appendChild(ring);
+  });
+}
+
+function skipCard(){closeCardModal();showProvThenNext(RO[PL[cur].pi],PL[cur]);}
+
+function closeCardModal(){
+  document.getElementById('mCard').classList.remove('show');
+  document.getElementById('cardAct').innerHTML='<button class="cbtn" onclick="afterCard()">✕ 確認</button>';
+}
+
+// ── DRAW CARD ──
+function drawCard(tp){
+  const dk=tp==='destiny'?DEST:CHAN;
+  const cd=dk[Math.floor(Math.random()*dk.length)];
+  const p=PL[cur];
+  // 填入資料
+  const label=tp==='destiny'?'◆ 命運卡':'◇ 機會卡';
+  document.getElementById('cardTp').textContent=label;
+  document.getElementById('cardInner').className='card-front-inner '+tp;
+  document.getElementById('cardIc').textContent=cd.ic;
+  document.getElementById('cardTi').textContent=cd.ti;
+  document.getElementById('cardDs').textContent=cd.ds;
+  document.getElementById('cardEf').textContent=cd.ef;
+  document.getElementById('cardEf').style.color=cd.v>0?'var(--green)':cd.v<0?'var(--red)':'var(--gold)';
+  // Apply effects
+  if(cd.v){p.mo=Math.max(0,p.mo+cd.v);rHud();}
+  if(cd.sp==='reroll'){reroll=true;}
+  if(cd.sp==='freetoll'){ft=true;}
+  if(cd.sp==='halftoll'){ht=true;}
+  if(cd.sp==='back3'){
+    p.pi=((p.pi-3)+RO.length)%RO.length;
+    setTimeout(()=>{rTok();},300);
+  }
+  if(cd.sp==='moveTo'){
+    const ti=RO.indexOf(cd.tg);
+    if(ti!==-1){p.pi=ti;setTimeout(()=>{rTok();},300);}
+  }
+  addLog((tp==='destiny'?'◆ 命運':'◇ 機會')+': '+cd.ti+(cd.v?' ('+(cd.v>0?'+':'')+cd.v+')':''),'lc');
+  document.getElementById('cardAct').innerHTML='<button class="cbtn" onclick="afterCard()">✕ 確認</button>';
+  document.getElementById('mCard').classList.add('show');
+  if(p.ai){setTimeout(afterCard,2800);}
+}
+
+function afterCard(){
+  closeCardModal();
+  const p=PL[cur],ci=RO[p.pi];
+  if(reroll){reroll=false;addLog('🎲 '+p.n+' 再擲一次！','lc');
+    p.ai?setTimeout(aiTurn,2500):(document.getElementById('rollBtn').disabled=false);wm=false;return;}
+  showProvThenNext(ci,p);
+}
+
+
+// ── 諺語 + 台語 TTS（NYCU iVoice API，與麻將版相同架構）──
+const TTS_URL = 'https://familyhistroy-tree.netlify.app/.netlify/functions/tts-speak';
+let _ttsPlaying = false;
+
+// 呼叫 NYCU TTS → 自動播放台語語音
+// 失敗時降級為瀏覽器 TTS（nan-TW → zh-TW）
+function speakProv(txt) {
+  if (!txt) return;
+  // 若上一句還在播，先中斷
+  _ttsPlaying = false;
+  _ttsPlaying = true;
+
+  fetch(TTS_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ text: txt })
+  })
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    if (!data.audioBase64) throw new Error('no audio');
+    const bytes = atob(data.audioBase64);
+    const arr   = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    const blob  = new Blob([arr], { type: data.mimeType || 'audio/mp4' });
+    const url   = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = () => { _ttsPlaying = false; URL.revokeObjectURL(url); };
+    audio.onerror = () => { _ttsPlaying = false; };
+    // 自動播放
+    audio.play().catch(() => { _ttsPlaying = false; });
+    // 更新狀態標示
+    const badge = document.getElementById('ttsLangBadge');
+    if (badge) badge.textContent = '🗣 台語語音';
+  })
+  .catch(err => {
+    console.warn('NYCU TTS 失敗，降級瀏覽器語音:', err.message);
+    _ttsPlaying = false;
+    const badge = document.getElementById('ttsLangBadge');
+    if (badge) badge.textContent = '🗣 備用語音';
+    // 降級：瀏覽器 TTS，nan-TW 優先
+    if (!window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(txt);
+      const vs = speechSynthesis.getVoices();
+      const voice = vs.find(v => v.lang === 'nan-TW')
+        || vs.find(v => v.lang.startsWith('nan'))
+        || vs.find(v => v.lang === 'zh-TW') || null;
+      if (voice) u.voice = voice;
+      u.lang  = voice ? voice.lang : 'zh-TW';
+      u.rate  = 0.82;
+      speechSynthesis.speak(u);
+    }, 100);
+  });
+}
+
+// 展示可用語音（除錯按鈕）
+function listVoices() {
+  if (!window.speechSynthesis) { alert('此裝置不支援語音合成'); return; }
+  const vs = speechSynthesis.getVoices();
+  const taigi = vs.find(v => v.lang === 'nan-TW' || v.lang.startsWith('nan'));
+  alert('NYCU TTS API：familyhistroy-tree.netlify.app\n\n瀏覽器備用語音：' +
+    (taigi ? '✅ 找到台語 ' + taigi.lang + ' ' + taigi.name
+           : '❌ 無台語，將用華語 zh-TW') +
+    '\n\n完整清單（' + vs.length + '）：\n' +
+    vs.slice(0,12).map(v => v.lang + ' ' + v.name).join('\n'));
+}
+
+// 諺語彈窗顯示 + 播放
+function showProvThenNext(ci, pl) {
+  const lst = PROV[ci] || [];
+  if (!lst.length) { wm = false; nxTurn(); return; }
+  const pv = lst[Math.floor(Math.random() * lst.length)];
+  const ct = C[ci];
+  document.getElementById('mpReg').textContent = '📍 ' + ct.n + ' · ' + ct.rg + '　台語諺語';
+  document.getElementById('mpIc').textContent  = pv.ic;
+  document.getElementById('mpTw').textContent  = pv.tw;
+  document.getElementById('mpZh').textContent  = pv.zh;
+  document.getElementById('mpMn').textContent  = '💡 ' + pv.mn;
+  document.getElementById('mProv').dataset.tts = pv.tw;
+  document.getElementById('mProv').classList.add('show');
+  speakProv(pv.tw);   // ← 自動播放台語
+  addLog('📖「' + pv.tw + '」', 'lp');
+  if (pl.ai) { setTimeout(closeProverb, 4000); }  // 給台語 TTS 足夠時間播放
+}
+
+function closeProverb() {
+  document.getElementById('mProv').classList.remove('show');
+  _ttsPlaying = false;
+  wm = false;
+  nxTurn();
+}
+
+
+// ── TURNS ──
+function nxTurn(){
+  cur=(cur+1)%PL.length;
+  rHud();rTok();
+  PL[cur].ai?setTimeout(aiTurn,3000):(document.getElementById('rollBtn').disabled=false);
+}
+
+function aiTurn(){
+  if(!PL[cur].ai)return;
+  rollDice();
+}
+
+// ── INIT ──
+rTok();rHud();
+addLog('🛣 台灣大富翁高速公路版 開始！','lmn');
+addLog('🚗 玩家一先攻，按「擲骰」開始','lm');
+document.getElementById('rollBtn').disabled=false;
+</script>
+</body>
+</html>
