@@ -1,10 +1,13 @@
 /**
  * netlify/functions/asr-transcript.js
  *
- * GAS 傳來音檔 base64 (m4a) + token
- * → 同時：取 ticket 建立 WS + ffmpeg 轉換 m4a → raw PCM 16kHz
- * → WS 連線後立刻送 PCM（ticket 30秒有效，必須搶時間）
- * → 回傳逐字稿 + 時長
+ * 正確流程（參照 bronci_asr_upload_wav.sh）：
+ * 1. login → token
+ * 2. GET access-info → ticket
+ * 3. WS 連線，等 code:180（服務已就緒）
+ * 4. 送 WAV binary chunks
+ * 5. 送 "EOS" 文字訊息
+ * 6. 等 code:200 result + end:1，或 code:202/204
  */
 
 const https        = require('https');
@@ -16,8 +19,7 @@ const path         = require('path');
 
 const ASR_HOST         = '140.113.30.204';
 const ASR_PORT         = 8451;
-const ACCESS_INFO_PATH = '/api/v1/streaming/transcript/access-info';
-const WS_TIMEOUT_MS    = 25000;
+const WS_TIMEOUT_MS    = 30000;
 
 exports.handler = async (event) => {
   const headers = {
@@ -39,35 +41,34 @@ exports.handler = async (event) => {
 
   const tmpDir  = os.tmpdir();
   const inFile  = path.join(tmpDir, `asr_in_${Date.now()}.m4a`);
-  const outFile = path.join(tmpDir, `asr_out_${Date.now()}.pcm`);
+  const outFile = path.join(tmpDir, `asr_out_${Date.now()}.wav`);
 
   try {
-    // Step 1：同時進行 ticket 取得 + ffmpeg 轉換（搶在 30 秒內）
+    // Step 1：並行 ffmpeg 轉換 + 取 ticket
     const m4aBuffer = Buffer.from(audioBase64, 'base64');
     fs.writeFileSync(inFile, m4aBuffer);
     console.log('m4a size:', m4aBuffer.length, 'bytes');
 
-    // 並行：取 ticket + 轉 PCM
     const [ticket] = await Promise.all([
       getAsrTicket(token),
       new Promise((resolve, reject) => {
         try {
           const ffmpegPath = require('ffmpeg-static');
-          execSync(`"${ffmpegPath}" -y -i "${inFile}" -ar 16000 -ac 1 -f s16le "${outFile}"`, { stdio: 'pipe' });
-          console.log('ffmpeg done, pcm size:', fs.statSync(outFile).size, 'bytes');
+          execSync(`"${ffmpegPath}" -y -i "${inFile}" -ac 1 -ar 16000 -c:a pcm_s16le "${outFile}"`, { stdio: 'pipe' });
+          console.log('ffmpeg done, wav size:', fs.statSync(outFile).size, 'bytes');
           resolve();
         } catch(e) { reject(e); }
       })
     ]);
 
     if (!ticket) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Failed to get ASR ticket' }) };
-    console.log('ticket:', ticket.substring(0, 40) + '... (valid 30s)');
+    console.log('ticket:', ticket.substring(0, 40) + '...');
 
-    const pcmBuffer = fs.readFileSync(outFile);
-    console.log('pcm size:', pcmBuffer.length, 'bytes');
+    const wavBuffer = fs.readFileSync(outFile);
+    console.log('wav size:', wavBuffer.length, 'bytes');
 
-    // Step 2：立刻建立 WS 並送 PCM（ticket 剛取到，時間最新鮮）
-    const result = await transcribeViaWebSocket(ticket, pcmBuffer);
+    // Step 2：WebSocket 轉寫（等 180 再送，送完發 EOS）
+    const result = await transcribeViaWebSocket(ticket, wavBuffer);
     console.log('result:', JSON.stringify(result));
 
     return { statusCode: 200, headers, body: JSON.stringify(result) };
@@ -91,7 +92,7 @@ function getAsrTicket(token) {
     const req = https.request({
       hostname: ASR_HOST,
       port:     ASR_PORT,
-      path:     ACCESS_INFO_PATH,
+      path:     '/api/v1/streaming/transcript/access-info',
       method:   'GET',
       headers:  { 'Authorization': token, 'Accept': 'application/json' },
       rejectUnauthorized: false,
@@ -112,65 +113,113 @@ function getAsrTicket(token) {
 }
 
 
-function transcribeViaWebSocket(ticket, pcmBuffer) {
+function transcribeViaWebSocket(ticket, wavBuffer) {
   return new Promise((resolve) => {
-    // type=raw&rate=16000（規格書指定）
-    const wsUrl = `wss://${ASR_HOST}:${ASR_PORT}/ws/v1/transcript?ticket=${encodeURIComponent(ticket)}&type=raw&rate=16000`;
+    // type=file，audioFilename=input.wav，modelName=taigi-roma-0814
+    const params = new URLSearchParams({
+      ticket:          ticket,
+      type:            'file',
+      audioFilename:   'input.wav',
+      saveResult:      '0',
+      enableTransient: '0',
+      modelName:       'taigi-roma-0814',
+    });
+    const wsUrl = `wss://${ASR_HOST}:${ASR_PORT}/ws/v1/transcript?${params.toString()}`;
     const ws    = new WebSocket(wsUrl, { rejectUnauthorized: false });
 
-    let parts    = [];
+    let finalSegments  = {};
+    let partialSegments = {};
     let resolved = false;
+    let ready    = false;
     const t0     = Date.now();
 
-    const done = () => {
+    const done = (transcript) => {
       if (resolved) return;
       resolved = true;
       clearTimeout(timer);
       try { ws.terminate(); } catch(e) {}
-      const transcript   = parts.length > 0 ? parts[parts.length - 1] : '';
       const duration_sec = Math.round((Date.now() - t0) / 100) / 10;
-      const char_count   = transcript.replace(/\s/g, '').length;
-      resolve({ transcript, duration_sec, char_count });
+      const char_count   = (transcript || '').replace(/\s/g, '').length;
+      resolve({ transcript: transcript || '', duration_sec, char_count });
     };
 
-    const timer = setTimeout(() => { console.log('WS timeout'); done(); }, WS_TIMEOUT_MS);
+    const timer = setTimeout(() => {
+      console.log('WS timeout');
+      const keys = Object.keys(finalSegments).sort();
+      const t = keys.map(k => finalSegments[k]).join('\n').trim();
+      done(t);
+    }, WS_TIMEOUT_MS);
 
     ws.on('open', () => {
-      console.log('WS connected at', Date.now() - t0, 'ms, sending PCM', pcmBuffer.length, 'bytes');
-      // 分塊送出 raw PCM
-      const CHUNK = 8192;
-      for (let i = 0; i < pcmBuffer.length; i += CHUNK) {
-        ws.send(pcmBuffer.slice(i, i + CHUNK));
-      }
-      // 送空 buffer 作為串流結束訊號
-      ws.send(Buffer.alloc(0));
-      console.log('PCM sent, waiting for transcript...');
+      console.log('WS connected, waiting for code:180...');
     });
 
     ws.on('message', (data) => {
       try {
         const msg  = JSON.parse(data.toString());
         console.log('WS msg:', JSON.stringify(msg));
-        const text    = msg.transcript || msg.text || msg.result || '';
-        const isFinal = msg.type === 'final' || msg.isFinal === true ||
-                        msg.is_final === true || msg.type === 'end' ||
-                        msg.status === 'end' || msg.code === 200;
-        if (text) parts.push(text);
-        if (isFinal && text) done();
+        const code = msg.code;
+
+        if (code === 180) {
+          // 服務已就緒，開始送 WAV
+          ready = true;
+          console.log('code:180 ready, sending WAV', wavBuffer.length, 'bytes');
+          const CHUNK = 320 * 1024;
+          for (let i = 0; i < wavBuffer.length; i += CHUNK) {
+            ws.send(wavBuffer.slice(i, i + CHUNK));
+          }
+          ws.send('EOS');  // 結束訊號
+          console.log('WAV sent + EOS');
+
+        } else if (code === 200) {
+          // 辨識結果
+          const results = msg.result || [];
+          for (const item of results) {
+            const seg = item.segment;
+            const txt = (item.transcript || '').trim();
+            const fin = item.final;
+            if (seg == null || !txt) continue;
+            if (fin === 1) {
+              finalSegments[seg] = txt;
+            } else {
+              partialSegments[seg] = txt;
+            }
+          }
+          if (msg.end === 1) {
+            const keys = Object.keys(finalSegments).sort();
+            const t = keys.map(k => finalSegments[k]).join('\n').trim();
+            console.log('end:1, transcript:', t);
+            done(t);
+          }
+
+        } else if (code === 202 || code === 204) {
+          // 完成
+          const keys = Object.keys(finalSegments).sort();
+          const t = keys.map(k => finalSegments[k]).join('\n').trim();
+          done(t);
+
+        } else if (code >= 400) {
+          console.error('ASR error code:', code, msg.message);
+          done('');
+        }
+
       } catch(e) {
-        const text = data.toString().trim();
-        console.log('WS raw:', text);
-        if (text) parts.push(text);
+        console.log('WS raw:', data.toString().trim());
       }
     });
 
     ws.on('close', (code, reason) => {
       console.log('WS closed:', code, reason ? reason.toString() : '');
-      done();
+      if (!resolved) {
+        const keys = Object.keys(finalSegments).sort();
+        const t = keys.map(k => finalSegments[k]).join('\n').trim();
+        done(t);
+      }
     });
+
     ws.on('error', (err) => {
       console.error('WS error:', err.message);
-      done();
+      done('');
     });
   });
 }
