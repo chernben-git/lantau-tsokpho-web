@@ -127,7 +127,11 @@ async function pollTask(token, taskId, maxWaitMs = 120000) {
     const status = data.data[0].status;
     console.log('[asr-scoring] poll taskId=' + taskId + ' status=' + status);
 
-    if (status === 3)             return 'success';
+    if (status === 3) {
+      console.log('[asr-scoring] task data keys=' + JSON.stringify(Object.keys(data.data[0])));
+      console.log('[asr-scoring] task data=' + JSON.stringify(data.data[0]).substring(0, 500));
+      return data.data[0];
+    }
     if (status === 4 || status === 5) throw new Error('Task failed, status=' + status);
   }
   throw new Error('ASR timeout (120s)');
@@ -135,34 +139,16 @@ async function pollTask(token, taskId, maxWaitMs = 120000) {
 
 // ── 下載逐字稿 ────────────────────────────────────────────────
 async function downloadTranscript(token, taskId) {
-  // 先取得任務詳細資料，拿到 resultScriptFilePath
-  const taskRes = await httpsRequest({
-    hostname: ASR_HOST, port: ASR_PORT,
-    path: '/api/v1/subtitle/tasks/' + taskId, method: 'GET',
-    headers: { 'Authorization': 'Bearer ' + token }
-  });
-  const taskData = JSON.parse(taskRes.body.toString());
-  const taskObj = taskData.data && taskData.data[0];
-  // 分段印出避免截斷
-  const taskStr = JSON.stringify(taskObj);
-  for (let i = 0; i < taskStr.length; i += 300) {
-    console.log('[asr-scoring] taskObj[' + i + ']=' + taskStr.substring(i, i+300));
-  }
-  const scriptPath = taskObj && (taskObj.resultScriptFilePath || taskObj.scriptFilePath || taskObj.result_script_file_path || taskObj.filePath || taskObj.file_path);
-  console.log('[asr-scoring] scriptPath=' + scriptPath);
-
-  if (!scriptPath) return '';
-
-  // 下載逐字稿檔案內容
-  const fileRes = await httpsRequest({
+  const res = await httpsRequest({
     hostname: ASR_HOST, port: ASR_PORT,
     path: '/api/v1/subtitle/tasks/' + taskId + '/file?target=resultScriptFilePath',
     method: 'GET',
     headers: { 'Authorization': 'Bearer ' + token }
   });
 
-  const text = fileRes.body.toString('utf8').trim();
-  console.log('[asr-scoring] raw transcript length=' + text.length);
+  console.log('[asr-scoring] file HTTP=' + res.statusCode + ' size=' + res.body.length);
+  const text = res.body.toString('utf8').trim();
+  console.log('[asr-scoring] raw file content=' + text.substring(0, 200));
 
   // 如果是 JSON 格式，解析出純文字
   try {
@@ -172,6 +158,7 @@ async function downloadTranscript(token, taskId) {
     }
     if (json.text) return json.text.trim();
     if (json.content) return json.content.trim();
+    if (json.data) return String(json.data).trim();
   } catch (_) {}
 
   return text;
@@ -216,8 +203,8 @@ exports.handler = async (event) => {
     const taskId = await createTask(token, wavBuffer);
     console.log('[asr-scoring] taskId=' + taskId);
 
-    // 5. 輪詢
-    await pollTask(token, taskId);
+    // 5. 輪詢（回傳 taskObj）
+    const taskObj = await pollTask(token, taskId);
 
     // 6. 下載逐字稿
     const transcript = await downloadTranscript(token, taskId);
