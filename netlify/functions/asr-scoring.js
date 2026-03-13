@@ -142,8 +142,11 @@ async function downloadTranscript(token, taskId) {
     headers: { 'Authorization': 'Bearer ' + token }
   });
   const taskData = JSON.parse(taskRes.body.toString());
-  const scriptPath = taskData.data && taskData.data[0] && taskData.data[0].resultScriptFilePath;
-  console.log('[asr-scoring] resultScriptFilePath=' + scriptPath);
+  const taskObj = taskData.data && taskData.data[0];
+  console.log('[asr-scoring] taskObj keys=' + (taskObj ? Object.keys(taskObj).join(',') : 'null'));
+  console.log('[asr-scoring] taskObj=' + JSON.stringify(taskObj).substring(0, 500));
+  const scriptPath = taskObj && (taskObj.resultScriptFilePath || taskObj.scriptFilePath || taskObj.result_script_file_path || taskObj.filePath || taskObj.file_path);
+  console.log('[asr-scoring] scriptPath=' + scriptPath);
 
   if (!scriptPath) return '';
 
