@@ -802,7 +802,7 @@ body::after{
     <div class="mp-mn" id="mpMn">—</div>
     <div class="prov-btns">
       <button class="mbtn" onclick="closeProverb()">✓ 知矣，繼續前行</button>
-      <button class="mbtn" style="padding:9px 14px;font-size:18px" onclick="speakProv(document.getElementById('mProv').dataset.tts)" title="重播台語">🔊</button>
+      <button class="mbtn" style="padding:9px 14px;font-size:18px" onclick="unlockAudio();speakProv(document.getElementById('mProv').dataset.tts)" title="重播台語">🔊</button>
       <button class="mbtn" style="padding:6px 10px;font-size:10px;opacity:.5" onclick="listVoices()" title="查看語音清單">⚙</button>
     </div>
     <div id="ttsLangBadge" style="font-size:9px;color:rgba(89,216,255,.35);font-family:'Share Tech Mono',monospace;letter-spacing:.1em;margin-top:2px">🗣 偵測語音中...</div>
@@ -1345,16 +1345,22 @@ let _audioCtx = null;
 
 // 第一次用戶互動時解鎖 AudioContext（iOS Safari autoplay 需要）
 function unlockAudio() {
-  if (_audioCtx) return;
+  if (_audioCtx && _audioCtx.state === 'running') return;
   try {
-    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!_audioCtx) {
+      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // iOS 需要在用戶手勢內 resume
+    if (_audioCtx.state === 'suspended') {
+      _audioCtx.resume();
+    }
     // 播一個無聲音符解鎖
     const buf = _audioCtx.createBuffer(1, 1, 22050);
     const src = _audioCtx.createBufferSource();
     src.buffer = buf;
     src.connect(_audioCtx.destination);
     src.start(0);
-  } catch(e) {}
+  } catch(e) { console.warn('unlockAudio:', e); }
 }
 
 // 呼叫 NYCU TTS → 自動播放台語語音
@@ -1404,21 +1410,31 @@ function speakProv(txt) {
     const arr   = new Uint8Array(bytes.length);
     for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
 
-    if (_audioCtx && _audioCtx.state !== 'closed') {
-      // 用 AudioContext 播放（iOS 免 autoplay 限制）
-      _audioCtx.decodeAudioData(arr.buffer, (decoded) => {
-        const src = _audioCtx.createBufferSource();
-        src.buffer = decoded;
-        src.connect(_audioCtx.destination);
-        src.onended = () => { _ttsPlaying = false; };
-        src.start(0);
-        setBadge('🗣 台語語音');
-      }, () => {
-        // decodeAudioData 失敗（格式不支援），改用 Audio 元素
+    // 確保 AudioContext 已 resume（iOS 關鍵）
+    const playAudio = () => {
+      if (_audioCtx && _audioCtx.state !== 'closed') {
+        // 先嘗試 AudioContext decode（支援 WAV/MP3）
+        const bufCopy = arr.buffer.slice(0);
+        _audioCtx.decodeAudioData(bufCopy, (decoded) => {
+          const src = _audioCtx.createBufferSource();
+          src.buffer = decoded;
+          src.connect(_audioCtx.destination);
+          src.onended = () => { _ttsPlaying = false; };
+          src.start(0);
+          setBadge('🗣 台語語音');
+        }, () => {
+          // M4A decode 失敗 → Audio element（桌機用）
+          playViaAudioElement(arr, data.mimeType, setBadge, fallback);
+        });
+      } else {
         playViaAudioElement(arr, data.mimeType, setBadge, fallback);
-      });
+      }
+    };
+
+    if (_audioCtx && _audioCtx.state === 'suspended') {
+      _audioCtx.resume().then(playAudio).catch(playAudio);
     } else {
-      playViaAudioElement(arr, data.mimeType, setBadge, fallback);
+      playAudio();
     }
   })
   .catch(err => {
@@ -1430,15 +1446,23 @@ function speakProv(txt) {
 // Audio 元素播放（桌機備用）
 function playViaAudioElement(arr, mimeType, setBadge, fallback) {
   try {
-    const blob = new Blob([arr], { type: mimeType || 'audio/mp4' });
-    const url  = URL.createObjectURL(blob);
+    const blob  = new Blob([arr], { type: mimeType || 'audio/mp4' });
+    const url   = URL.createObjectURL(blob);
     const audio = new Audio(url);
     audio.onended = () => { _ttsPlaying = false; URL.revokeObjectURL(url); };
     audio.onerror = () => { _ttsPlaying = false; URL.revokeObjectURL(url); fallback(); };
-    audio.play().then(() => {
-      setBadge('🗣 台語語音');
-    }).catch(() => { fallback(); });
-  } catch(e) { fallback(); }
+    // iOS：先 resume AudioContext 再 play，有機會繞過限制
+    const doPlay = () => {
+      audio.play().then(() => {
+        setBadge('🗣 台語語音');
+      }).catch(() => { _ttsPlaying = false; fallback(); });
+    };
+    if (_audioCtx && _audioCtx.state === 'suspended') {
+      _audioCtx.resume().then(doPlay).catch(doPlay);
+    } else {
+      doPlay();
+    }
+  } catch(e) { _ttsPlaying = false; fallback(); }
 }
 
 // 展示可用語音（除錯按鈕）
