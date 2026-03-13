@@ -1492,7 +1492,7 @@ function showProvThenNext(ci, pl) {
   document.getElementById('mProv').classList.add('show');
   speakProv(pv.tw);  // 立刻播台語
   addLog('📖「' + pv.tw + '」', 'lp');
-  if (pl.ai) { setTimeout(closeProverb, 12000); }  // AI：等12秒（TTS回傳2-3秒+播放5秒）
+  if (pl.ai) { setTimeout(closeProverb, 15000); }  // AI：等15秒（TTS回傳5秒+播放5秒+緩衝5秒）
 }
 
 function closeProverb() {
