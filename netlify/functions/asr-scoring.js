@@ -4,26 +4,28 @@
 // 咱兜的台語 — 劍橋分析股份有限公司
 // ============================================================
 // 流程：
-//   1. 接收 GAS 傳來的 { audioBase64 }（m4a 格式）
-//   2. ffmpeg 轉換 m4a → WAV PCM s16le 16kHz mono
-//   3. 登入 NYCU BRONCI ASR（File Inference API V3.5）取得 token
-//   4. multipart/form-data 上傳 WAV 建立任務
-//   5. 輪詢任務狀態（status=3 成功）
-//   6. 下載 resultScriptFilePath（逐字稿純文字）
-//   7. 回傳 { transcript }
+//   1. 接收 GAS 傳來的 { messageId, lineToken }
+//   2. 從 LINE API 下載音檔（m4a）
+//   3. ffmpeg 轉換 m4a → WAV PCM s16le 16kHz mono
+//   4. 登入 NYCU BRONCI ASR（File Inference API V3.5）取得 token
+//   5. multipart/form-data 上傳 WAV 建立任務
+//   6. 輪詢任務狀態（status=3 成功）
+//   7. 下載 resultScriptFilePath（逐字稿純文字）
+//   8. 回傳 { transcript }
 // ============================================================
 
 const https = require('https');
+const http  = require('http');
 const path  = require('path');
 const os    = require('os');
 const fs    = require('fs');
 const { execSync } = require('child_process');
 const ffmpegPath    = require('ffmpeg-static');
 
-const ASR_HOST = '140.113.30.204';
-const ASR_PORT = 8451;
-const ASR_USER = 'chernben';
-const ASR_PASS = 'SRGER#342sd';
+const ASR_HOST  = '140.113.30.204';
+const ASR_PORT  = 8451;
+const ASR_USER  = 'chernben';
+const ASR_PASS  = 'SRGER#342sd';
 const ASR_MODEL = 'taigi-roma-0814';
 
 // ── HTTPS helper（忽略自簽憑證）──────────────────────────────
@@ -40,6 +42,33 @@ function httpsRequest(options, body) {
     });
     req.on('error', reject);
     if (body) req.write(body);
+    req.end();
+  });
+}
+
+// ── 從 LINE API 下載音檔 ──────────────────────────────────────
+function downloadLineAudio(messageId, lineToken) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api-data.line.me',
+      path: '/v2/bot/message/' + messageId + '/content',
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + lineToken }
+    };
+    const req = https.request(options, (res) => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        const buf = Buffer.concat(chunks);
+        console.log('[asr-scoring] LINE audio HTTP=' + res.statusCode + ' size=' + buf.length);
+        if (res.statusCode !== 200) {
+          reject(new Error('LINE download failed HTTP ' + res.statusCode));
+        } else {
+          resolve(buf);
+        }
+      });
+    });
+    req.on('error', reject);
     req.end();
   });
 }
@@ -127,16 +156,14 @@ async function pollTask(token, taskId, maxWaitMs = 120000) {
     const status = data.data[0].status;
     console.log('[asr-scoring] poll taskId=' + taskId + ' status=' + status);
 
-    if (status === 3) {
-      return data.data[0];  // 回傳完整task物件
-    }    if (status === 4 || status === 5) throw new Error('Task failed, status=' + status);
+    if (status === 3) return data.data[0];
+    if (status === 4 || status === 5) throw new Error('Task failed, status=' + status);
   }
   throw new Error('ASR timeout (120s)');
 }
 
 // ── 下載逐字稿 ────────────────────────────────────────────────
 async function downloadTranscript(token, taskId, taskObj) {
-  // 若音檔太短，ASR不會產生結果
   if (taskObj && taskObj.resultComment && taskObj.resultScriptFileExist === 0) {
     console.log('[asr-scoring] no script: ' + taskObj.resultComment);
     return { text: '', error: taskObj.resultComment };
@@ -172,22 +199,25 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  let audioBase64;
+  let messageId, lineToken;
   try {
     const body = JSON.parse(event.body || '{}');
-    audioBase64 = body.audioBase64;
-    if (!audioBase64) throw new Error('audioBase64 missing');
+    messageId = body.messageId;
+    lineToken = body.lineToken;
+    if (!messageId) throw new Error('messageId missing');
+    if (!lineToken) throw new Error('lineToken missing');
   } catch (e) {
     return { statusCode: 400, body: JSON.stringify({ error: e.message }) };
   }
 
-  const tmpDir   = os.tmpdir();
-  const inFile   = path.join(tmpDir, 'scoring_in_'  + Date.now() + '.m4a');
-  const outFile  = path.join(tmpDir, 'scoring_out_' + Date.now() + '.wav');
+  const tmpDir  = os.tmpdir();
+  const inFile  = path.join(tmpDir, 'scoring_in_'  + Date.now() + '.m4a');
+  const outFile = path.join(tmpDir, 'scoring_out_' + Date.now() + '.wav');
 
   try {
-    // 1. 寫入 m4a
-    fs.writeFileSync(inFile, Buffer.from(audioBase64, 'base64'));
+    // 1. 從 LINE 下載音檔
+    const audioBuffer = await downloadLineAudio(messageId, lineToken);
+    fs.writeFileSync(inFile, audioBuffer);
 
     // 2. ffmpeg 轉 WAV PCM s16le 16kHz mono
     execSync(
@@ -205,14 +235,13 @@ exports.handler = async (event) => {
     const taskId = await createTask(token, wavBuffer);
     console.log('[asr-scoring] taskId=' + taskId);
 
-    // 5. 輪詢（回傳完整taskObj）
+    // 5. 輪詢
     const taskObj = await pollTask(token, taskId);
 
     // 6. 下載逐字稿
     const result = await downloadTranscript(token, taskId, taskObj);
     console.log('[asr-scoring] transcript="' + result.text + '"' + (result.error ? ' error=' + result.error : ''));
 
-    // 若音檔過短，回傳特殊訊息
     if (!result.text && result.error && result.error.includes('音檔長度過短')) {
       return {
         statusCode: 200,
@@ -234,7 +263,6 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: e.message, transcript: '' })
     };
   } finally {
-    // 清理暫存檔
     try { fs.unlinkSync(inFile);  } catch (_) {}
     try { fs.unlinkSync(outFile); } catch (_) {}
   }
