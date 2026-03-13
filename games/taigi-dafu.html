@@ -1367,7 +1367,7 @@ function unlockAudio() {
 // 失敗時降級為瀏覽器 TTS（nan-TW → zh-TW）
 function speakProv(txt) {
   if (!txt) return;
-  if (_ttsPlaying) return; // 防止重疊
+  if (_ttsPlaying) return;
   _ttsPlaying = true;
 
   const setBadge = (t) => {
@@ -1375,24 +1375,12 @@ function speakProv(txt) {
     if (b) b.textContent = t;
   };
 
-  // 降級：瀏覽器 TTS
+  setBadge('🗣 台語語音載入中...');
+
+  // 失敗就算了，不播備用，_ttsPlaying 釋放讓下次可以播
   const fallback = () => {
     _ttsPlaying = false;
-    setBadge('🗣 備用語音');
-    if (!window.speechSynthesis) return;
-    speechSynthesis.cancel();
-    setTimeout(() => {
-      const u = new SpeechSynthesisUtterance(txt);
-      const vs = speechSynthesis.getVoices();
-      const voice = vs.find(v => v.lang === 'nan-TW')
-        || vs.find(v => v.lang.startsWith('nan'))
-        || vs.find(v => v.lang === 'zh-TW') || null;
-      if (voice) u.voice = voice;
-      u.lang = voice ? voice.lang : 'zh-TW';
-      u.rate = 0.82;
-      u.onend = () => { _ttsPlaying = false; };
-      speechSynthesis.speak(u);
-    }, 80);
+    setBadge('🗣 —');
   };
 
   fetch(TTS_URL, {
@@ -1404,8 +1392,8 @@ function speakProv(txt) {
   .then(data => {
     if (!data.audioBase64) throw new Error('no audio');
 
-    // 用 ArrayBuffer 解碼，再用 AudioContext 播放
-    // AudioContext 在 rollDice 時已被用戶手勢解鎖，AI 也能播
+    setBadge('🗣 台語語音');
+
     const bytes = atob(data.audioBase64);
     const arr   = new Uint8Array(bytes.length);
     for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
