@@ -143,8 +143,11 @@ async function downloadTranscript(token, taskId) {
   });
   const taskData = JSON.parse(taskRes.body.toString());
   const taskObj = taskData.data && taskData.data[0];
-  console.log('[asr-scoring] taskObj keys=' + (taskObj ? Object.keys(taskObj).join(',') : 'null'));
-  console.log('[asr-scoring] taskObj=' + JSON.stringify(taskObj).substring(0, 500));
+  // 分段印出避免截斷
+  const taskStr = JSON.stringify(taskObj);
+  for (let i = 0; i < taskStr.length; i += 300) {
+    console.log('[asr-scoring] taskObj[' + i + ']=' + taskStr.substring(i, i+300));
+  }
   const scriptPath = taskObj && (taskObj.resultScriptFilePath || taskObj.scriptFilePath || taskObj.result_script_file_path || taskObj.filePath || taskObj.file_path);
   console.log('[asr-scoring] scriptPath=' + scriptPath);
 
