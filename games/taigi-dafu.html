@@ -1341,43 +1341,38 @@ function afterCard(){
 // ── 諺語 + 台語 TTS（NYCU iVoice API，與麻將版相同架構）──
 const TTS_URL = 'https://familyhistroy-tree.netlify.app/.netlify/functions/tts-speak';
 let _ttsPlaying = false;
+let _audioCtx = null;
+
+// 第一次用戶互動時解鎖 AudioContext（iOS Safari autoplay 需要）
+function unlockAudio() {
+  if (_audioCtx) return;
+  try {
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // 播一個無聲音符解鎖
+    const buf = _audioCtx.createBuffer(1, 1, 22050);
+    const src = _audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(_audioCtx.destination);
+    src.start(0);
+  } catch(e) {}
+}
 
 // 呼叫 NYCU TTS → 自動播放台語語音
 // 失敗時降級為瀏覽器 TTS（nan-TW → zh-TW）
 function speakProv(txt) {
   if (!txt) return;
-  // 若上一句還在播，先中斷
-  _ttsPlaying = false;
+  if (_ttsPlaying) return; // 防止重疊
   _ttsPlaying = true;
 
-  fetch(TTS_URL, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ text: txt })
-  })
-  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-  .then(data => {
-    if (!data.audioBase64) throw new Error('no audio');
-    const bytes = atob(data.audioBase64);
-    const arr   = new Uint8Array(bytes.length);
-    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-    const blob  = new Blob([arr], { type: data.mimeType || 'audio/mp4' });
-    const url   = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.onended = () => { _ttsPlaying = false; URL.revokeObjectURL(url); };
-    audio.onerror = () => { _ttsPlaying = false; };
-    // 自動播放
-    audio.play().catch(() => { _ttsPlaying = false; });
-    // 更新狀態標示
-    const badge = document.getElementById('ttsLangBadge');
-    if (badge) badge.textContent = '🗣 台語語音';
-  })
-  .catch(err => {
-    console.warn('NYCU TTS 失敗，降級瀏覽器語音:', err.message);
+  const setBadge = (t) => {
+    const b = document.getElementById('ttsLangBadge');
+    if (b) b.textContent = t;
+  };
+
+  // 降級：瀏覽器 TTS
+  const fallback = () => {
     _ttsPlaying = false;
-    const badge = document.getElementById('ttsLangBadge');
-    if (badge) badge.textContent = '🗣 備用語音';
-    // 降級：瀏覽器 TTS，nan-TW 優先
+    setBadge('🗣 備用語音');
     if (!window.speechSynthesis) return;
     speechSynthesis.cancel();
     setTimeout(() => {
@@ -1387,11 +1382,63 @@ function speakProv(txt) {
         || vs.find(v => v.lang.startsWith('nan'))
         || vs.find(v => v.lang === 'zh-TW') || null;
       if (voice) u.voice = voice;
-      u.lang  = voice ? voice.lang : 'zh-TW';
-      u.rate  = 0.82;
+      u.lang = voice ? voice.lang : 'zh-TW';
+      u.rate = 0.82;
+      u.onend = () => { _ttsPlaying = false; };
       speechSynthesis.speak(u);
-    }, 100);
+    }, 80);
+  };
+
+  fetch(TTS_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ text: txt })
+  })
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    if (!data.audioBase64) throw new Error('no audio');
+
+    // 用 ArrayBuffer 解碼，再用 AudioContext 播放
+    // AudioContext 在 rollDice 時已被用戶手勢解鎖，AI 也能播
+    const bytes = atob(data.audioBase64);
+    const arr   = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+
+    if (_audioCtx && _audioCtx.state !== 'closed') {
+      // 用 AudioContext 播放（iOS 免 autoplay 限制）
+      _audioCtx.decodeAudioData(arr.buffer, (decoded) => {
+        const src = _audioCtx.createBufferSource();
+        src.buffer = decoded;
+        src.connect(_audioCtx.destination);
+        src.onended = () => { _ttsPlaying = false; };
+        src.start(0);
+        setBadge('🗣 台語語音');
+      }, () => {
+        // decodeAudioData 失敗（格式不支援），改用 Audio 元素
+        playViaAudioElement(arr, data.mimeType, setBadge, fallback);
+      });
+    } else {
+      playViaAudioElement(arr, data.mimeType, setBadge, fallback);
+    }
+  })
+  .catch(err => {
+    console.warn('NYCU TTS 失敗:', err.message);
+    fallback();
   });
+}
+
+// Audio 元素播放（桌機備用）
+function playViaAudioElement(arr, mimeType, setBadge, fallback) {
+  try {
+    const blob = new Blob([arr], { type: mimeType || 'audio/mp4' });
+    const url  = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = () => { _ttsPlaying = false; URL.revokeObjectURL(url); };
+    audio.onerror = () => { _ttsPlaying = false; URL.revokeObjectURL(url); fallback(); };
+    audio.play().then(() => {
+      setBadge('🗣 台語語音');
+    }).catch(() => { fallback(); });
+  } catch(e) { fallback(); }
 }
 
 // 展示可用語音（除錯按鈕）
