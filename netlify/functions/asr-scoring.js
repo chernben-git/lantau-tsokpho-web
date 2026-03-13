@@ -128,17 +128,20 @@ async function pollTask(token, taskId, maxWaitMs = 120000) {
     console.log('[asr-scoring] poll taskId=' + taskId + ' status=' + status);
 
     if (status === 3) {
-      console.log('[asr-scoring] task data keys=' + JSON.stringify(Object.keys(data.data[0])));
-      console.log('[asr-scoring] task data=' + JSON.stringify(data.data[0]).substring(0, 500));
-      return data.data[0];
-    }
-    if (status === 4 || status === 5) throw new Error('Task failed, status=' + status);
+      return data.data[0];  // 回傳完整task物件
+    }    if (status === 4 || status === 5) throw new Error('Task failed, status=' + status);
   }
   throw new Error('ASR timeout (120s)');
 }
 
 // ── 下載逐字稿 ────────────────────────────────────────────────
-async function downloadTranscript(token, taskId) {
+async function downloadTranscript(token, taskId, taskObj) {
+  // 若音檔太短，ASR不會產生結果
+  if (taskObj && taskObj.resultComment && taskObj.resultScriptFileExist === 0) {
+    console.log('[asr-scoring] no script: ' + taskObj.resultComment);
+    return { text: '', error: taskObj.resultComment };
+  }
+
   const res = await httpsRequest({
     hostname: ASR_HOST, port: ASR_PORT,
     path: '/api/v1/subtitle/tasks/' + taskId + '/file?target=resultScriptFilePath',
@@ -146,22 +149,21 @@ async function downloadTranscript(token, taskId) {
     headers: { 'Authorization': 'Bearer ' + token }
   });
 
-  console.log('[asr-scoring] file HTTP=' + res.statusCode + ' size=' + res.body.length);
-  const text = res.body.toString('utf8').trim();
-  console.log('[asr-scoring] raw file content=' + text.substring(0, 200));
+  const raw = res.body.toString('utf8').trim();
+  console.log('[asr-scoring] file HTTP=' + res.statusCode + ' len=' + raw.length + ' preview=' + raw.substring(0, 100));
 
-  // 如果是 JSON 格式，解析出純文字
+  if (!raw) return { text: '', error: 'empty' };
+
   try {
-    const json = JSON.parse(text);
+    const json = JSON.parse(raw);
     if (Array.isArray(json)) {
-      return json.map(seg => seg.text || seg.word || seg.content || '').join('').trim();
+      return { text: json.map(s => s.text || s.word || s.content || '').join('').trim() };
     }
-    if (json.text) return json.text.trim();
-    if (json.content) return json.content.trim();
-    if (json.data) return String(json.data).trim();
+    if (json.text) return { text: json.text.trim() };
+    if (json.content) return { text: json.content.trim() };
   } catch (_) {}
 
-  return text;
+  return { text: raw };
 }
 
 // ── Netlify handler ────────────────────────────────────────────
@@ -203,17 +205,26 @@ exports.handler = async (event) => {
     const taskId = await createTask(token, wavBuffer);
     console.log('[asr-scoring] taskId=' + taskId);
 
-    // 5. 輪詢（回傳 taskObj）
+    // 5. 輪詢（回傳完整taskObj）
     const taskObj = await pollTask(token, taskId);
 
     // 6. 下載逐字稿
-    const transcript = await downloadTranscript(token, taskId);
-    console.log('[asr-scoring] transcript="' + transcript + '"');
+    const result = await downloadTranscript(token, taskId, taskObj);
+    console.log('[asr-scoring] transcript="' + result.text + '"' + (result.error ? ' error=' + result.error : ''));
+
+    // 若音檔過短，回傳特殊訊息
+    if (!result.text && result.error && result.error.includes('音檔長度過短')) {
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript: '', error: 'TOO_SHORT' })
+      };
+    }
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript })
+      body: JSON.stringify({ transcript: result.text || '' })
     };
 
   } catch (e) {
