@@ -135,13 +135,40 @@ async function pollTask(token, taskId, maxWaitMs = 120000) {
 
 // ── 下載逐字稿 ────────────────────────────────────────────────
 async function downloadTranscript(token, taskId) {
-  const res = await httpsRequest({
+  // 先取得任務詳細資料，拿到 resultScriptFilePath
+  const taskRes = await httpsRequest({
+    hostname: ASR_HOST, port: ASR_PORT,
+    path: '/api/v1/subtitle/tasks/' + taskId, method: 'GET',
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const taskData = JSON.parse(taskRes.body.toString());
+  const scriptPath = taskData.data && taskData.data[0] && taskData.data[0].resultScriptFilePath;
+  console.log('[asr-scoring] resultScriptFilePath=' + scriptPath);
+
+  if (!scriptPath) return '';
+
+  // 下載逐字稿檔案內容
+  const fileRes = await httpsRequest({
     hostname: ASR_HOST, port: ASR_PORT,
     path: '/api/v1/subtitle/tasks/' + taskId + '/file?target=resultScriptFilePath',
     method: 'GET',
     headers: { 'Authorization': 'Bearer ' + token }
   });
-  return res.body.toString('utf8').trim();
+
+  const text = fileRes.body.toString('utf8').trim();
+  console.log('[asr-scoring] raw transcript length=' + text.length);
+
+  // 如果是 JSON 格式，解析出純文字
+  try {
+    const json = JSON.parse(text);
+    if (Array.isArray(json)) {
+      return json.map(seg => seg.text || seg.word || seg.content || '').join('').trim();
+    }
+    if (json.text) return json.text.trim();
+    if (json.content) return json.content.trim();
+  } catch (_) {}
+
+  return text;
 }
 
 // ── Netlify handler ────────────────────────────────────────────
