@@ -639,6 +639,116 @@ body::after{
       </g>
       <text class="label" x="298" y="508">台東</text>
 
+
+      <!-- ══ 咱兜的台語 浮動文字 ══ -->
+      <defs>
+        <filter id="glowText" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="2.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.9"/>
+        </filter>
+        <linearGradient id="titleGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fff8c0"/>
+          <stop offset="40%" stop-color="#ffe44a"/>
+          <stop offset="100%" stop-color="#ffb020"/>
+        </linearGradient>
+        <linearGradient id="missionGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#ffffff"/>
+          <stop offset="100%" stop-color="#d0f0ff"/>
+        </linearGradient>
+      </defs>
+
+      <g id="missionText" style="pointer-events:none">
+
+        <!-- 半透明背板，讓文字更清晰 -->
+        <rect x="328" y="10" width="88" height="200" rx="12" ry="12"
+          fill="rgba(4,10,22,0.72)" stroke="rgba(255,220,80,0.25)" stroke-width="0.8"/>
+
+        <!-- 閃亮粒子（靠近文字區域） -->
+        <circle cx="332" cy="16" r="1.1" fill="#ffe97a" opacity="0.9">
+          <animate attributeName="opacity" values="0.9;0;0.9" dur="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="r" values="1.1;2.0;1.1" dur="1.8s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="412" cy="20" r="0.9" fill="#fff" opacity="0.8">
+          <animate attributeName="opacity" values="0.8;0.1;0.8" dur="2.3s" begin="0.5s" repeatCount="indefinite"/>
+          <animate attributeName="r" values="0.9;1.7;0.9" dur="2.3s" begin="0.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="331" cy="98" r="1.0" fill="#ffd44a" opacity="0.7">
+          <animate attributeName="opacity" values="0.7;0.1;0.7" dur="1.9s" begin="1.0s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="411" cy="136" r="1.2" fill="#b8f0ff" opacity="0.8">
+          <animate attributeName="opacity" values="0.8;0;0.8" dur="2.1s" begin="0.3s" repeatCount="indefinite"/>
+          <animate attributeName="r" values="1.2;2.1;1.2" dur="2.1s" begin="0.3s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="333" cy="190" r="0.9" fill="#ffe97a" opacity="0.7">
+          <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2.5s" begin="0.7s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="410" cy="206" r="1.0" fill="#fff" opacity="0.6">
+          <animate attributeName="opacity" values="0.6;0;0.6" dur="1.7s" begin="1.3s" repeatCount="indefinite"/>
+        </circle>
+
+        <!-- ✦ 頂部裝飾 -->
+        <text x="372" y="28" text-anchor="middle" font-size="7" fill="#ffe97a"
+          filter="url(#glowText)" opacity="0.9">✦</text>
+
+        <!-- 主標題：咱兜的台語 -->
+        <text x="372" y="50"
+          text-anchor="middle"
+          font-family="'Noto Serif TC', serif"
+          font-size="14" font-weight="900"
+          fill="url(#titleGrad)"
+          filter="url(#glowStrong)"
+          letter-spacing="1.5">
+          咱兜的台語
+          <animate attributeName="opacity" values="1;0.8;1" dur="3s" repeatCount="indefinite"/>
+        </text>
+
+        <!-- 金色裝飾線 -->
+        <line x1="334" y1="56" x2="410" y2="56"
+          stroke="#ffe97a" stroke-width="0.7" opacity="0.5"
+          stroke-dasharray="2,3"/>
+
+        <!-- 四大使命（純白加陰影，最清晰） -->
+        <text x="372" y="85" text-anchor="middle"
+          font-family="'Noto Serif TC', serif" font-size="11" font-weight="700"
+          fill="#ffffff" filter="url(#shadow)" letter-spacing="0.8">
+          為文化生根
+          <animate attributeName="opacity" values="1;0.65;1" dur="4.5s" begin="0s" repeatCount="indefinite"/>
+        </text>
+        <text x="372" y="112" text-anchor="middle"
+          font-family="'Noto Serif TC', serif" font-size="11" font-weight="700"
+          fill="#ffffff" filter="url(#shadow)" letter-spacing="0.8">
+          為台語續命
+          <animate attributeName="opacity" values="1;0.65;1" dur="4.5s" begin="0.9s" repeatCount="indefinite"/>
+        </text>
+        <text x="372" y="139" text-anchor="middle"
+          font-family="'Noto Serif TC', serif" font-size="11" font-weight="700"
+          fill="#ffffff" filter="url(#shadow)" letter-spacing="0.8">
+          為家族找傳承
+          <animate attributeName="opacity" values="1;0.65;1" dur="4.5s" begin="1.8s" repeatCount="indefinite"/>
+        </text>
+        <text x="372" y="166" text-anchor="middle"
+          font-family="'Noto Serif TC', serif" font-size="11" font-weight="700"
+          fill="#ffffff" filter="url(#shadow)" letter-spacing="0.8">
+          為台灣創文明
+          <animate attributeName="opacity" values="1;0.65;1" dur="4.5s" begin="2.7s" repeatCount="indefinite"/>
+        </text>
+
+        <!-- 底部裝飾 -->
+        <line x1="342" y1="175" x2="402" y2="175"
+          stroke="rgba(200,230,255,0.4)" stroke-width="0.6"/>
+        <text x="372" y="190" text-anchor="middle" font-size="8"
+          fill="#ffe97a" filter="url(#glowText)" opacity="0.85">
+          ✦ ✦ ✦
+          <animate attributeName="opacity" values="0.85;0.25;0.85" dur="2.8s" repeatCount="indefinite"/>
+        </text>
+      </g>
       <!-- Tokens layer -->
       <g id="tokLayer"></g>
     </svg>
@@ -1216,14 +1326,14 @@ function drawCard(tp){
   addLog((tp==='destiny'?'◆ 命運':'◇ 機會')+': '+cd.ti+(cd.v?' ('+(cd.v>0?'+':'')+cd.v+')':''),'lc');
   document.getElementById('cardAct').innerHTML='<button class="cbtn" onclick="afterCard()">✕ 確認</button>';
   document.getElementById('mCard').classList.add('show');
-  if(p.ai){setTimeout(afterCard,2800);}
+  if(p.ai){setTimeout(afterCard,5000);}
 }
 
 function afterCard(){
   closeCardModal();
   const p=PL[cur],ci=RO[p.pi];
   if(reroll){reroll=false;addLog('🎲 '+p.n+' 再擲一次！','lc');
-    p.ai?setTimeout(aiTurn,2500):(document.getElementById('rollBtn').disabled=false);wm=false;return;}
+    p.ai?setTimeout(aiTurn,5000):(document.getElementById('rollBtn').disabled=false);wm=false;return;}
   showProvThenNext(ci,p);
 }
 
@@ -1311,7 +1421,7 @@ function showProvThenNext(ci, pl) {
   document.getElementById('mProv').classList.add('show');
   speakProv(pv.tw);   // ← 自動播放台語
   addLog('📖「' + pv.tw + '」', 'lp');
-  if (pl.ai) { setTimeout(closeProverb, 4000); }  // 給台語 TTS 足夠時間播放
+  if (pl.ai) { setTimeout(closeProverb, 6500); }  // 給台語 TTS 足夠時間播放
 }
 
 function closeProverb() {
@@ -1326,7 +1436,7 @@ function closeProverb() {
 function nxTurn(){
   cur=(cur+1)%PL.length;
   rHud();rTok();
-  PL[cur].ai?setTimeout(aiTurn,3000):(document.getElementById('rollBtn').disabled=false);
+  PL[cur].ai?setTimeout(aiTurn,5500):(document.getElementById('rollBtn').disabled=false);
 }
 
 function aiTurn(){
