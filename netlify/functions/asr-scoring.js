@@ -1,50 +1,24 @@
 // netlify/functions/asr-scoring.js
 // ============================================================
-// 台語發音評分 ASR 中繼 function
+// 台語發音評分 - 使用 GOP API (gop.nptu.edu.tw)
 // 咱兜的台語 — 劍橋分析股份有限公司
 // ============================================================
 // 流程：
-//   1. 接收 GAS 傳來的 { messageId, lineToken }
+//   1. 接收 GAS 傳來的 { messageId, lineToken, taigiText, tailoText }
 //   2. 從 LINE API 下載音檔（m4a）
 //   3. ffmpeg 轉換 m4a → WAV PCM s16le 16kHz mono
-//   4. 登入 NYCU BRONCI ASR（File Inference API V3.5）取得 token
-//   5. multipart/form-data 上傳 WAV 建立任務
-//   6. 輪詢任務狀態（status=3 成功）
-//   7. 下載 resultScriptFilePath（逐字稿純文字）
-//   8. 回傳 { transcript }
+//   4. POST 到 gop.nptu.edu.tw/api/v1/score
+//   5. 回傳 { scores, totalScore }
 // ============================================================
 
-const https = require('https');
-const http  = require('http');
-const path  = require('path');
-const os    = require('os');
-const fs    = require('fs');
+const https  = require('https');
+const path   = require('path');
+const os     = require('os');
+const fs     = require('fs');
 const { execSync } = require('child_process');
 const ffmpegPath    = require('ffmpeg-static');
 
-const ASR_HOST  = '140.113.30.204';
-const ASR_PORT  = 8451;
-const ASR_USER  = 'chernben';
-const ASR_PASS  = 'SRGER#342sd';
-const ASR_MODEL = 'taigi-roma-0814';
-
-// ── HTTPS helper（忽略自簽憑證）──────────────────────────────
-function httpsRequest(options, body) {
-  return new Promise((resolve, reject) => {
-    options.rejectUnauthorized = false;
-    const req = https.request(options, (res) => {
-      const chunks = [];
-      res.on('data', c => chunks.push(c));
-      res.on('end', () => {
-        const raw = Buffer.concat(chunks);
-        resolve({ statusCode: res.statusCode, body: raw });
-      });
-    });
-    req.on('error', reject);
-    if (body) req.write(body);
-    req.end();
-  });
-}
+const GOP_HOST = 'gop.nptu.edu.tw';
 
 // ── 從 LINE API 下載音檔 ──────────────────────────────────────
 function downloadLineAudio(messageId, lineToken) {
@@ -73,124 +47,82 @@ function downloadLineAudio(messageId, lineToken) {
   });
 }
 
-// ── 登入取 token ──────────────────────────────────────────────
-async function getToken() {
-  const payload = Buffer.from(JSON.stringify({
-    username: ASR_USER,
-    password: ASR_PASS,
-    rememberMe: 0
-  }));
-  const res = await httpsRequest({
-    hostname: ASR_HOST, port: ASR_PORT,
-    path: '/api/v1/login', method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': payload.length
-    }
-  }, payload);
-  const data = JSON.parse(res.body.toString());
-  if (data.code !== 200) throw new Error('ASR login failed: ' + JSON.stringify(data));
-  return data.token;
-}
+// ── 呼叫 GOP API ──────────────────────────────────────────────
+function callGopApi(wavBuffer, ansStr, ansTL) {
+  return new Promise((resolve, reject) => {
+    const boundary = '----GopBoundary' + Date.now();
+    const CRLF = '\r\n';
 
-// ── 建立任務（multipart/form-data）────────────────────────────
-async function createTask(token, wavBuffer) {
-  const boundary = '----NetlifyASR' + Date.now();
-  const CRLF = '\r\n';
-
-  const fields = [
-    ['sourceType', '2'],
-    ['title',      'scoring-' + Date.now()],
-    ['modelName',  ASR_MODEL],
-    ['dspMode',    '1'],
-  ];
-
-  let textParts = Buffer.alloc(0);
-  for (const [name, value] of fields) {
-    const part =
+    const fileHeader = Buffer.from(
       '--' + boundary + CRLF +
-      'Content-Disposition: form-data; name="' + name + '"' + CRLF + CRLF +
-      value + CRLF;
-    textParts = Buffer.concat([textParts, Buffer.from(part)]);
-  }
+      'Content-Disposition: form-data; name="file"; filename="voice.wav"' + CRLF +
+      'Content-Type: audio/wav' + CRLF + CRLF
+    );
+    const closing = Buffer.from(CRLF + '--' + boundary + '--' + CRLF);
+    const body = Buffer.concat([fileHeader, wavBuffer, closing]);
 
-  const audioHeader = Buffer.from(
-    '--' + boundary + CRLF +
-    'Content-Disposition: form-data; name="audio"; filename="voice.wav"' + CRLF +
-    'Content-Type: audio/wav' + CRLF + CRLF
-  );
-  const closing = Buffer.from(CRLF + '--' + boundary + '--' + CRLF);
+    const ansTLEncoded = encodeURIComponent(ansTL);
+    const ansStrEncoded = encodeURIComponent(ansStr);
+    const queryPath = '/api/v1/score?ans_str=' + ansStrEncoded + '&ans_TL=' + ansTLEncoded;
 
-  const body = Buffer.concat([textParts, audioHeader, wavBuffer, closing]);
+    console.log('[asr-scoring] GOP path=' + queryPath.substring(0, 80));
 
-  const res = await httpsRequest({
-    hostname: ASR_HOST, port: ASR_PORT,
-    path: '/api/v1/subtitle/tasks', method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'multipart/form-data; boundary=' + boundary,
-      'Content-Length': body.length
-    }
-  }, body);
+    const options = {
+      hostname: GOP_HOST,
+      path: queryPath,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'multipart/form-data; boundary=' + boundary,
+        'Content-Length': body.length
+      }
+    };
 
-  const data = JSON.parse(res.body.toString());
-  if (data.code !== 200) throw new Error('Create task failed: ' + JSON.stringify(data));
-  return data.id;
-}
-
-// ── 輪詢任務狀態 ──────────────────────────────────────────────
-async function pollTask(token, taskId, maxWaitMs = 120000) {
-  const start = Date.now();
-  while (Date.now() - start < maxWaitMs) {
-    await new Promise(r => setTimeout(r, 4000));
-
-    const res = await httpsRequest({
-      hostname: ASR_HOST, port: ASR_PORT,
-      path: '/api/v1/subtitle/tasks/' + taskId, method: 'GET',
-      headers: { 'Authorization': 'Bearer ' + token }
+    const req = https.request(options, (res) => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        const raw = Buffer.concat(chunks).toString('utf8');
+        console.log('[asr-scoring] GOP HTTP=' + res.statusCode + ' len=' + raw.length);
+        if (res.statusCode !== 200) {
+          reject(new Error('GOP API failed HTTP ' + res.statusCode + ': ' + raw.substring(0, 200)));
+          return;
+        }
+        try {
+          resolve(JSON.parse(raw));
+        } catch(e) {
+          reject(new Error('GOP JSON parse failed: ' + raw.substring(0, 100)));
+        }
+      });
     });
-
-    const data = JSON.parse(res.body.toString());
-    if (data.code !== 200 || !data.data || !data.data[0]) continue;
-
-    const status = data.data[0].status;
-    console.log('[asr-scoring] poll taskId=' + taskId + ' status=' + status);
-
-    if (status === 3) return data.data[0];
-    if (status === 4 || status === 5) throw new Error('Task failed, status=' + status);
-  }
-  throw new Error('ASR timeout (120s)');
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
 }
 
-// ── 下載逐字稿 ────────────────────────────────────────────────
-async function downloadTranscript(token, taskId, taskObj) {
-  if (taskObj && taskObj.resultComment && taskObj.resultScriptFileExist === 0) {
-    console.log('[asr-scoring] no script: ' + taskObj.resultComment);
-    return { text: '', error: taskObj.resultComment };
-  }
+// ── 計算總分 ──────────────────────────────────────────────────
+function calcTotalScore(gopResult) {
+  if (!Array.isArray(gopResult) || gopResult.length === 0) return 0;
 
-  const res = await httpsRequest({
-    hostname: ASR_HOST, port: ASR_PORT,
-    path: '/api/v1/subtitle/tasks/' + taskId + '/file?target=resultScriptFilePath',
-    method: 'GET',
-    headers: { 'Authorization': 'Bearer ' + token }
-  });
+  // 過濾掉 SIL（靜音）
+  const syllables = gopResult.filter(s => s.syllable !== 'SIL' && s.gop_score !== undefined);
+  if (syllables.length === 0) return 0;
 
-  const raw = res.body.toString('utf8').trim();
-  console.log('[asr-scoring] file HTTP=' + res.statusCode + ' len=' + raw.length + ' preview=' + raw.substring(0, 100));
+  const avg = syllables.reduce((sum, s) => sum + (s.gop_score || 0), 0) / syllables.length;
+  // GOP 分數通常是 0~100，直接用
+  return Math.min(100, Math.max(0, Math.round(avg)));
+}
 
-  if (!raw) return { text: '', error: 'empty' };
-
-  try {
-    const json = JSON.parse(raw);
-    if (Array.isArray(json)) {
-      return { text: json.map(s => s.text || s.word || s.content || '').join('').trim() };
-    }
-    if (json.text) return { text: json.text.trim() };
-    if (json.content) return { text: json.content.trim() };
-  } catch (_) {}
-
-  return { text: raw };
+// ── 產生逐音節結果摘要 ──────────────────────────────────────
+function buildSyllableSummary(gopResult) {
+  if (!Array.isArray(gopResult)) return [];
+  return gopResult
+    .filter(s => s.syllable !== 'SIL')
+    .map(s => ({
+      syllable: s.syllable || '',
+      score: Math.round(s.gop_score || 0),
+      status: (s.gop_score || 0) >= 60 ? 'ok' : 'wrong'
+    }));
 }
 
 // ── Netlify handler ────────────────────────────────────────────
@@ -199,13 +131,17 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  let messageId, lineToken;
+  let messageId, lineToken, taigiText, tailoText;
   try {
     const body = JSON.parse(event.body || '{}');
     messageId = body.messageId;
-    lineToken = body.lineToken;
+    lineToken  = body.lineToken;
+    taigiText  = body.taigiText  || '';
+    tailoText  = body.tailoText  || '';
     if (!messageId) throw new Error('messageId missing');
-    if (!lineToken) throw new Error('lineToken missing');
+    if (!lineToken)  throw new Error('lineToken missing');
+    if (!taigiText)  throw new Error('taigiText missing');
+    if (!tailoText)  throw new Error('tailoText missing');
   } catch (e) {
     return { statusCode: 400, body: JSON.stringify({ error: e.message }) };
   }
@@ -227,40 +163,29 @@ exports.handler = async (event) => {
     const wavBuffer = fs.readFileSync(outFile);
     console.log('[asr-scoring] WAV size:', wavBuffer.length);
 
-    // 3. 登入
-    const token = await getToken();
-    console.log('[asr-scoring] token OK');
+    // 3. 呼叫 GOP API
+    const gopResult = await callGopApi(wavBuffer, taigiText, tailoText);
+    console.log('[asr-scoring] GOP result syllables=' + (Array.isArray(gopResult) ? gopResult.length : 'N/A'));
 
-    // 4. 建立任務
-    const taskId = await createTask(token, wavBuffer);
-    console.log('[asr-scoring] taskId=' + taskId);
-
-    // 5. 輪詢
-    const taskObj = await pollTask(token, taskId);
-
-    // 6. 下載逐字稿
-    const result = await downloadTranscript(token, taskId, taskObj);
-    console.log('[asr-scoring] transcript="' + result.text + '"' + (result.error ? ' error=' + result.error : ''));
-
-    if (!result.text && result.error && result.error.includes('音檔長度過短')) {
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript: '', error: 'TOO_SHORT' })
-      };
-    }
+    // 4. 計算總分
+    const totalScore = calcTotalScore(gopResult);
+    const syllables  = buildSyllableSummary(gopResult);
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript: result.text || '' })
+      body: JSON.stringify({
+        totalScore,
+        syllables,
+        raw: gopResult
+      })
     };
 
   } catch (e) {
     console.error('[asr-scoring] ERROR:', e.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: e.message, transcript: '' })
+      body: JSON.stringify({ error: e.message })
     };
   } finally {
     try { fs.unlinkSync(inFile);  } catch (_) {}
