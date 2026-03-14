@@ -714,10 +714,7 @@ function clearOut(){document.getElementById('oTA').value='';document.getElementB
 function toggleMic(){isR=!isR;const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');if(isR){btn.classList.add('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;w.classList.add('on');if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;rec=new SR();rec.lang=lc==='auto'?'ja-JP':lc;rec.interimResults=true;rec.onresult=e=>{document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');if(e.results[e.results.length-1].isFinal){stopMic();doTx();}};rec.onerror=()=>stopMic();rec.start();}else{setTimeout(()=>{document.getElementById('inpTA').value='Hello, I love Taiwan!';stopMic();doTx();},2000);}}else stopMic();}
 function stopMic(){isR=false;const btn=document.getElementById('micBtn');btn.classList.remove('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;document.getElementById('mw1').classList.remove('on');if(rec){try{rec.stop();}catch(e){}}}
 
-function toggleOMic(){isOR=!isOR;const btn=document.getElementById('oMicBtn'),w=document.getElementById('mw2');if(isOR){btn.classList.add('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;w.classList.add('on');if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const r2=new SR();r2.lang=oltts;r2.interimResults=true;r2.onresult=e=>{document.getElementById('oTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');if(e.results[e.results.length-1].isFinal){stopOMic();doOTx();}};r2.onerror=()=>stopOMic();r2.onend=()=>{if(isOR)stopOMic();};r2.start();}else{alert('此瀏覽器不支援語音輸入');stopOMic();}}else stopOMic();}
-function stopOMic(){isOR=false;const btn=document.getElementById('oMicBtn');btn.classList.remove('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;document.getElementById('mw2').classList.remove('on');}
-
-async function doTx(){
+function copyR(){
   const text=document.getElementById('inpTA').value.trim();
   if(!text)return;
   const btn=document.getElementById('txBtn');
@@ -746,12 +743,135 @@ async function doTx(){
 
 async function doOTx(){const text=document.getElementById('oTA').value.trim();if(!text)return;const btn=document.getElementById('oTxBtn');btn.innerHTML=`<div class="spin"></div>翻譯中…`;btn.style.pointerEvents='none';const t0=Date.now();try{const ep=os==='taigi'?'/translate/from-taigi':'/translate/mandarin-to-world';const r=await fetch(API+ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,targetLang:olc})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');const el=((Date.now()-t0)/1000).toFixed(1);document.getElementById('oe2').style.display='none';const res=document.getElementById('or2');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');setFlag('oResFlag',olfc,22,15);document.getElementById('oResLName').textContent=oln;document.getElementById('oResTxt').textContent=d.translated||'';const tag=document.getElementById('ttag2');tag.textContent=el+'秒';tag.className='timer-tag';document.getElementById('stxt2').textContent=`完成 · ${el}秒`;if(document.getElementById('oAutoPlayTog').classList.contains('on'))setTimeout(playOAudio,300);}catch(e){document.getElementById('stxt2').textContent='錯誤：'+e.message;}btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;btn.style.pointerEvents='';}
 
-function playAudio(){const btn=document.getElementById('playBtn');btn.classList.add('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;const t=document.getElementById('taigiTxt').textContent;if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(t);u.lang='zh-TW';u.rate=spds[si];u.onend=stopAudio;speechSynthesis.speak(u);}else setTimeout(stopAudio,2000);}
-function stopAudio(){const btn=document.getElementById('playBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語`;}}
+// ── 播放台語語音（接 NYCU TTS，有男女聲）──
+let currentAudio = null;
+
+async function playAudio(){
+  const btn=document.getElementById('playBtn');
+  // 如果正在播放就停止
+  if(currentAudio){currentAudio.pause();currentAudio=null;stopAudio();return;}
+
+  const tailo=document.getElementById('taigiTxt').textContent;
+  if(!tailo)return;
+  btn.classList.add('playing');
+  btn.innerHTML=`<div class="spin" style="border-color:rgba(255,255,255,0.3);border-top-color:white"></div>載入中…`;
+
+  try{
+    // 用翻譯時記住的原始華語文字送 TTS（直接送華語，廖教授 TTS 內部會轉台語）
+    const srcText=document.getElementById('inpTA').value.trim()||tailo;
+    const r=await fetch(API+'/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:srcText,speaker:vc})});
+    const d=await r.json();
+    if(!r.ok||!d.audioBase64)throw new Error('TTS 失敗');
+    // base64 WAV → Audio
+    const wav=atob(d.audioBase64);
+    const buf=new Uint8Array(wav.length);
+    for(let i=0;i<wav.length;i++)buf[i]=wav.charCodeAt(i);
+    const blob=new Blob([buf],{type:'audio/wav'});
+    const url=URL.createObjectURL(blob);
+    currentAudio=new Audio(url);
+    currentAudio.playbackRate=spds[si];
+    currentAudio.onended=stopAudio;
+    currentAudio.play();
+    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
+  }catch(e){
+    console.log('TTS error:',e);
+    // fallback: 瀏覽器 TTS
+    if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(tailo);u.lang='zh-TW';u.rate=spds[si];u.onend=stopAudio;speechSynthesis.speak(u);btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;}
+    else stopAudio();
+  }
+}
+function stopAudio(){
+  if(currentAudio){currentAudio.pause();currentAudio=null;}
+  const btn=document.getElementById('playBtn');
+  if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語`;}
+}
+
 function playOAudio(){const btn=document.getElementById('oPlayBtn');btn.classList.add('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;const t=document.getElementById('oResTxt').textContent;if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(t);u.lang=oltts;u.rate=spds[osi];u.onend=stopOAudio;speechSynthesis.speak(u);}else setTimeout(stopOAudio,2000);}
 function stopOAudio(){const btn=document.getElementById('oPlayBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放給對方聽`;}}
 
-function copyR(){navigator.clipboard?.writeText(document.getElementById('taigiTxt').textContent+'\n'+document.getElementById('tailoTxt').textContent);document.getElementById('stxt1').textContent='已複製 ✓';}
+// ── 麥克風：LINE 用 MediaRecorder 錄音模式，Safari/Chrome 用 Web Speech ──
+let mediaRec=null, audioChunks=[];
+
+async function toggleMic(){
+  if(isR){stopMic();return;}
+
+  const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');
+  const isLine=/Line/i.test(navigator.userAgent);
+
+  // 優先嘗試 MediaRecorder（LINE/Safari 都支援）
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      isR=true;
+      btn.classList.add('mic-on');
+      btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止錄音`;
+      w.classList.add('on');
+      audioChunks=[];
+      mediaRec=new MediaRecorder(stream);
+      mediaRec.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
+      mediaRec.onstop=async()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        const blob=new Blob(audioChunks,{type:'audio/webm'});
+        // 送到 ASR 辨識
+        await sendAudioToASR(blob);
+      };
+      mediaRec.start();
+      // 最長 30 秒自動停止
+      setTimeout(()=>{if(isR)stopMic();},30000);
+    }catch(e){
+      if(e.name==='NotAllowedError')alert('請允許麥克風權限\n設定 → Safari → 麥克風 → 允許');
+      else alert('無法使用麥克風：'+e.message);
+    }
+  } else {
+    // Web Speech API fallback
+    if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
+      isR=true;
+      btn.classList.add('mic-on');
+      btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
+      w.classList.add('on');
+      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+      rec=new SR();
+      const lmap={auto:'zh-TW','zh-TW':'zh-TW',ja:'ja-JP',en:'en-US',ko:'ko-KR',vi:'vi-VN',id:'id-ID',ms:'ms-MY',th:'th-TH',tl:'fil-PH',fr:'fr-FR',de:'de-DE',es:'es-ES',ar:'ar-SA'};
+      rec.lang=lmap[lc]||'zh-TW';
+      rec.interimResults=true;
+      rec.onresult=e=>{
+        document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');
+        if(e.results[e.results.length-1].isFinal){stopMic();doTx();}
+      };
+      rec.onerror=()=>stopMic();
+      rec.onend=()=>{if(isR)stopMic();};
+      rec.start();
+    } else {
+      alert('此裝置不支援語音輸入，請直接打字');
+    }
+  }
+}
+
+function stopMic(){
+  isR=false;
+  if(mediaRec&&mediaRec.state!=='inactive'){mediaRec.stop();}
+  if(rec){try{rec.stop();}catch(e){}}
+  const btn=document.getElementById('micBtn');
+  btn.classList.remove('mic-on');
+  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;
+  document.getElementById('mw1').classList.remove('on');
+}
+
+async function sendAudioToASR(blob){
+  document.getElementById('stxt1').textContent='辨識中…';
+  try{
+    // 把音訊轉 base64 送到翻譯 API（用 Google Speech 或讓用戶看文字）
+    // 簡單做法：直接轉文字用 Web Speech，不行就提示手動輸入
+    // 這裡先用 URL 播放讓用戶確認
+    const url=URL.createObjectURL(blob);
+    const a=new Audio(url);a.play();
+    // 用 SpeechRecognition 從 blob 辨識（部分瀏覽器支援）
+    document.getElementById('stxt1').textContent='請在上方輸入框輸入剛才說的話，或重新錄音';
+    // TODO: 等廖教授 ASR 串接後，這裡改成送 ASR
+  }catch(e){
+    document.getElementById('stxt1').textContent='辨識失敗，請手動輸入';
+  }
+}navigator.clipboard?.writeText(document.getElementById('taigiTxt').textContent+'\n'+document.getElementById('tailoTxt').textContent);document.getElementById('stxt1').textContent='已複製 ✓';}
 function shareR(){if(navigator.share)navigator.share({title:'咱兜的台語',text:document.getElementById('taigiTxt').textContent});else copyR();}
 function copyO(){navigator.clipboard?.writeText(document.getElementById('oResTxt').textContent);document.getElementById('stxt2').textContent='已複製 ✓';}
 function shareO(){if(navigator.share)navigator.share({title:'咱兜的台語',text:document.getElementById('oResTxt').textContent});else copyO();}
