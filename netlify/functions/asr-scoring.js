@@ -18,7 +18,7 @@ const fs     = require('fs');
 const { execSync } = require('child_process');
 const ffmpegPath    = require('ffmpeg-static');
 
-const GOP_HOST = 'gop.nptu.edu.tw';
+const RELAY_URL = 'https://asr.bitfull.tw/asr';
 
 // ── 從 LINE API 下載音檔 ──────────────────────────────────────
 function downloadLineAudio(messageId, lineToken) {
@@ -146,49 +146,43 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: e.message }) };
   }
 
-  const tmpDir  = os.tmpdir();
-  const inFile  = path.join(tmpDir, 'scoring_in_'  + Date.now() + '.m4a');
-  const outFile = path.join(tmpDir, 'scoring_out_' + Date.now() + '.wav');
-
   try {
-    // 1. 從 LINE 下載音檔
-    const audioBuffer = await downloadLineAudio(messageId, lineToken);
-    fs.writeFileSync(inFile, audioBuffer);
+    // 轉發給中繼伺服器處理
+    console.log('[asr-scoring] 轉發到中繼伺服器 messageId=' + messageId);
+    const relayResp = await fetch(RELAY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageId, lineToken })
+    });
+    const relayData = await relayResp.json();
+    console.log('[asr-scoring] 中繼回傳 transcript="' + (relayData.transcript || '') + '"');
 
-    // 2. ffmpeg 轉 WAV PCM s16le 16kHz mono
-    execSync(
-      `"${ffmpegPath}" -y -i "${inFile}" -ac 1 -ar 16000 -c:a pcm_s16le "${outFile}"`,
-      { timeout: 30000 }
-    );
-    const wavBuffer = fs.readFileSync(outFile);
-    console.log('[asr-scoring] WAV size:', wavBuffer.length);
+    if (!relayResp.ok) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: relayData.error || 'relay failed' })
+      };
+    }
 
-    // 3. 呼叫 GOP API
-    const gopResult = await callGopApi(wavBuffer, taigiText, tailoText);
-    console.log('[asr-scoring] GOP result syllables=' + (Array.isArray(gopResult) ? gopResult.length : 'N/A'));
-
-    // 4. 計算總分
-    const totalScore = calcTotalScore(gopResult);
-    const syllables  = buildSyllableSummary(gopResult);
+    if (relayData.error === 'TOO_SHORT') {
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript: '', error: 'TOO_SHORT' })
+      };
+    }
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        totalScore,
-        syllables,
-        raw: gopResult
-      })
+      body: JSON.stringify({ transcript: relayData.transcript || '' })
     };
 
   } catch (e) {
     console.error('[asr-scoring] ERROR:', e.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: e.message })
+      body: JSON.stringify({ error: e.message, transcript: '' })
     };
-  } finally {
-    try { fs.unlinkSync(inFile);  } catch (_) {}
-    try { fs.unlinkSync(outFile); } catch (_) {}
   }
 };
