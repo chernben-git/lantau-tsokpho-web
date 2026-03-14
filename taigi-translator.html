@@ -652,14 +652,37 @@ function renderResult(taigi,tailo){
 }
 
 // ════ MIC ════
+const isLINE=/Line/i.test(navigator.userAgent);
+
+// LINE 瀏覽器頂部提示條
+if(isLINE){
+  const banner=document.createElement('div');
+  banner.style.cssText='position:fixed;top:56px;left:0;right:0;z-index:999;background:#2B7A0B;color:white;font-size:13px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.2)';
+  banner.innerHTML=`<span>💡 在 Safari 開啟可使用語音翻譯</span><button onclick="openInSafari()" style="background:white;color:#2B7A0B;border:none;border-radius:12px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">開啟 Safari</button>`;
+  document.body.appendChild(banner);
+}
+
+function openInSafari(){
+  // LINE 的「在瀏覽器中開啟」方式
+  window.open(window.location.href,'_blank');
+}
+
 // Web Speech API 優先（邊說邊辨識，說完自動翻譯+播放）
 // MediaRecorder 備用（LINE 不支援 Web Speech 時）
 async function toggleMic(){
   if(isR){stopMic();return;}
+
+  // LINE 瀏覽器點麥克風時直接引導去 Safari
+  if(isLINE){
+    if(confirm('語音輸入需要在 Safari 中使用\n\n點確定後請點右上角「⋯」→「在瀏覽器中開啟」')){
+      openInSafari();
+    }
+    return;
+  }
+
   const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');
 
   if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
-    // ✅ Web Speech：即時辨識，說完自動翻譯
     isR=true;btn.classList.add('mic-on');
     btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
     w.classList.add('on');
@@ -674,14 +697,13 @@ async function toggleMic(){
     };
     rec.onerror=(e)=>{
       if(e.error==='not-allowed'||e.error==='service-not-allowed')
-        alert('請在 Safari 中開啟此頁面，或允許麥克風權限');
+        alert('請允許麥克風權限：設定 → Safari → 麥克風 → 允許');
       stopMic();
     };
     rec.onend=()=>{if(isR)stopMic();};
     rec.start();
 
   } else if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
-    // 備用：MediaRecorder，錄完後手動按翻譯
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
       isR=true;btn.classList.add('mic-on');
