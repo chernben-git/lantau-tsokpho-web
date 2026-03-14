@@ -594,24 +594,31 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
 </div>
 
 <!-- Safari Guide Modal for LINE -->
-<div id="safariGuide" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:flex-end;justify-content:center">
+<div id="safariGuide" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:flex-end;justify-content:center;overflow-y:auto">
   <div style="background:white;border-radius:20px 20px 0 0;padding:28px 24px 48px;width:100%;max-width:480px">
     <div style="font-size:22px;font-weight:900;color:#16162A;margin-bottom:6px;font-family:'Noto Serif TC',serif">用語音翻譯台語</div>
-    <div style="font-size:13px;color:#6B7280;margin-bottom:24px;line-height:1.65">LINE 內建瀏覽器無法使用麥克風<br>請照以下步驟在 Safari 開啟：</div>
-    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
-      <div style="display:flex;align-items:center;gap:12px;background:#F8F5F0;border-radius:12px;padding:14px">
-        <div style="width:28px;height:28px;border-radius:50%;background:#C8352A;color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
-        <div style="font-size:13.5px;color:#2A2A50">點右下角 <strong>「⋯」</strong> 按鈕</div>
+    <div style="font-size:13px;color:#6B7280;margin-bottom:20px;line-height:1.65">LINE 內建瀏覽器無法使用麥克風<br>有兩種方式可以解決：</div>
+
+    <!-- 方法一：LINE Labs（一勞永逸） -->
+    <div style="background:#FDF6DC;border:1.5px solid #D4A017;border-radius:14px;padding:16px;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:700;color:#8B6914;margin-bottom:10px">⭐ 方法一：一勞永逸設定（推薦）</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:10px;align-items:flex-start"><span style="background:#D4A017;color:white;border-radius:50%;width:20px;height:20px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</span><span style="font-size:13px;color:#2A2A50">開啟 LINE → 點右上角 <strong>齒輪⚙️</strong>（設定）</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start"><span style="background:#D4A017;color:white;border-radius:50%;width:20px;height:20px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</span><span style="font-size:13px;color:#2A2A50">找到 <strong>「LINE Labs」</strong></span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start"><span style="background:#D4A017;color:white;border-radius:50%;width:20px;height:20px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</span><span style="font-size:13px;color:#2A2A50">開啟 <strong>「使用預設瀏覽器開啟連結」</strong></span></div>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;background:#F8F5F0;border-radius:12px;padding:14px">
-        <div style="width:28px;height:28px;border-radius:50%;background:#C8352A;color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
-        <div style="font-size:13.5px;color:#2A2A50">選 <strong>「在瀏覽器中開啟」</strong></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;background:#F8F5F0;border-radius:12px;padding:14px">
-        <div style="width:28px;height:28px;border-radius:50%;background:#C8352A;color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
-        <div style="font-size:13.5px;color:#2A2A50">Safari 開啟後，按 <strong>語音輸入</strong> 說話即可</div>
+      <div style="font-size:12px;color:#8B6914;margin-top:10px">✅ 設定後，以後點連結直接用 Safari 開，永遠不用再手動切換！</div>
+    </div>
+
+    <!-- 方法二：這次手動 -->
+    <div style="background:#F8F5F0;border-radius:14px;padding:16px;margin-bottom:20px">
+      <div style="font-size:14px;font-weight:700;color:#2A2A50;margin-bottom:10px">方法二：這次手動開啟</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:10px;align-items:flex-start"><span style="background:#C8352A;color:white;border-radius:50%;width:20px;height:20px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</span><span style="font-size:13px;color:#2A2A50">點右下角 <strong>「⋯」</strong> 按鈕</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start"><span style="background:#C8352A;color:white;border-radius:50%;width:20px;height:20px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</span><span style="font-size:13px;color:#2A2A50">選 <strong>「在瀏覽器中開啟」</strong></span></div>
       </div>
     </div>
+
     <button onclick="document.getElementById('safariGuide').style.display='none'" style="width:100%;padding:15px;background:#16162A;color:white;border:none;border-radius:14px;font-family:'Noto Serif TC',serif;font-size:16px;font-weight:700;cursor:pointer">我知道了</button>
   </div>
 </div>
