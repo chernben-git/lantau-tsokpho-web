@@ -603,13 +603,80 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
 
 <script>
 const API='https://asr.bitfull.tw';
-let lc='auto',le='🌐',lfc='',vc='female',ovc='female';
+let lc='auto',le='🌐',lfc='',vc='male',ovc='male';
 let si=1,osi=1,isR=false,isOR=false,rec=null;
 let olc='ja',oln='日語',olfc='f-jp',ole='🇯🇵',oltts='ja-JP',os='taigi';
 let caps=JSON.parse(localStorage.getItem('taigiCaps')||'[]');
 let csc='🎂',csn='生日驚喜';
 const spds=[0.7,1.0,1.3];
 const SP={birthday:['🎂','生日驚喜'],travel:['✈️','旅途想念'],future:['🌱','給未來的自己'],family:['🏠','家族傳承'],new_year:['🧧','新年祝福'],custom:['⏰','自訂']};
+
+// ── 修正1：台羅拼音 toggle 正確運作 ──
+// toggle 預設開啟，按下後切換顯示/隱藏
+function toggleTailo(){
+  const tog=document.getElementById('tailoTog');
+  tog.classList.toggle('on');
+  const t=document.getElementById('tailoTxt');
+  t.style.display=tog.classList.contains('on')?'block':'none';
+}
+
+// ── 修正3：數字調台羅 → 漢字+台羅 並列格式 ──
+// API 回傳：taigi=台語漢字（或空）, tailo=數字調台羅
+// 顯示：漢字（大字）+ 台羅拼音（小字）
+function renderResult(taigi, tailo){
+  // taigi 可能空（廖教授 bug），tailo 是確定有的數字調台羅
+  const taigiEl=document.getElementById('taigiTxt');
+  const tailoEl=document.getElementById('tailoTxt');
+
+  if(taigi && taigi!==tailo){
+    // 有漢字：大字顯示漢字，小字顯示台羅
+    taigiEl.textContent=taigi;
+    tailoEl.textContent=tailo||'';
+  } else {
+    // 無漢字（廖教授 bug 中）：直接大字顯示台羅
+    taigiEl.textContent=tailo||taigi||'';
+    tailoEl.textContent='';
+  }
+  // 根據 toggle 決定台羅顯示
+  tailoEl.style.display=document.getElementById('tailoTog').classList.contains('on')?'block':'none';
+}
+
+// ── 修正4：麥克風即時收音（Web Speech API）──
+function toggleMic(){
+  isR=!isR;
+  const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');
+  if(isR){
+    btn.classList.add('mic-on');
+    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
+    w.classList.add('on');
+
+    // 嘗試使用 Web Speech API 即時收音
+    if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
+      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+      rec=new SR();
+      // 語言對應
+      const langMap={auto:'zh-TW','zh-TW':'zh-TW',ja:'ja-JP',en:'en-US',ko:'ko-KR',vi:'vi-VN',id:'id-ID',ms:'ms-MY',th:'th-TH',tl:'fil-PH',fr:'fr-FR',de:'de-DE',es:'es-ES',ar:'ar-SA'};
+      rec.lang=langMap[lc]||'zh-TW';
+      rec.interimResults=true;
+      rec.continuous=false;
+      rec.onresult=e=>{
+        const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+        document.getElementById('inpTA').value=t;
+        if(e.results[e.results.length-1].isFinal){stopMic();doTx();}
+      };
+      rec.onerror=(e)=>{
+        if(e.error==='not-allowed'){alert('請允許麥克風權限');}
+        stopMic();
+      };
+      rec.onend=()=>{if(isR)stopMic();};
+      rec.start();
+    } else {
+      // 不支援時顯示提示
+      alert('此瀏覽器不支援語音輸入，請直接打字');
+      stopMic();
+    }
+  } else stopMic();
+}
 
 function switchM(s){['tr','cap','forum','learn'].forEach(x=>{document.getElementById('ms-'+x).classList.toggle('active',x===s);document.getElementById('nb-'+x).classList.toggle('active',x===s);});}
 function switchDir(d){document.getElementById('pg-in').classList.toggle('active',d==='in');document.getElementById('pg-out').classList.toggle('active',d==='out');document.getElementById('tab-in').classList.toggle('active',d==='in');document.getElementById('tab-out').classList.toggle('active',d==='out');}
@@ -625,7 +692,6 @@ function toggleOLP(){olo=!olo;document.getElementById('olpBody').classList.toggl
 function selOL(btn,code,fc,em,name,tts){olc=code;oln=name;olfc=fc;ole=em;oltts=tts;document.querySelectorAll('#pg-out .lang-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');setFlag('oSelFlag',fc,24,16);document.getElementById('oSelName').textContent='翻譯成：'+name;setFlag('oResFlag',fc,22,15);document.getElementById('oResLName').textContent=name;olo=false;document.getElementById('olpBody').classList.remove('open');document.getElementById('olpChev').classList.remove('open');}
 function selOS(m,btn){os=m;document.querySelectorAll('.srcbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('oSrcDisp').textContent=m==='taigi'?'🗣️ 台語':'🇹🇼 華語';document.getElementById('oTA').placeholder=m==='taigi'?'輸入台語文字…':'輸入華語文字…';}
 
-function toggleTailo(){const t=document.getElementById('tailoTxt');t.style.display=t.style.display==='none'?'block':'none';}
 function setV(v,btn){vc=v;document.querySelectorAll('#pg-in .vbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function setOV(v,btn){ovc=v;document.querySelectorAll('#pg-out .vbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function setSpd(i,btn){si=i;document.querySelectorAll('#pg-in .spd').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
@@ -640,10 +706,35 @@ function clearOut(){document.getElementById('oTA').value='';document.getElementB
 function toggleMic(){isR=!isR;const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');if(isR){btn.classList.add('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;w.classList.add('on');if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;rec=new SR();rec.lang=lc==='auto'?'ja-JP':lc;rec.interimResults=true;rec.onresult=e=>{document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');if(e.results[e.results.length-1].isFinal){stopMic();doTx();}};rec.onerror=()=>stopMic();rec.start();}else{setTimeout(()=>{document.getElementById('inpTA').value='Hello, I love Taiwan!';stopMic();doTx();},2000);}}else stopMic();}
 function stopMic(){isR=false;const btn=document.getElementById('micBtn');btn.classList.remove('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;document.getElementById('mw1').classList.remove('on');if(rec){try{rec.stop();}catch(e){}}}
 
-function toggleOMic(){isOR=!isOR;const btn=document.getElementById('oMicBtn'),w=document.getElementById('mw2');if(isOR){btn.classList.add('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;w.classList.add('on');setTimeout(()=>{document.getElementById('oTA').value='多謝，恁來台灣！';stopOMic();doOTx();},2000);}else stopOMic();}
+function toggleOMic(){isOR=!isOR;const btn=document.getElementById('oMicBtn'),w=document.getElementById('mw2');if(isOR){btn.classList.add('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;w.classList.add('on');if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const r2=new SR();r2.lang=oltts;r2.interimResults=true;r2.onresult=e=>{document.getElementById('oTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');if(e.results[e.results.length-1].isFinal){stopOMic();doOTx();}};r2.onerror=()=>stopOMic();r2.onend=()=>{if(isOR)stopOMic();};r2.start();}else{alert('此瀏覽器不支援語音輸入');stopOMic();}}else stopOMic();}
 function stopOMic(){isOR=false;const btn=document.getElementById('oMicBtn');btn.classList.remove('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;document.getElementById('mw2').classList.remove('on');}
 
-async function doTx(){const text=document.getElementById('inpTA').value.trim();if(!text)return;const btn=document.getElementById('txBtn');btn.classList.add('loading');btn.innerHTML=`<div class="spin"></div>翻譯中…`;document.getElementById('stxt1').textContent='翻譯中…';const t0=Date.now();try{const r=await fetch(API+'/translate/to-taigi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sourceLang:lc})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');const ms=Date.now()-t0,el=(ms/1000).toFixed(1);document.getElementById('oe1').style.display='none';const res=document.getElementById('or1');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');document.getElementById('taigiTxt').textContent=d.taigi||d.tailo||'';const tt=document.getElementById('tailoTxt');tt.textContent=d.tailo||'';tt.style.display=document.getElementById('tailoTog').classList.contains('on')?'block':'none';const tag=document.getElementById('ttag1');tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=3000?'':' slow');document.getElementById('stxt1').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;if(document.getElementById('autoPlayTog').classList.contains('on'))setTimeout(playAudio,300);addHist(text,d.taigi||d.tailo,le,lfc);}catch(e){document.getElementById('stxt1').textContent='錯誤：'+e.message;}btn.classList.remove('loading');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;}
+async function doTx(){
+  const text=document.getElementById('inpTA').value.trim();
+  if(!text)return;
+  const btn=document.getElementById('txBtn');
+  btn.classList.add('loading');btn.innerHTML=`<div class="spin"></div>翻譯中…`;
+  document.getElementById('stxt1').textContent='翻譯中…';
+  const t0=Date.now();
+  try{
+    const r=await fetch(API+'/translate/to-taigi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sourceLang:lc})});
+    const d=await r.json();
+    if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
+    const ms=Date.now()-t0,el=(ms/1000).toFixed(1);
+    document.getElementById('oe1').style.display='none';
+    const res=document.getElementById('or1');
+    res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
+    // 修正3：漢字+台羅並列顯示
+    renderResult(d.taigi, d.tailo);
+    const tag=document.getElementById('ttag1');
+    tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=3000?'':' slow');
+    document.getElementById('stxt1').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;
+    if(document.getElementById('autoPlayTog').classList.contains('on'))setTimeout(playAudio,300);
+    addHist(text,d.taigi||d.tailo,le,lfc);
+  }catch(e){document.getElementById('stxt1').textContent='錯誤：'+e.message;}
+  btn.classList.remove('loading');
+  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;
+}
 
 async function doOTx(){const text=document.getElementById('oTA').value.trim();if(!text)return;const btn=document.getElementById('oTxBtn');btn.innerHTML=`<div class="spin"></div>翻譯中…`;btn.style.pointerEvents='none';const t0=Date.now();try{const ep=os==='taigi'?'/translate/from-taigi':'/translate/mandarin-to-world';const r=await fetch(API+ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,targetLang:olc})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');const el=((Date.now()-t0)/1000).toFixed(1);document.getElementById('oe2').style.display='none';const res=document.getElementById('or2');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');setFlag('oResFlag',olfc,22,15);document.getElementById('oResLName').textContent=oln;document.getElementById('oResTxt').textContent=d.translated||'';const tag=document.getElementById('ttag2');tag.textContent=el+'秒';tag.className='timer-tag';document.getElementById('stxt2').textContent=`完成 · ${el}秒`;if(document.getElementById('oAutoPlayTog').classList.contains('on'))setTimeout(playOAudio,300);}catch(e){document.getElementById('stxt2').textContent='錯誤：'+e.message;}btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;btn.style.pointerEvents='';}
 
