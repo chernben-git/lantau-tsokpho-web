@@ -593,6 +593,29 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
   </div>
 </div>
 
+<!-- Safari Guide Modal for LINE -->
+<div id="safariGuide" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:flex-end;justify-content:center">
+  <div style="background:white;border-radius:20px 20px 0 0;padding:28px 24px 48px;width:100%;max-width:480px">
+    <div style="font-size:22px;font-weight:900;color:#16162A;margin-bottom:6px;font-family:'Noto Serif TC',serif">用語音翻譯台語</div>
+    <div style="font-size:13px;color:#6B7280;margin-bottom:24px;line-height:1.65">LINE 內建瀏覽器無法使用麥克風<br>請照以下步驟在 Safari 開啟：</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:12px;background:#F8F5F0;border-radius:12px;padding:14px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#C8352A;color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+        <div style="font-size:13.5px;color:#2A2A50">點右上角 <strong>「⋯」</strong> 選單</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;background:#F8F5F0;border-radius:12px;padding:14px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#C8352A;color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+        <div style="font-size:13.5px;color:#2A2A50">選 <strong>「在瀏覽器中開啟」</strong></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;background:#F8F5F0;border-radius:12px;padding:14px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#C8352A;color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+        <div style="font-size:13.5px;color:#2A2A50">Safari 開啟後，按 <strong>語音輸入</strong> 說話即可</div>
+      </div>
+    </div>
+    <button onclick="document.getElementById('safariGuide').style.display='none'" style="width:100%;padding:15px;background:#16162A;color:white;border:none;border-radius:14px;font-family:'Noto Serif TC',serif;font-size:16px;font-weight:700;cursor:pointer">我知道了</button>
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <nav class="bnav">
   <button class="nbtn active" id="nb-tr" onclick="switchM('tr')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯機</button>
@@ -663,8 +686,8 @@ if(isLINE){
 }
 
 function openInSafari(){
-  // LINE 的「在瀏覽器中開啟」方式
-  window.open(window.location.href,'_blank');
+  // 顯示操作說明 modal
+  document.getElementById('safariGuide').style.display='flex';
 }
 
 // Web Speech API 優先（邊說邊辨識，說完自動翻譯+播放）
