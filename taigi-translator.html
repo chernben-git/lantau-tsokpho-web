@@ -641,8 +641,19 @@ function renderResult(taigi, tailo){
   tailoEl.style.display=document.getElementById('tailoTog').classList.contains('on')?'block':'none';
 }
 
-// ── 修正4：麥克風即時收音（Web Speech API）──
+// ── 修正4：麥克風 - LINE 瀏覽器偵測 + Safari 提示 ──
+function isLineBrowser(){return /Line/i.test(navigator.userAgent);}
+
 function toggleMic(){
+  // LINE 內建瀏覽器無法使用麥克風，引導用外部瀏覽器
+  if(isLineBrowser()){
+    if(confirm('LINE 內建瀏覽器不支援麥克風\n\n要用 Safari 開啟嗎？\n（點確定→右上角選單→在瀏覽器中開啟）')){
+      // 提示用戶操作
+      alert('請點右上角「⋯」→「在瀏覽器中開啟」\n然後再使用語音輸入');
+    }
+    return;
+  }
+
   isR=!isR;
   const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');
   if(isR){
@@ -650,11 +661,9 @@ function toggleMic(){
     btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
     w.classList.add('on');
 
-    // 嘗試使用 Web Speech API 即時收音
     if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
       const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
       rec=new SR();
-      // 語言對應
       const langMap={auto:'zh-TW','zh-TW':'zh-TW',ja:'ja-JP',en:'en-US',ko:'ko-KR',vi:'vi-VN',id:'id-ID',ms:'ms-MY',th:'th-TH',tl:'fil-PH',fr:'fr-FR',de:'de-DE',es:'es-ES',ar:'ar-SA'};
       rec.lang=langMap[lc]||'zh-TW';
       rec.interimResults=true;
@@ -665,14 +674,13 @@ function toggleMic(){
         if(e.results[e.results.length-1].isFinal){stopMic();doTx();}
       };
       rec.onerror=(e)=>{
-        if(e.error==='not-allowed'){alert('請允許麥克風權限');}
+        if(e.error==='not-allowed')alert('請在瀏覽器設定允許麥克風權限');
         stopMic();
       };
       rec.onend=()=>{if(isR)stopMic();};
       rec.start();
     } else {
-      // 不支援時顯示提示
-      alert('此瀏覽器不支援語音輸入，請直接打字');
+      alert('此瀏覽器不支援語音輸入\n請使用 Safari 或 Chrome');
       stopMic();
     }
   } else stopMic();
