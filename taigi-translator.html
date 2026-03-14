@@ -602,6 +602,7 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
 </nav>
 
 <script>
+// ════ STATE ════
 const API='https://asr.bitfull.tw';
 let lc='auto',le='🌐',lfc='',vc='male',ovc='male';
 let si=1,osi=1,isR=false,isOR=false,rec=null;
@@ -610,85 +611,15 @@ let caps=JSON.parse(localStorage.getItem('taigiCaps')||'[]');
 let csc='🎂',csn='生日驚喜';
 const spds=[0.7,1.0,1.3];
 const SP={birthday:['🎂','生日驚喜'],travel:['✈️','旅途想念'],future:['🌱','給未來的自己'],family:['🏠','家族傳承'],new_year:['🧧','新年祝福'],custom:['⏰','自訂']};
+let currentAudio=null;
+let mediaRec=null,audioChunks=[];
+let hist=JSON.parse(localStorage.getItem('taigiHist')||'[]');
 
-// ── 修正1：台羅拼音 toggle 正確運作 ──
-// toggle 預設開啟，按下後切換顯示/隱藏
-function toggleTailo(){
-  const tog=document.getElementById('tailoTog');
-  tog.classList.toggle('on');
-  const t=document.getElementById('tailoTxt');
-  t.style.display=tog.classList.contains('on')?'block':'none';
-}
-
-// ── 修正3：數字調台羅 → 漢字+台羅 並列格式 ──
-// API 回傳：taigi=台語漢字（或空）, tailo=數字調台羅
-// 顯示：漢字（大字）+ 台羅拼音（小字）
-function renderResult(taigi, tailo){
-  // taigi 可能空（廖教授 bug），tailo 是確定有的數字調台羅
-  const taigiEl=document.getElementById('taigiTxt');
-  const tailoEl=document.getElementById('tailoTxt');
-
-  if(taigi && taigi!==tailo){
-    // 有漢字：大字顯示漢字，小字顯示台羅
-    taigiEl.textContent=taigi;
-    tailoEl.textContent=tailo||'';
-  } else {
-    // 無漢字（廖教授 bug 中）：直接大字顯示台羅
-    taigiEl.textContent=tailo||taigi||'';
-    tailoEl.textContent='';
-  }
-  // 根據 toggle 決定台羅顯示
-  tailoEl.style.display=document.getElementById('tailoTog').classList.contains('on')?'block':'none';
-}
-
-// ── 修正4：麥克風 - LINE 瀏覽器偵測 + Safari 提示 ──
-function isLineBrowser(){return /Line/i.test(navigator.userAgent);}
-
-function toggleMic(){
-  // LINE 內建瀏覽器無法使用麥克風，引導用外部瀏覽器
-  if(isLineBrowser()){
-    if(confirm('LINE 內建瀏覽器不支援麥克風\n\n要用 Safari 開啟嗎？\n（點確定→右上角選單→在瀏覽器中開啟）')){
-      // 提示用戶操作
-      alert('請點右上角「⋯」→「在瀏覽器中開啟」\n然後再使用語音輸入');
-    }
-    return;
-  }
-
-  isR=!isR;
-  const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');
-  if(isR){
-    btn.classList.add('mic-on');
-    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
-    w.classList.add('on');
-
-    if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
-      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-      rec=new SR();
-      const langMap={auto:'zh-TW','zh-TW':'zh-TW',ja:'ja-JP',en:'en-US',ko:'ko-KR',vi:'vi-VN',id:'id-ID',ms:'ms-MY',th:'th-TH',tl:'fil-PH',fr:'fr-FR',de:'de-DE',es:'es-ES',ar:'ar-SA'};
-      rec.lang=langMap[lc]||'zh-TW';
-      rec.interimResults=true;
-      rec.continuous=false;
-      rec.onresult=e=>{
-        const t=Array.from(e.results).map(r=>r[0].transcript).join('');
-        document.getElementById('inpTA').value=t;
-        if(e.results[e.results.length-1].isFinal){stopMic();doTx();}
-      };
-      rec.onerror=(e)=>{
-        if(e.error==='not-allowed')alert('請在瀏覽器設定允許麥克風權限');
-        stopMic();
-      };
-      rec.onend=()=>{if(isR)stopMic();};
-      rec.start();
-    } else {
-      alert('此瀏覽器不支援語音輸入\n請使用 Safari 或 Chrome');
-      stopMic();
-    }
-  } else stopMic();
-}
-
+// ════ NAV ════
 function switchM(s){['tr','cap','forum','learn'].forEach(x=>{document.getElementById('ms-'+x).classList.toggle('active',x===s);document.getElementById('nb-'+x).classList.toggle('active',x===s);});}
 function switchDir(d){document.getElementById('pg-in').classList.toggle('active',d==='in');document.getElementById('pg-out').classList.toggle('active',d==='out');document.getElementById('tab-in').classList.toggle('active',d==='in');document.getElementById('tab-out').classList.toggle('active',d==='out');}
 
+// ════ LANG PICKER ════
 let lo=true;
 function toggleLP(){lo=!lo;document.getElementById('lpBody').classList.toggle('open',lo);document.getElementById('lpChev').classList.toggle('open',lo);}
 function setFlag(id,fc,w,h){const e=document.getElementById(id);e.className='flag '+(fc||'');e.style.cssText=`width:${w}px;height:${h}px`;}
@@ -698,25 +629,72 @@ function selL(btn,code,fc,em,name){lc=code;le=em;lfc=fc;document.getElementById(
 let olo=true;
 function toggleOLP(){olo=!olo;document.getElementById('olpBody').classList.toggle('open',olo);document.getElementById('olpChev').classList.toggle('open',olo);}
 function selOL(btn,code,fc,em,name,tts){olc=code;oln=name;olfc=fc;ole=em;oltts=tts;document.querySelectorAll('#pg-out .lang-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');setFlag('oSelFlag',fc,24,16);document.getElementById('oSelName').textContent='翻譯成：'+name;setFlag('oResFlag',fc,22,15);document.getElementById('oResLName').textContent=name;olo=false;document.getElementById('olpBody').classList.remove('open');document.getElementById('olpChev').classList.remove('open');}
-function selOS(m,btn){os=m;document.querySelectorAll('.srcbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('oSrcDisp').textContent=m==='taigi'?'🗣️ 台語':'🇹🇼 華語';document.getElementById('oTA').placeholder=m==='taigi'?'輸入台語文字…':'輸入華語文字…';}
+function selOS(m,btn){os=m;document.querySelectorAll('.srcbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('oSrcDisp').textContent=m==='taigi'?'🗣️ 台語':'🇹🇼 華語';}
 
+// ════ SETTINGS ════
+function toggleTailo(){const tog=document.getElementById('tailoTog');tog.classList.toggle('on');document.getElementById('tailoTxt').style.display=tog.classList.contains('on')?'block':'none';}
 function setV(v,btn){vc=v;document.querySelectorAll('#pg-in .vbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function setOV(v,btn){ovc=v;document.querySelectorAll('#pg-out .vbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function setSpd(i,btn){si=i;document.querySelectorAll('#pg-in .spd').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function setOS(i,btn){osi=i;document.querySelectorAll('#pg-out .spd').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 
+// ════ INPUT ════
 function onInp(){const t=document.getElementById('inpTA').value.trim();if(!t||lc!=='auto')return;const tag=document.getElementById('detTag');const jp=/[\u3040-\u309f\u30a0-\u30ff]/.test(t),kr=/[\uac00-\ud7af]/.test(t),cn=/[\u4e00-\u9fff]/.test(t);if(jp){tag.textContent='🇯🇵 日語';tag.style.display='inline';}else if(kr){tag.textContent='🇰🇷 韓語';tag.style.display='inline';}else if(cn){tag.textContent='🇹🇼 華語';tag.style.display='inline';}else if(t.length>2){tag.textContent='🇺🇸 英語';tag.style.display='inline';}}
-
 function toggleOCR(){document.getElementById('ocrPanel').classList.toggle('show');}
 function clearAll(){document.getElementById('inpTA').value='';document.getElementById('oe1').style.display='block';document.getElementById('or1').classList.remove('show');document.getElementById('detTag').style.display='none';document.getElementById('stxt1').textContent='已連線 · asr.bitfull.tw';}
 function clearOut(){document.getElementById('oTA').value='';document.getElementById('oe2').style.display='block';document.getElementById('or2').classList.remove('show');}
 
-function toggleMic(){isR=!isR;const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');if(isR){btn.classList.add('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;w.classList.add('on');if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;rec=new SR();rec.lang=lc==='auto'?'ja-JP':lc;rec.interimResults=true;rec.onresult=e=>{document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');if(e.results[e.results.length-1].isFinal){stopMic();doTx();}};rec.onerror=()=>stopMic();rec.start();}else{setTimeout(()=>{document.getElementById('inpTA').value='Hello, I love Taiwan!';stopMic();doTx();},2000);}}else stopMic();}
-function stopMic(){isR=false;const btn=document.getElementById('micBtn');btn.classList.remove('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;document.getElementById('mw1').classList.remove('on');if(rec){try{rec.stop();}catch(e){}}}
+function renderResult(taigi,tailo){
+  const tEl=document.getElementById('taigiTxt'),rEl=document.getElementById('tailoTxt');
+  tEl.textContent=taigi&&taigi!==tailo?taigi:(tailo||taigi||'');
+  rEl.textContent=taigi&&taigi!==tailo?(tailo||''):'';
+  rEl.style.display=document.getElementById('tailoTog').classList.contains('on')?'block':'none';
+}
 
-function copyR(){
-  const text=document.getElementById('inpTA').value.trim();
-  if(!text)return;
+// ════ MIC ════
+async function toggleMic(){
+  if(isR){stopMic();return;}
+  const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      isR=true;btn.classList.add('mic-on');
+      btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止錄音`;
+      w.classList.add('on');audioChunks=[];
+      mediaRec=new MediaRecorder(stream);
+      mediaRec.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
+      mediaRec.onstop=()=>{stream.getTracks().forEach(t=>t.stop());document.getElementById('stxt1').textContent='錄音完成，請按翻譯';};
+      mediaRec.start();
+      setTimeout(()=>{if(isR)stopMic();},30000);
+    }catch(e){
+      alert(e.name==='NotAllowedError'?'請允許麥克風權限（設定→Safari→麥克風→允許）':'無法使用麥克風：'+e.message);
+    }
+  }else if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
+    isR=true;btn.classList.add('mic-on');
+    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
+    w.classList.add('on');
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;rec=new SR();
+    const lmap={auto:'zh-TW','zh-TW':'zh-TW',ja:'ja-JP',en:'en-US',ko:'ko-KR',vi:'vi-VN',id:'id-ID',ms:'ms-MY',th:'th-TH',tl:'fil-PH',fr:'fr-FR',de:'de-DE',es:'es-ES',ar:'ar-SA'};
+    rec.lang=lmap[lc]||'zh-TW';rec.interimResults=true;
+    rec.onresult=e=>{document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');if(e.results[e.results.length-1].isFinal){stopMic();doTx();}};
+    rec.onerror=()=>stopMic();rec.onend=()=>{if(isR)stopMic();};rec.start();
+  }else{alert('此裝置不支援語音輸入，請直接打字');}
+}
+function stopMic(){
+  isR=false;
+  if(mediaRec&&mediaRec.state!=='inactive')mediaRec.stop();
+  if(rec){try{rec.stop();}catch(e){}}
+  const btn=document.getElementById('micBtn');
+  btn.classList.remove('mic-on');
+  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;
+  document.getElementById('mw1').classList.remove('on');
+}
+function toggleOMic(){isOR=!isOR;const btn=document.getElementById('oMicBtn'),w=document.getElementById('mw2');if(isOR){btn.classList.add('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;w.classList.add('on');if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const r2=new SR();r2.lang=oltts;r2.interimResults=true;r2.onresult=e=>{document.getElementById('oTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');if(e.results[e.results.length-1].isFinal){stopOMic();doOTx();}};r2.onerror=()=>stopOMic();r2.start();}else stopOMic();}else stopOMic();}
+function stopOMic(){isOR=false;const btn=document.getElementById('oMicBtn');btn.classList.remove('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;document.getElementById('mw2').classList.remove('on');}
+
+// ════ TRANSLATE ════
+async function doTx(){
+  const text=document.getElementById('inpTA').value.trim();if(!text)return;
   const btn=document.getElementById('txBtn');
   btn.classList.add('loading');btn.innerHTML=`<div class="spin"></div>翻譯中…`;
   document.getElementById('stxt1').textContent='翻譯中…';
@@ -727,12 +705,9 @@ function copyR(){
     if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
     const ms=Date.now()-t0,el=(ms/1000).toFixed(1);
     document.getElementById('oe1').style.display='none';
-    const res=document.getElementById('or1');
-    res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
-    // 修正3：漢字+台羅並列顯示
-    renderResult(d.taigi, d.tailo);
-    const tag=document.getElementById('ttag1');
-    tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=3000?'':' slow');
+    const res=document.getElementById('or1');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
+    renderResult(d.taigi,d.tailo);
+    const tag=document.getElementById('ttag1');tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=3000?'':' slow');
     document.getElementById('stxt1').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;
     if(document.getElementById('autoPlayTog').classList.contains('on'))setTimeout(playAudio,300);
     addHist(text,d.taigi||d.tailo,le,lfc);
@@ -741,150 +716,70 @@ function copyR(){
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;
 }
 
-async function doOTx(){const text=document.getElementById('oTA').value.trim();if(!text)return;const btn=document.getElementById('oTxBtn');btn.innerHTML=`<div class="spin"></div>翻譯中…`;btn.style.pointerEvents='none';const t0=Date.now();try{const ep=os==='taigi'?'/translate/from-taigi':'/translate/mandarin-to-world';const r=await fetch(API+ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,targetLang:olc})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');const el=((Date.now()-t0)/1000).toFixed(1);document.getElementById('oe2').style.display='none';const res=document.getElementById('or2');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');setFlag('oResFlag',olfc,22,15);document.getElementById('oResLName').textContent=oln;document.getElementById('oResTxt').textContent=d.translated||'';const tag=document.getElementById('ttag2');tag.textContent=el+'秒';tag.className='timer-tag';document.getElementById('stxt2').textContent=`完成 · ${el}秒`;if(document.getElementById('oAutoPlayTog').classList.contains('on'))setTimeout(playOAudio,300);}catch(e){document.getElementById('stxt2').textContent='錯誤：'+e.message;}btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;btn.style.pointerEvents='';}
+async function doOTx(){
+  const text=document.getElementById('oTA').value.trim();if(!text)return;
+  const btn=document.getElementById('oTxBtn');btn.innerHTML=`<div class="spin"></div>翻譯中…`;btn.style.pointerEvents='none';
+  const t0=Date.now();
+  try{
+    const ep=os==='taigi'?'/translate/from-taigi':'/translate/mandarin-to-world';
+    const r=await fetch(API+ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,targetLang:olc})});
+    const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
+    const el=((Date.now()-t0)/1000).toFixed(1);
+    document.getElementById('oe2').style.display='none';
+    const res=document.getElementById('or2');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
+    setFlag('oResFlag',olfc,22,15);document.getElementById('oResLName').textContent=oln;
+    document.getElementById('oResTxt').textContent=d.translated||'';
+    const tag=document.getElementById('ttag2');tag.textContent=el+'秒';tag.className='timer-tag';
+    document.getElementById('stxt2').textContent=`完成 · ${el}秒`;
+    if(document.getElementById('oAutoPlayTog').classList.contains('on'))setTimeout(playOAudio,300);
+  }catch(e){document.getElementById('stxt2').textContent='錯誤：'+e.message;}
+  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;btn.style.pointerEvents='';
+}
 
-// ── 播放台語語音（接 NYCU TTS，有男女聲）──
-let currentAudio = null;
-
+// ════ AUDIO ════
 async function playAudio(){
   const btn=document.getElementById('playBtn');
-  // 如果正在播放就停止
   if(currentAudio){currentAudio.pause();currentAudio=null;stopAudio();return;}
-
-  const tailo=document.getElementById('taigiTxt').textContent;
-  if(!tailo)return;
+  const tailo=document.getElementById('taigiTxt').textContent;if(!tailo)return;
   btn.classList.add('playing');
   btn.innerHTML=`<div class="spin" style="border-color:rgba(255,255,255,0.3);border-top-color:white"></div>載入中…`;
-
   try{
-    // 用翻譯時記住的原始華語文字送 TTS（直接送華語，廖教授 TTS 內部會轉台語）
     const srcText=document.getElementById('inpTA').value.trim()||tailo;
     const r=await fetch(API+'/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:srcText,speaker:vc})});
     const d=await r.json();
-    if(!r.ok||!d.audioBase64)throw new Error('TTS 失敗');
-    // base64 WAV → Audio
-    const wav=atob(d.audioBase64);
-    const buf=new Uint8Array(wav.length);
+    if(!r.ok||!d.audioBase64)throw new Error('TTS失敗');
+    const wav=atob(d.audioBase64),buf=new Uint8Array(wav.length);
     for(let i=0;i<wav.length;i++)buf[i]=wav.charCodeAt(i);
     const blob=new Blob([buf],{type:'audio/wav'});
-    const url=URL.createObjectURL(blob);
-    currentAudio=new Audio(url);
-    currentAudio.playbackRate=spds[si];
-    currentAudio.onended=stopAudio;
-    currentAudio.play();
+    currentAudio=new Audio(URL.createObjectURL(blob));
+    currentAudio.playbackRate=spds[si];currentAudio.onended=stopAudio;currentAudio.play();
     btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
   }catch(e){
-    console.log('TTS error:',e);
-    // fallback: 瀏覽器 TTS
     if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(tailo);u.lang='zh-TW';u.rate=spds[si];u.onend=stopAudio;speechSynthesis.speak(u);btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;}
     else stopAudio();
   }
 }
-function stopAudio(){
-  if(currentAudio){currentAudio.pause();currentAudio=null;}
-  const btn=document.getElementById('playBtn');
-  if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語`;}
-}
-
+function stopAudio(){if(currentAudio){currentAudio.pause();currentAudio=null;}const btn=document.getElementById('playBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語`;}}
 function playOAudio(){const btn=document.getElementById('oPlayBtn');btn.classList.add('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;const t=document.getElementById('oResTxt').textContent;if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(t);u.lang=oltts;u.rate=spds[osi];u.onend=stopOAudio;speechSynthesis.speak(u);}else setTimeout(stopOAudio,2000);}
 function stopOAudio(){const btn=document.getElementById('oPlayBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放給對方聽`;}}
 
-// ── 麥克風：LINE 用 MediaRecorder 錄音模式，Safari/Chrome 用 Web Speech ──
-let mediaRec=null, audioChunks=[];
-
-async function toggleMic(){
-  if(isR){stopMic();return;}
-
-  const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');
-  const isLine=/Line/i.test(navigator.userAgent);
-
-  // 優先嘗試 MediaRecorder（LINE/Safari 都支援）
-  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
-    try{
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      isR=true;
-      btn.classList.add('mic-on');
-      btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止錄音`;
-      w.classList.add('on');
-      audioChunks=[];
-      mediaRec=new MediaRecorder(stream);
-      mediaRec.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
-      mediaRec.onstop=async()=>{
-        stream.getTracks().forEach(t=>t.stop());
-        const blob=new Blob(audioChunks,{type:'audio/webm'});
-        // 送到 ASR 辨識
-        await sendAudioToASR(blob);
-      };
-      mediaRec.start();
-      // 最長 30 秒自動停止
-      setTimeout(()=>{if(isR)stopMic();},30000);
-    }catch(e){
-      if(e.name==='NotAllowedError')alert('請允許麥克風權限\n設定 → Safari → 麥克風 → 允許');
-      else alert('無法使用麥克風：'+e.message);
-    }
-  } else {
-    // Web Speech API fallback
-    if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
-      isR=true;
-      btn.classList.add('mic-on');
-      btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
-      w.classList.add('on');
-      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-      rec=new SR();
-      const lmap={auto:'zh-TW','zh-TW':'zh-TW',ja:'ja-JP',en:'en-US',ko:'ko-KR',vi:'vi-VN',id:'id-ID',ms:'ms-MY',th:'th-TH',tl:'fil-PH',fr:'fr-FR',de:'de-DE',es:'es-ES',ar:'ar-SA'};
-      rec.lang=lmap[lc]||'zh-TW';
-      rec.interimResults=true;
-      rec.onresult=e=>{
-        document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');
-        if(e.results[e.results.length-1].isFinal){stopMic();doTx();}
-      };
-      rec.onerror=()=>stopMic();
-      rec.onend=()=>{if(isR)stopMic();};
-      rec.start();
-    } else {
-      alert('此裝置不支援語音輸入，請直接打字');
-    }
-  }
-}
-
-function stopMic(){
-  isR=false;
-  if(mediaRec&&mediaRec.state!=='inactive'){mediaRec.stop();}
-  if(rec){try{rec.stop();}catch(e){}}
-  const btn=document.getElementById('micBtn');
-  btn.classList.remove('mic-on');
-  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;
-  document.getElementById('mw1').classList.remove('on');
-}
-
-async function sendAudioToASR(blob){
-  document.getElementById('stxt1').textContent='辨識中…';
-  try{
-    // 把音訊轉 base64 送到翻譯 API（用 Google Speech 或讓用戶看文字）
-    // 簡單做法：直接轉文字用 Web Speech，不行就提示手動輸入
-    // 這裡先用 URL 播放讓用戶確認
-    const url=URL.createObjectURL(blob);
-    const a=new Audio(url);a.play();
-    // 用 SpeechRecognition 從 blob 辨識（部分瀏覽器支援）
-    document.getElementById('stxt1').textContent='請在上方輸入框輸入剛才說的話，或重新錄音';
-    // TODO: 等廖教授 ASR 串接後，這裡改成送 ASR
-  }catch(e){
-    document.getElementById('stxt1').textContent='辨識失敗，請手動輸入';
-  }
-}navigator.clipboard?.writeText(document.getElementById('taigiTxt').textContent+'\n'+document.getElementById('tailoTxt').textContent);document.getElementById('stxt1').textContent='已複製 ✓';}
+// ════ COPY/SHARE ════
+function copyR(){navigator.clipboard?.writeText(document.getElementById('taigiTxt').textContent+'\n'+document.getElementById('tailoTxt').textContent);document.getElementById('stxt1').textContent='已複製 ✓';}
 function shareR(){if(navigator.share)navigator.share({title:'咱兜的台語',text:document.getElementById('taigiTxt').textContent});else copyR();}
 function copyO(){navigator.clipboard?.writeText(document.getElementById('oResTxt').textContent);document.getElementById('stxt2').textContent='已複製 ✓';}
 function shareO(){if(navigator.share)navigator.share({title:'咱兜的台語',text:document.getElementById('oResTxt').textContent});else copyO();}
 
-let hist=JSON.parse(localStorage.getItem('taigiHist')||'[]');
+// ════ HISTORY ════
 function addHist(src,taigi,em,fc){hist.unshift({src,taigi,em,fc,t:Date.now()});if(hist.length>20)hist.pop();localStorage.setItem('taigiHist',JSON.stringify(hist));renderHist();}
 function renderHist(){const c=document.getElementById('histCard'),l=document.getElementById('histList');if(!hist.length){c.style.display='none';return;}c.style.display='block';l.innerHTML=hist.slice(0,5).map(h=>`<div class="hitem" onclick="document.getElementById('inpTA').value=${JSON.stringify(h.src)};doTx()"><span class="hflag ${h.fc||''}" style="width:22px;height:15px"></span><div style="flex:1;min-width:0"><div class="hsrc">${h.src}</div><div class="htaigi">${h.taigi}</div></div></div>`).join('');}
 function clearHist(){hist=[];localStorage.removeItem('taigiHist');renderHist();}
 
+// ════ VOICE MODAL ════
 function openVM(){document.getElementById('vmModal').classList.add('show');}
 function closeVM(e){if(!e||e.target===document.getElementById('vmModal'))document.getElementById('vmModal').classList.remove('show');}
 function notifyV(){alert('✅ 已記錄！上線時通知您。');closeVM();}
 
+// ════ TIME CAPSULE ════
 function openCM(scene){document.getElementById('capModal').classList.add('show');const d=new Date();d.setDate(d.getDate()+1);document.getElementById('capDate').value=d.toISOString().split('T')[0];if(scene&&SP[scene]){csc=SP[scene][0];csn=SP[scene][1];document.querySelectorAll('#capSTs .stag').forEach(b=>{b.classList.toggle('active',b.textContent.trim().startsWith(csc));});}}
 function closeCM(){document.getElementById('capModal').classList.remove('show');}
 function selCS(btn,em,name){csc=em;csn=name;document.querySelectorAll('#capSTs .stag').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
