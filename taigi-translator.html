@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>咱兜的台語 — 台語翻譯機</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:#C8352A;--red-d:#9B271E;--red-l:#FCECEA;
+  --gold:#D4A017;--gold-l:#FDF6DC;
+  --ink:#16162A;--ink2:#2A2A50;
+  --muted:#6B7280;--subtle:#9CA3AF;
+  --bg:#F8F5F0;--bg2:#F0EBE3;
+  --surf:#FFFFFF;
+  --bd:rgba(0,0,0,0.08);--bd-m:rgba(0,0,0,0.14);
+  --r-sm:10px;--r-md:16px;--r-lg:20px;--r-xl:28px;
+  --sh-sm:0 1px 4px rgba(0,0,0,0.06),0 2px 12px rgba(0,0,0,0.06);
+  --sh-md:0 2px 8px rgba(0,0,0,0.06),0 8px 32px rgba(0,0,0,0.10);
+  --sh-btn:0 4px 14px rgba(200,53,42,0.38);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{height:100%;}
+body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 60% at 15% 10%,rgba(200,53,42,0.07) 0%,transparent 70%),radial-gradient(ellipse 60% 50% at 85% 90%,rgba(212,160,23,0.09) 0%,transparent 70%);}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:200;background:rgba(248,245,240,0.92);backdrop-filter:blur(20px) saturate(1.8);-webkit-backdrop-filter:blur(20px) saturate(1.8);border-bottom:1px solid var(--bd);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;}
+.hdr-logo{display:flex;align-items:center;gap:11px;}
+.hdr-icon{width:36px;height:36px;border-radius:9px;background:linear-gradient(145deg,var(--red) 0%,var(--red-d) 100%);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(200,53,42,0.35);}
+.hdr-title{font-family:'Noto Serif TC',serif;font-size:17px;font-weight:900;color:var(--red-d);line-height:1.1;}
+.hdr-sub{font-size:10px;color:var(--muted);letter-spacing:0.04em;}
+.hdr-badge{font-size:11px;font-weight:600;background:var(--gold-l);color:#8B6914;border:1px solid rgba(212,160,23,0.4);padding:3px 10px;border-radius:20px;}
+
+/* MAIN */
+main{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:16px 14px 110px;}
+@media(min-width:900px){main{max-width:1160px;padding:28px 36px 60px;}}
+
+/* DIRECTION TABS */
+.dir-tabs{display:flex;gap:6px;background:var(--surf);border-radius:var(--r-lg);padding:5px;box-shadow:var(--sh-sm);border:1px solid var(--bd);margin-bottom:16px;}
+.dir-tab{flex:1;padding:10px 8px;border-radius:var(--r-md);border:none;background:transparent;font-family:'Noto Sans TC',sans-serif;font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.22s;line-height:1.35;text-align:center;}
+.dir-tab svg{width:15px;height:15px;flex-shrink:0;}
+.dir-tab .dsub{font-size:10px;opacity:0.7;}
+.dir-tab.active{background:var(--red);color:white;box-shadow:var(--sh-btn);}
+.dir-tab:not(.active):hover{background:var(--red-l);color:var(--red);}
+
+/* PAGE */
+.page{display:none;}
+.page.active{display:block;animation:fadeUp 0.28s ease;}
+
+/* DESKTOP GRID */
+@media(min-width:900px){
+  .tx-grid{display:grid;grid-template-columns:240px 1fr;gap:20px;align-items:start;}
+  .tx-grid .lang-pick{grid-column:1;}
+  .tx-grid .tx-card{grid-column:2;}
+}
+
+/* LANG PICKER */
+.lang-pick{background:var(--surf);border-radius:var(--r-lg);box-shadow:var(--sh-sm);border:1px solid var(--bd);overflow:hidden;}
+.lp-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;transition:background 0.15s;}
+.lp-hdr:hover{background:rgba(200,53,42,0.03);}
+.lp-sel{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--ink);}
+.lp-chev{width:20px;height:20px;color:var(--muted);transition:transform 0.25s;flex-shrink:0;}
+.lp-chev.open{transform:rotate(180deg);}
+.lp-body{max-height:0;overflow:hidden;transition:max-height 0.3s ease;padding:0 12px;}
+.lp-body.open{max-height:340px;padding:0 12px 12px;}
+@media(min-width:900px){.lp-body{max-height:none!important;padding:12px!important;}.lp-chev{display:none;}.lp-hdr{cursor:default;}.lp-hdr:hover{background:transparent;}}
+.lang-grid{display:flex;flex-wrap:wrap;gap:7px;padding-top:10px;border-top:1px solid var(--bd);}
+.auto-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1.5px solid var(--bd-m);background:var(--bg);font-family:'Noto Sans TC',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;transition:all 0.18s;}
+.auto-pill svg{width:13px;height:13px;}
+.auto-pill.active{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:600;}
+.lang-pill{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:20px;border:1.5px solid var(--bd);background:var(--surf);font-family:'Noto Sans TC',sans-serif;font-size:12px;color:var(--ink2);cursor:pointer;transition:all 0.18s;white-space:nowrap;}
+.lang-pill.active{background:var(--ink2);border-color:var(--ink2);color:white;}
+.lang-pill:not(.active):hover{border-color:var(--ink2);}
+span.flag{display:inline-block;border-radius:2px;vertical-align:middle;background-size:cover;background-position:center;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,0.15);}
+.detected-tag{font-size:11px;background:var(--gold-l);color:#8B6914;border:1px solid rgba(212,160,23,0.4);padding:2px 8px;border-radius:10px;display:none;}
+
+/* TRANSLATE CARD */
+.tx-card{background:var(--surf);border-radius:var(--r-xl);box-shadow:var(--sh-md);border:1px solid var(--bd);overflow:hidden;margin-top:14px;}
+@media(min-width:900px){.tx-card{margin-top:0;}}
+
+.settings-row{display:flex;align-items:center;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--bd);gap:10px;flex-wrap:wrap;}
+.si{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);}
+.sdiv{width:1px;height:14px;background:var(--bd-m);}
+.tog{width:36px;height:20px;border-radius:10px;background:var(--bd-m);border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;}
+.tog.on{background:var(--red);}
+.tog::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:white;top:2px;left:2px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.25);}
+.tog.on::after{transform:translateX(16px);}
+
+.voice-row{display:flex;align-items:center;gap:7px;padding:9px 16px;border-bottom:1px solid var(--bd);background:var(--bg);flex-wrap:wrap;}
+.vlbl{font-size:12px;color:var(--muted);flex-shrink:0;}
+.vbtn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:16px;border:1.5px solid var(--bd-m);background:var(--surf);font-family:'Noto Sans TC',sans-serif;font-size:12px;color:var(--ink2);cursor:pointer;transition:all 0.18s;}
+.vbtn.active{background:var(--ink2);border-color:var(--ink2);color:white;}
+.vbtn:not(.active):hover{border-color:var(--ink2);}
+.vcustom{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:16px;border:1.5px dashed rgba(212,160,23,0.6);background:var(--gold-l);color:#8B6914;font-family:'Noto Sans TC',sans-serif;font-size:12px;cursor:pointer;transition:all 0.18s;}
+.vcustom svg{width:12px;height:12px;}
+.vcustom:hover{border-color:var(--gold);}
+.soon-tag{font-size:10px;background:var(--gold);color:var(--ink);padding:1px 5px;border-radius:6px;font-weight:600;}
+
+.inp-wrap{padding:16px 18px 12px;}
+.inp-lang-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.inp-lname{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink2);}
+.micwave{display:none;align-items:center;gap:2.5px;height:18px;}
+.micwave.on{display:flex;}
+.mw{width:2.5px;background:var(--red);border-radius:2px;}
+.mw:nth-child(1){height:6px;animation:wave 0.8s ease-in-out infinite 0s;}
+.mw:nth-child(2){height:14px;animation:wave 0.8s ease-in-out infinite 0.1s;}
+.mw:nth-child(3){height:18px;animation:wave 0.8s ease-in-out infinite 0.2s;}
+.mw:nth-child(4){height:12px;animation:wave 0.8s ease-in-out infinite 0.1s;}
+.mw:nth-child(5){height:7px;animation:wave 0.8s ease-in-out infinite 0s;}
+.inp-ta{width:100%;border:none;outline:none;font-family:'Noto Sans TC',sans-serif;font-size:19px;line-height:1.65;color:var(--ink);background:transparent;resize:none;min-height:100px;caret-color:var(--red);}
+.inp-ta::placeholder{color:#C4C9D4;}
+.inp-tools{display:flex;align-items:center;gap:7px;padding-top:10px;border-top:1px solid var(--bd);margin-top:2px;}
+.tbtn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:16px;border:1.5px solid var(--bd-m);background:var(--surf);color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-size:12px;cursor:pointer;transition:all 0.18s;}
+.tbtn svg{width:13px;height:13px;}
+.tbtn:hover{border-color:var(--red);color:var(--red);background:var(--red-l);}
+.tbtn.mic-on{background:var(--red);border-color:var(--red);color:white;}
+.clrbtn{margin-left:auto;font-size:12px;color:var(--subtle);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px;font-family:'Noto Sans TC',sans-serif;transition:color 0.15s;}
+.clrbtn:hover{color:var(--red);}
+
+.tx-bar{display:flex;align-items:center;padding:12px 16px;background:var(--bg);border-top:1px solid var(--bd);gap:12px;}
+.txbtn{flex:1;padding:15px 20px;background:linear-gradient(145deg,var(--red) 0%,var(--red-d) 100%);color:white;border:none;border-radius:var(--r-md);font-family:'Noto Serif TC',serif;font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--sh-btn);transition:all 0.2s;}
+.txbtn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(200,53,42,0.45);}
+.txbtn.loading{opacity:0.75;pointer-events:none;}
+.txbtn svg{width:18px;height:18px;}
+.spd-ctrl{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.spd-lbl{font-size:10px;color:var(--muted);}
+.spd-dots{display:flex;gap:4px;}
+.spd{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--bd-m);background:var(--surf);font-size:10px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.spd.active{background:var(--ink2);border-color:var(--ink2);color:white;}
+.spd:hover:not(.active){border-color:var(--ink2);}
+
+.out-wrap{padding:20px 18px 16px;min-height:120px;}
+.out-empty{text-align:center;padding:24px 0;color:var(--subtle);}
+.out-empty-icon{font-size:34px;margin-bottom:8px;}
+.out-empty-txt{font-size:13px;line-height:1.6;}
+.out-res{display:none;}
+.out-res.show{display:block;animation:fadeUp 0.35s ease;}
+.taigi-big{font-family:'Noto Serif TC',serif;font-size:30px;font-weight:700;color:var(--red-d);line-height:1.55;margin-bottom:10px;letter-spacing:0.01em;}
+.tailo-sm{font-size:15px;color:var(--muted);letter-spacing:0.07em;margin-bottom:16px;line-height:1.7;font-style:italic;}
+.out-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.playbtn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;background:var(--ink2);color:white;border:none;border-radius:22px;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.18s;box-shadow:0 2px 10px rgba(42,42,80,0.22);}
+.playbtn:hover{background:var(--ink);transform:translateY(-1px);}
+.playbtn.playing{background:var(--red);animation:pulse 1.4s infinite;}
+.playbtn svg{width:14px;height:14px;}
+.actbtn{display:inline-flex;align-items:center;gap:5px;padding:9px 13px;border-radius:18px;border:1.5px solid var(--bd-m);background:var(--bg);color:var(--ink2);font-family:'Noto Sans TC',sans-serif;font-size:12px;cursor:pointer;transition:all 0.18s;}
+.actbtn:hover{border-color:var(--red);color:var(--red);}
+.actbtn svg{width:12px;height:12px;}
+.timer-tag{font-size:11px;color:#16A34A;background:#F0FDF4;border:1px solid #BBF7D0;padding:3px 9px;border-radius:10px;margin-left:auto;}
+.timer-tag.slow{color:var(--muted);background:var(--bg);border-color:var(--bd-m);}
+
+.status-bar{display:flex;align-items:center;gap:6px;padding:9px 18px;background:var(--bg);border-top:1px solid var(--bd);font-size:11px;color:var(--muted);}
+.status-dot{width:6px;height:6px;border-radius:50%;background:#22C55E;animation:blink 2s infinite;flex-shrink:0;}
+
+/* OCR */
+.ocr-panel{background:var(--surf);border-radius:var(--r-lg);border:1.5px dashed rgba(200,53,42,0.25);margin-bottom:14px;display:none;overflow:hidden;}
+.ocr-panel.show{display:block;animation:fadeUp 0.28s ease;}
+.ocr-drop{padding:26px 20px;text-align:center;cursor:pointer;transition:background 0.15s;}
+.ocr-drop:hover{background:var(--red-l);}
+.ocr-drop-icon{font-size:34px;margin-bottom:8px;}
+.ocr-drop-txt{font-size:13px;color:var(--muted);line-height:1.6;}
+.ocr-drop-txt strong{color:var(--red);}
+
+/* HISTORY */
+.hist-card{background:var(--surf);border-radius:var(--r-lg);box-shadow:var(--sh-sm);border:1px solid var(--bd);overflow:hidden;margin-top:14px;display:none;}
+.hist-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--bd);}
+.hist-hdr-t{font-size:13px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:6px;}
+.hist-hdr-t svg{width:13px;height:13px;}
+.hist-clr{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'Noto Sans TC',sans-serif;padding:3px 8px;border-radius:7px;}
+.hist-clr:hover{color:var(--red);}
+.hitem{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background 0.12s;}
+.hitem:last-child{border-bottom:none;}
+.hitem:hover{background:var(--bg);}
+.hflag{width:22px;height:15px;border-radius:2px;flex-shrink:0;margin-top:3px;display:inline-block;background-size:cover;box-shadow:0 1px 3px rgba(0,0,0,0.18);}
+.hsrc{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.htaigi{font-size:14px;font-weight:700;color:var(--red-d);font-family:'Noto Serif TC',serif;}
+
+/* PAGE 2 */
+.src-bar{background:var(--surf);border-radius:var(--r-lg);box-shadow:var(--sh-sm);border:1px solid var(--bd);padding:13px 16px;margin-bottom:14px;}
+.src-lbl{font-size:11px;font-weight:600;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;margin-bottom:9px;}
+.src-btns{display:flex;gap:8px;}
+.srcbtn{flex:1;padding:10px 8px;border-radius:var(--r-sm);border:1.5px solid var(--bd-m);background:var(--surf);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer;text-align:center;transition:all 0.18s;}
+.srcbtn.active{background:var(--ink2);border-color:var(--ink2);color:white;}
+.srcbtn:not(.active):hover{border-color:var(--ink2);}
+.out-res-lang{display:flex;align-items:center;gap:9px;padding:10px 14px;background:var(--bg);border-radius:var(--r-sm);margin-bottom:12px;border:1px solid var(--bd);}
+.out-res-lname{font-size:13px;font-weight:600;color:var(--ink2);}
+.out-res-txt{font-size:26px;font-weight:700;color:var(--ink);line-height:1.55;margin-bottom:8px;font-family:'Noto Serif TC',serif;}
+
+/* MAIN SECTIONS */
+.msec{display:none;}
+.msec.active{display:block;animation:fadeUp 0.28s ease;}
+
+/* TIME CAPSULE */
+.cap-hero{background:linear-gradient(145deg,var(--ink) 0%,var(--ink2) 100%);border-radius:var(--r-xl);padding:30px 24px 24px;margin-bottom:16px;text-align:center;overflow:hidden;position:relative;}
+.cap-hero::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 80% 20%,rgba(212,160,23,0.18) 0%,transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(200,53,42,0.14) 0%,transparent 60%);}
+.cap-hero-icon{font-size:46px;margin-bottom:10px;position:relative;}
+.cap-hero-title{font-family:'Noto Serif TC',serif;font-size:24px;font-weight:900;color:#FEF9EC;margin-bottom:4px;position:relative;}
+.cap-hero-tag{font-size:12px;color:rgba(254,249,236,0.6);letter-spacing:0.12em;position:relative;margin-bottom:10px;}
+.cap-hero-desc{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.65;max-width:280px;margin:0 auto;position:relative;}
+.cap-new{display:flex;align-items:center;gap:14px;background:var(--ink2);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:16px;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(42,42,80,0.22);}
+.cap-new:hover{background:var(--ink);transform:translateY(-1px);}
+.cap-new-icon{width:44px;height:44px;border-radius:12px;background:rgba(212,160,23,0.2);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0;}
+.cap-new-icon svg{width:22px;height:22px;}
+.cap-new-title{font-size:14px;font-weight:600;color:white;margin-bottom:2px;}
+.cap-new-sub{font-size:11px;color:rgba(255,255,255,0.45);}
+.cap-new-arr{font-size:18px;color:var(--gold);margin-left:auto;}
+.scene-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.scard{background:var(--surf);border-radius:var(--r-md);padding:14px 10px;text-align:center;cursor:pointer;border:1px solid var(--bd);box-shadow:var(--sh-sm);transition:all 0.2s;}
+.scard:hover{border-color:var(--red);transform:translateY(-2px);box-shadow:var(--sh-md);}
+.semoji{font-size:26px;margin-bottom:6px;}
+.sname{font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:3px;}
+.shint{font-size:10.5px;color:var(--muted);line-height:1.4;}
+.mycaps{background:var(--surf);border-radius:var(--r-lg);box-shadow:var(--sh-sm);border:1px solid var(--bd);overflow:hidden;}
+.mycaps-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--bd);}
+.mycaps-title{font-size:13.5px;font-weight:600;color:var(--ink2);}
+.mycaps-cnt{font-size:11px;color:var(--muted);background:var(--bg);padding:2px 9px;border-radius:10px;}
+.cap-empty{text-align:center;padding:40px 20px;}
+.cap-empty-icon{font-size:42px;margin-bottom:10px;}
+.cap-empty-txt{font-size:13px;color:var(--muted);line-height:1.7;}
+.citem{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background 0.12s;}
+.citem:last-child{border-bottom:none;}
+.citem:hover{background:var(--bg);}
+.citem-icon{width:44px;height:44px;border-radius:12px;flex-shrink:0;background:linear-gradient(145deg,var(--ink) 0%,var(--ink2) 100%);display:flex;align-items:center;justify-content:center;font-size:20px;}
+.citem-title{font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:2px;}
+.citem-prev{font-size:12px;color:var(--muted);margin-bottom:3px;}
+.citem-time{font-size:11px;color:var(--red);display:flex;align-items:center;gap:4px;}
+.citem-time svg{width:11px;height:11px;}
+.citem-lock{font-size:18px;flex-shrink:0;margin-left:auto;}
+
+/* COMING PAGE */
+.coming-page{text-align:center;padding:80px 24px;color:var(--muted);line-height:1.7;}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;z-index:300;background:rgba(22,22,42,0.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overflow-y:auto;}
+.modal-ov.show{display:block;animation:fadeUp 0.3s ease;}
+.modal-sheet{background:var(--bg);min-height:100vh;padding:20px 18px 100px;max-width:520px;margin:0 auto;}
+.modal-hdr{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+.modal-back{width:36px;height:36px;border-radius:10px;background:var(--surf);border:1px solid var(--bd-m);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink2);flex-shrink:0;}
+.modal-back svg{width:18px;height:18px;}
+.modal-title{font-family:'Noto Serif TC',serif;font-size:20px;font-weight:700;color:var(--ink);}
+.modal-sec{margin-bottom:16px;}
+.modal-lbl{font-size:11px;font-weight:600;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+.modal-panel{background:var(--surf);border-radius:var(--r-md);box-shadow:var(--sh-sm);border:1px solid var(--bd);overflow:hidden;}
+.modal-inp-row{display:flex;align-items:center;gap:10px;padding:12px 16px;}
+.modal-inp-icon{font-size:20px;flex-shrink:0;}
+.modal-field{flex:1;border:none;outline:none;font-family:'Noto Sans TC',sans-serif;font-size:14.5px;color:var(--ink);background:transparent;caret-color:var(--red);}
+.modal-field::placeholder{color:#C4C9D4;}
+.modal-ta{width:100%;border:none;outline:none;font-family:'Noto Sans TC',sans-serif;font-size:16px;line-height:1.7;color:var(--ink);background:transparent;resize:none;min-height:100px;padding:14px 16px;caret-color:var(--red);}
+.modal-ta::placeholder{color:#C4C9D4;}
+.modal-media-bar{display:flex;gap:7px;padding:9px 14px;border-top:1px solid var(--bd);}
+.mmb{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:14px;border:1.5px solid var(--bd-m);background:var(--surf);font-family:'Noto Sans TC',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;transition:all 0.18s;}
+.mmb:hover{border-color:var(--red);color:var(--red);}
+.mmb.active{border-color:var(--red);background:var(--red-l);color:var(--red);}
+.mmb svg{width:13px;height:13px;}
+.modal-tailo-row{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid var(--bd);font-size:12.5px;color:var(--ink2);}
+.modal-time-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bd);}
+.modal-time-row:last-child{border-bottom:none;}
+.modal-time-lbl{font-size:12px;color:var(--muted);width:55px;flex-shrink:0;}
+.modal-dt{flex:1;border:1.5px solid var(--bd-m);border-radius:9px;padding:7px 12px;font-family:'Noto Sans TC',sans-serif;font-size:13.5px;color:var(--ink);background:var(--surf);outline:none;}
+.modal-dt:focus{border-color:var(--red);}
+.scene-tags{display:flex;gap:7px;flex-wrap:wrap;}
+.stag{padding:6px 13px;border-radius:16px;border:1.5px solid var(--bd-m);background:var(--surf);font-family:'Noto Sans TC',sans-serif;font-size:12px;color:var(--ink2);cursor:pointer;transition:all 0.18s;}
+.stag.active{background:var(--ink2);border-color:var(--ink2);color:white;}
+.seal-btn{width:100%;padding:16px;background:linear-gradient(145deg,var(--ink) 0%,var(--ink2) 100%);color:#FEF9EC;border:none;border-radius:var(--r-md);font-family:'Noto Serif TC',serif;font-size:17px;font-weight:700;cursor:pointer;letter-spacing:0.03em;box-shadow:0 4px 20px rgba(22,22,42,0.28);display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s;}
+.seal-btn:hover{transform:translateY(-1px);}
+
+/* VOICE MODAL */
+.voice-modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(22,22,42,0.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;}
+.voice-modal.show{display:flex;animation:fadeUp 0.28s ease;}
+.voice-sheet{background:var(--surf);border-radius:22px 22px 0 0;padding:24px 24px 40px;width:100%;max-width:480px;}
+.vs-handle{width:36px;height:4px;background:var(--bd-m);border-radius:2px;margin:0 auto 18px;}
+.vs-title{font-family:'Noto Serif TC',serif;font-size:19px;font-weight:700;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.vs-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.65;}
+.vs-steps{display:flex;flex-direction:column;gap:11px;margin-bottom:20px;}
+.vs-step{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border-radius:11px;border:1px solid var(--bd);}
+.vs-num{width:26px;height:26px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.vs-txt{font-size:13px;color:var(--ink2);line-height:1.55;}
+.vs-txt strong{color:var(--red-d);}
+.vs-btns{display:flex;gap:10px;}
+.vs-notify{flex:1;padding:13px;background:var(--red);color:white;border:none;border-radius:12px;font-family:'Noto Serif TC',serif;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:var(--sh-btn);}
+.vs-close{padding:13px 18px;background:var(--bg);color:var(--muted);border:none;border-radius:12px;font-family:'Noto Sans TC',sans-serif;font-size:13.5px;cursor:pointer;}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(248,245,240,0.95);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);border-top:1px solid var(--bd);padding:8px 0 calc(6px + env(safe-area-inset-bottom));display:flex;justify-content:space-around;}
+@media(min-width:900px){.bnav{max-width:480px;left:50%;transform:translateX(-50%);border-radius:16px 16px 0 0;border:1px solid var(--bd);border-bottom:none;}}
+.nbtn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 16px;border:none;background:none;font-family:'Noto Sans TC',sans-serif;font-size:10.5px;color:var(--muted);cursor:pointer;transition:color 0.18s;}
+.nbtn svg{width:22px;height:22px;}
+.nbtn.active{color:var(--red);}
+
+/* FLAGS */
+.f-tw{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23FE0000'/%3E%3Crect width='11' height='7.5' fill='%23000095'/%3E%3Ccircle cx='5.5' cy='3.75' r='2.3' fill='white'/%3E%3C/svg%3E");}
+.f-jp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='white'/%3E%3Ccircle cx='11' cy='7.5' r='4.2' fill='%23BC002D'/%3E%3C/svg%3E");}
+.f-us{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23B22234'/%3E%3Crect y='1.15' width='22' height='1.15' fill='white'/%3E%3Crect y='3.46' width='22' height='1.15' fill='white'/%3E%3Crect y='5.77' width='22' height='1.15' fill='white'/%3E%3Crect y='8.08' width='22' height='1.15' fill='white'/%3E%3Crect y='10.38' width='22' height='1.15' fill='white'/%3E%3Crect y='12.69' width='22' height='1.15' fill='white'/%3E%3Crect width='9' height='8' fill='%233C3B6E'/%3E%3C/svg%3E");}
+.f-kr{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='white'/%3E%3Ccircle cx='11' cy='7.5' r='3.5' fill='%23CD2E3A'/%3E%3Cpath d='M11 4Q8.5 5.5 11 7.5Q13.5 5.5 11 4Z' fill='%23003478'/%3E%3C/svg%3E");}
+.f-vn{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23DA251D'/%3E%3Cpolygon points='11,3.5 12.3,7.3 16.3,7.3 13.1,9.6 14.4,13.4 11,11.1 7.6,13.4 8.9,9.6 5.7,7.3 9.7,7.3' fill='%23FFFF00'/%3E%3C/svg%3E");}
+.f-id{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='7.5' fill='%23CE1126'/%3E%3Crect y='7.5' width='22' height='7.5' fill='white'/%3E%3C/svg%3E");}
+.f-my{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23CC0001'/%3E%3Crect y='1.07' width='22' height='1.07' fill='white'/%3E%3Crect y='3.21' width='22' height='1.07' fill='white'/%3E%3Crect y='5.36' width='22' height='1.07' fill='white'/%3E%3Crect y='7.5' width='22' height='1.07' fill='white'/%3E%3Crect y='9.64' width='22' height='1.07' fill='white'/%3E%3Crect y='11.79' width='22' height='1.07' fill='white'/%3E%3Crect width='10' height='8' fill='%23010066'/%3E%3C/svg%3E");}
+.f-th{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23A51931'/%3E%3Crect y='2.5' width='22' height='10' fill='white'/%3E%3Crect y='5' width='22' height='5' fill='%232D2A4A'/%3E%3C/svg%3E");}
+.f-ph{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='7.5' fill='%230038A8'/%3E%3Crect y='7.5' width='22' height='7.5' fill='%23CE1126'/%3E%3Cpolygon points='0,0 10,7.5 0,15' fill='white'/%3E%3Ccircle cx='3.5' cy='7.5' r='1.5' fill='%23FCD116'/%3E%3C/svg%3E");}
+.f-fr{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='7.3' height='15' fill='%23002395'/%3E%3Crect x='7.3' width='7.4' height='15' fill='white'/%3E%3Crect x='14.7' width='7.3' height='15' fill='%23ED2939'/%3E%3C/svg%3E");}
+.f-de{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='5' fill='%23000'/%3E%3Crect y='5' width='22' height='5' fill='%23DD0000'/%3E%3Crect y='10' width='22' height='5' fill='%23FFCE00'/%3E%3C/svg%3E");}
+.f-es{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23AA151B'/%3E%3Crect y='3.75' width='22' height='7.5' fill='%23F1BF00'/%3E%3C/svg%3E");}
+.f-sa{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23006C35'/%3E%3Crect y='5.5' width='22' height='4' fill='white' opacity='.7'/%3E%3C/svg%3E");}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(200,53,42,0.4)}50%{box-shadow:0 0 0 8px rgba(200,53,42,0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes wave{0%,100%{transform:scaleY(0.4)}50%{transform:scaleY(1)}}
+.spin{display:inline-block;width:17px;height:17px;border:2.5px solid rgba(255,255,255,0.35);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-logo">
+    <div class="hdr-icon">🗣️</div>
+    <div><div class="hdr-title">咱兜的台語</div><div class="hdr-sub">Taigi Translator</div></div>
+  </div>
+  <div class="hdr-badge">β 版</div>
+</header>
+
+<main>
+
+<!-- TRANSLATOR -->
+<div class="msec active" id="ms-tr">
+  <div class="dir-tabs">
+    <button class="dir-tab active" id="tab-in" onclick="switchDir('in')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      <div>各國語言 → 台語<br><span class="dsub">外國人來台灣用</span></div>
+    </button>
+    <button class="dir-tab" id="tab-out" onclick="switchDir('out')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      <div>台語/華語 → 各國<br><span class="dsub">台灣人出國用</span></div>
+    </button>
+  </div>
+
+  <!-- PAGE IN -->
+  <div class="page active" id="pg-in">
+    <div class="tx-grid">
+      <div class="lang-pick" id="lp">
+        <div class="lp-hdr" onclick="toggleLP()">
+          <div class="lp-sel">
+            <span class="flag" id="selFlag" style="width:24px;height:16px"></span>
+            <span id="selName">選擇來源語言</span>
+            <span class="detected-tag" id="detTag"></span>
+          </div>
+          <svg class="lp-chev open" id="lpChev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="lp-body open" id="lpBody">
+          <div class="lang-grid">
+            <button class="auto-pill active" id="autoBtn" onclick="selAuto()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20"/></svg>自動偵測</button>
+            <button class="lang-pill" onclick="selL(this,'zh-TW','f-tw','🇹🇼','華語')"><span class="flag f-tw" style="width:18px;height:12px"></span>華語</button>
+            <button class="lang-pill" onclick="selL(this,'ja','f-jp','🇯🇵','日語')"><span class="flag f-jp" style="width:18px;height:12px"></span>日語</button>
+            <button class="lang-pill" onclick="selL(this,'en','f-us','🇺🇸','English')"><span class="flag f-us" style="width:18px;height:12px"></span>English</button>
+            <button class="lang-pill" onclick="selL(this,'ko','f-kr','🇰🇷','한국어')"><span class="flag f-kr" style="width:18px;height:12px"></span>한국어</button>
+            <button class="lang-pill" onclick="selL(this,'vi','f-vn','🇻🇳','Việt')"><span class="flag f-vn" style="width:18px;height:12px"></span>Việt</button>
+            <button class="lang-pill" onclick="selL(this,'id','f-id','🇮🇩','Indonesia')"><span class="flag f-id" style="width:18px;height:12px"></span>Indonesia</button>
+            <button class="lang-pill" onclick="selL(this,'ms','f-my','🇲🇾','Melayu')"><span class="flag f-my" style="width:18px;height:12px"></span>Melayu</button>
+            <button class="lang-pill" onclick="selL(this,'th','f-th','🇹🇭','ไทย')"><span class="flag f-th" style="width:18px;height:12px"></span>ไทย</button>
+            <button class="lang-pill" onclick="selL(this,'tl','f-ph','🇵🇭','Filipino')"><span class="flag f-ph" style="width:18px;height:12px"></span>Filipino</button>
+            <button class="lang-pill" onclick="selL(this,'fr','f-fr','🇫🇷','Français')"><span class="flag f-fr" style="width:18px;height:12px"></span>Français</button>
+            <button class="lang-pill" onclick="selL(this,'de','f-de','🇩🇪','Deutsch')"><span class="flag f-de" style="width:18px;height:12px"></span>Deutsch</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="ocr-panel" id="ocrPanel">
+          <div class="ocr-drop" onclick="document.getElementById('ocrFile').click()">
+            <div class="ocr-drop-icon">📷</div>
+            <div class="ocr-drop-txt">點擊上傳圖片或拍照<br><strong>自動辨識文字並翻譯</strong></div>
+            <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display:none">
+          </div>
+        </div>
+        <div class="tx-card">
+          <div class="settings-row">
+            <div class="si"><button class="tog on" id="autoPlayTog" onclick="this.classList.toggle('on')"></button>🔊 自動播放</div>
+            <div class="sdiv"></div>
+            <div class="si"><button class="tog on" id="tailoTog" onclick="toggleTailo()"></button>台羅拼音</div>
+          </div>
+          <div class="voice-row">
+            <span class="vlbl">🎙️ 台語語音</span>
+            <button class="vbtn active" id="vM" onclick="setV('male',this)">👨 男聲</button>
+            <button class="vbtn" id="vF" onclick="setV('female',this)">👩 女聲</button>
+            <button class="vcustom" onclick="openVM()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4"/></svg>我的聲音 <span class="soon-tag">即將</span></button>
+          </div>
+          <div class="inp-wrap">
+            <div class="inp-lang-row">
+              <div class="inp-lname"><span class="flag" id="inpFlag" style="width:20px;height:14px"></span><span id="inpLName">自動偵測</span></div>
+              <div class="micwave" id="mw1"><div class="mw"></div><div class="mw"></div><div class="mw"></div><div class="mw"></div><div class="mw"></div></div>
+            </div>
+            <textarea class="inp-ta" id="inpTA" placeholder="輸入文字，或按麥克風說話…" rows="4" oninput="onInp()"></textarea>
+            <div class="inp-tools">
+              <button class="tbtn" id="micBtn" onclick="toggleMic()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入</button>
+              <button class="tbtn" onclick="toggleOCR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>拍照翻譯</button>
+              <button class="clrbtn" onclick="clearAll()">清除</button>
+            </div>
+          </div>
+          <div class="tx-bar">
+            <button class="txbtn" id="txBtn" onclick="doTx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語</button>
+            <div class="spd-ctrl"><div class="spd-lbl">語速</div><div class="spd-dots"><button class="spd" onclick="setSpd(0,this)">慢</button><button class="spd active" onclick="setSpd(1,this)">正</button><button class="spd" onclick="setSpd(2,this)">快</button></div></div>
+          </div>
+          <div class="out-wrap">
+            <div class="out-empty" id="oe1"><div class="out-empty-icon">🎵</div><div class="out-empty-txt">台語翻譯結果會顯示在這裡</div></div>
+            <div class="out-res" id="or1">
+              <div class="taigi-big" id="taigiTxt"></div>
+              <div class="tailo-sm" id="tailoTxt"></div>
+              <div class="out-acts">
+                <button class="playbtn" id="playBtn" onclick="playAudio()"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語</button>
+                <button class="actbtn" onclick="copyR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>複製</button>
+                <button class="actbtn" onclick="shareR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>分享</button>
+                <span class="timer-tag" id="ttag1"></span>
+              </div>
+            </div>
+          </div>
+          <div class="status-bar"><div class="status-dot"></div><span id="stxt1">已連線 · asr.bitfull.tw</span></div>
+        </div>
+        <div class="hist-card" id="histCard">
+          <div class="hist-hdr"><div class="hist-hdr-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>最近翻譯</div><button class="hist-clr" onclick="clearHist()">清除</button></div>
+          <div id="histList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE OUT -->
+  <div class="page" id="pg-out">
+    <div class="tx-grid">
+      <div>
+        <div class="src-bar">
+          <div class="src-lbl">我要說的語言</div>
+          <div class="src-btns">
+            <button class="srcbtn active" id="osTaigi" onclick="selOS('taigi',this)">🗣️ 台語</button>
+            <button class="srcbtn" id="osMandarin" onclick="selOS('mandarin',this)">🇹🇼 華語</button>
+          </div>
+        </div>
+        <div class="lang-pick" id="olp">
+          <div class="lp-hdr" onclick="toggleOLP()">
+            <div class="lp-sel">
+              <span class="flag f-jp" id="oSelFlag" style="width:24px;height:16px"></span>
+              <span id="oSelName">翻譯成：日語</span>
+            </div>
+            <svg class="lp-chev open" id="olpChev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="lp-body open" id="olpBody">
+            <div class="lang-grid">
+              <button class="lang-pill active" onclick="selOL(this,'ja','f-jp','🇯🇵','日語','ja-JP')"><span class="flag f-jp" style="width:18px;height:12px"></span>日語</button>
+              <button class="lang-pill" onclick="selOL(this,'en','f-us','🇺🇸','English','en-US')"><span class="flag f-us" style="width:18px;height:12px"></span>English</button>
+              <button class="lang-pill" onclick="selOL(this,'ko','f-kr','🇰🇷','한국어','ko-KR')"><span class="flag f-kr" style="width:18px;height:12px"></span>한국어</button>
+              <button class="lang-pill" onclick="selOL(this,'vi','f-vn','🇻🇳','Việt','vi-VN')"><span class="flag f-vn" style="width:18px;height:12px"></span>Việt</button>
+              <button class="lang-pill" onclick="selOL(this,'id','f-id','🇮🇩','Indonesia','id-ID')"><span class="flag f-id" style="width:18px;height:12px"></span>Indonesia</button>
+              <button class="lang-pill" onclick="selOL(this,'ms','f-my','🇲🇾','Melayu','ms-MY')"><span class="flag f-my" style="width:18px;height:12px"></span>Melayu</button>
+              <button class="lang-pill" onclick="selOL(this,'th','f-th','🇹🇭','ไทย','th-TH')"><span class="flag f-th" style="width:18px;height:12px"></span>ไทย</button>
+              <button class="lang-pill" onclick="selOL(this,'tl','f-ph','🇵🇭','Filipino','fil-PH')"><span class="flag f-ph" style="width:18px;height:12px"></span>Filipino</button>
+              <button class="lang-pill" onclick="selOL(this,'fr','f-fr','🇫🇷','Français','fr-FR')"><span class="flag f-fr" style="width:18px;height:12px"></span>Français</button>
+              <button class="lang-pill" onclick="selOL(this,'de','f-de','🇩🇪','Deutsch','de-DE')"><span class="flag f-de" style="width:18px;height:12px"></span>Deutsch</button>
+              <button class="lang-pill" onclick="selOL(this,'es','f-es','🇪🇸','Español','es-ES')"><span class="flag f-es" style="width:18px;height:12px"></span>Español</button>
+              <button class="lang-pill" onclick="selOL(this,'ar','f-sa','🇸🇦','العربية','ar-SA')"><span class="flag f-sa" style="width:18px;height:12px"></span>العربية</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tx-card">
+        <div class="settings-row"><div class="si"><button class="tog on" id="oAutoPlayTog" onclick="this.classList.toggle('on')"></button>🔊 自動播放目標語音</div></div>
+        <div class="voice-row">
+          <span class="vlbl">🎙️ 台語語音</span>
+          <button class="vbtn active" id="ovM" onclick="setOV('male',this)">👨 男聲</button>
+          <button class="vbtn" id="ovF" onclick="setOV('female',this)">👩 女聲</button>
+          <button class="vcustom" onclick="openVM()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4"/></svg>我的聲音 <span class="soon-tag">即將</span></button>
+        </div>
+        <div class="inp-wrap">
+          <div class="inp-lang-row">
+            <div class="inp-lname" id="oSrcDisp">🗣️ 台語</div>
+            <div class="micwave" id="mw2"><div class="mw"></div><div class="mw"></div><div class="mw"></div><div class="mw"></div><div class="mw"></div></div>
+          </div>
+          <textarea class="inp-ta" id="oTA" placeholder="輸入台語或華語，或按麥克風說話…" rows="4"></textarea>
+          <div class="inp-tools">
+            <button class="tbtn" id="oMicBtn" onclick="toggleOMic()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入</button>
+            <button class="clrbtn" onclick="clearOut()">清除</button>
+          </div>
+        </div>
+        <div class="tx-bar">
+          <button class="txbtn" id="oTxBtn" onclick="doOTx()" style="background:linear-gradient(145deg,var(--ink2) 0%,var(--ink) 100%);box-shadow:0 4px 14px rgba(42,42,80,0.35)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看</button>
+          <div class="spd-ctrl"><div class="spd-lbl">語速</div><div class="spd-dots"><button class="spd" onclick="setOS(0,this)">慢</button><button class="spd active" onclick="setOS(1,this)">正</button><button class="spd" onclick="setOS(2,this)">快</button></div></div>
+        </div>
+        <div class="out-wrap">
+          <div class="out-empty" id="oe2"><div class="out-empty-icon">✈️</div><div class="out-empty-txt">翻譯結果顯示在這裡<br>把螢幕轉給對方看</div></div>
+          <div class="out-res" id="or2">
+            <div class="out-res-lang"><span class="flag" id="oResFlag" style="width:22px;height:15px"></span><span class="out-res-lname" id="oResLName">日語</span></div>
+            <div class="out-res-txt" id="oResTxt"></div>
+            <div class="out-acts">
+              <button class="playbtn" id="oPlayBtn" onclick="playOAudio()" style="background:var(--ink2);box-shadow:0 2px 10px rgba(42,42,80,0.25)"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放給對方聽</button>
+              <button class="actbtn" onclick="copyO()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>複製</button>
+              <button class="actbtn" onclick="shareO()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>分享</button>
+              <span class="timer-tag" id="ttag2"></span>
+            </div>
+          </div>
+        </div>
+        <div class="status-bar"><div class="status-dot"></div><span id="stxt2">已連線 · asr.bitfull.tw</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TIME CAPSULE -->
+<div class="msec" id="ms-cap">
+  <div class="cap-hero">
+    <div class="cap-hero-icon">💌</div>
+    <div class="cap-hero-title">時光寶盒</div>
+    <div class="cap-hero-tag">留聲予後代 · 傳心予遠方</div>
+    <div class="cap-hero-desc">用台語錄下心聲，在你選定的時刻，送達最重要的人</div>
+  </div>
+  <div class="cap-new" onclick="openCM()">
+    <div class="cap-new-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+    <div><div class="cap-new-title">封存新的時光寶盒</div><div class="cap-new-sub">文字・語音・照片・台語翻譯</div></div>
+    <div class="cap-new-arr">→</div>
+  </div>
+  <div class="scene-grid">
+    <div class="scard" onclick="openCM('birthday')"><div class="semoji">🎂</div><div class="sname">生日驚喜</div><div class="shint">等到生日才開啟</div></div>
+    <div class="scard" onclick="openCM('travel')"><div class="semoji">✈️</div><div class="sname">旅途想念</div><div class="shint">出國時差的溫暖</div></div>
+    <div class="scard" onclick="openCM('future')"><div class="semoji">🌱</div><div class="sname">給未來的自己</div><div class="shint">一年後・十年後</div></div>
+    <div class="scard" onclick="openCM('family')"><div class="semoji">🏠</div><div class="sname">家族傳承</div><div class="shint">阿公的台語心聲</div></div>
+    <div class="scard" onclick="openCM('new_year')"><div class="semoji">🧧</div><div class="sname">新年祝福</div><div class="shint">除夕夜開啟</div></div>
+    <div class="scard" onclick="openCM('custom')"><div class="semoji">⏰</div><div class="sname">自訂時間</div><div class="shint">任何你選定的時刻</div></div>
+  </div>
+  <div class="mycaps">
+    <div class="mycaps-hdr"><span class="mycaps-title">我的時光寶盒</span><span class="mycaps-cnt" id="capCnt">0 個</span></div>
+    <div id="capList"><div class="cap-empty"><div class="cap-empty-icon">🫙</div><div class="cap-empty-txt">還沒有時光寶盒<br>現在就封存第一個心聲吧</div></div></div>
+  </div>
+</div>
+
+<!-- FORUM -->
+<div class="msec" id="ms-forum"><div class="coming-page"><div style="font-size:56px">✍️</div><div style="font-size:20px;font-weight:700;color:var(--ink2);margin:12px 0 8px;font-family:'Noto Serif TC',serif">台語文學創作論壇</div><div>用華語寫作，自動生成台語文字與台羅拼音<br>即將上線</div></div></div>
+
+<!-- LEARN -->
+<div class="msec" id="ms-learn"><div class="coming-page"><div style="font-size:56px">📖</div><div style="font-size:20px;font-weight:700;color:var(--ink2);margin:12px 0 8px;font-family:'Noto Serif TC',serif">台語學習</div><div>台羅拼音學習機・打字練習・發音評分<br>即將上線</div></div></div>
+
+</main>
+
+<!-- CAPSULE MODAL -->
+<div class="modal-ov" id="capModal">
+  <div class="modal-sheet">
+    <div class="modal-hdr"><div class="modal-back" onclick="closeCM()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></div><div class="modal-title">💌 封存時光寶盒</div></div>
+    <div class="modal-sec"><div class="modal-lbl">寫給誰</div><div class="modal-panel"><div class="modal-inp-row"><span class="modal-inp-icon">👤</span><input class="modal-field" id="capTo" placeholder="對方的名字或 LINE ID…" type="text"></div></div></div>
+    <div class="modal-sec"><div class="modal-lbl">你想說的話</div>
+      <div class="modal-panel">
+        <textarea class="modal-ta" id="capContent" placeholder="寫下你想留給他的話…&#10;用台語、華語、或任何語言都可以"></textarea>
+        <div class="modal-media-bar">
+          <button class="mmb" id="capVBtn" onclick="toggleCV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>錄製語音</button>
+          <button class="mmb" onclick="alert('圖片功能即將上線')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>附上照片</button>
+          <button class="mmb" id="capTBtn" onclick="this.classList.toggle('active')">🗣️ 台語朗讀</button>
+        </div>
+        <div class="modal-tailo-row"><span>🔤 自動加上台羅拼音</span><button class="tog on" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+    </div>
+    <div class="modal-sec"><div class="modal-lbl">⏰ 什麼時候可以開啟</div>
+      <div class="modal-panel">
+        <div class="modal-time-row"><span class="modal-time-lbl">開啟日期</span><input class="modal-dt" id="capDate" type="date"></div>
+        <div class="modal-time-row"><span class="modal-time-lbl">幾點開啟</span><input class="modal-dt" id="capTime" type="time" value="08:00"></div>
+      </div>
+    </div>
+    <div class="modal-sec"><div class="modal-lbl">場景</div>
+      <div class="scene-tags" id="capSTs">
+        <button class="stag active" onclick="selCS(this,'🎂','生日驚喜')">🎂 生日驚喜</button>
+        <button class="stag" onclick="selCS(this,'✈️','旅途想念')">✈️ 旅途想念</button>
+        <button class="stag" onclick="selCS(this,'🌱','給未來的自己')">🌱 給未來的自己</button>
+        <button class="stag" onclick="selCS(this,'🏠','家族傳承')">🏠 家族傳承</button>
+        <button class="stag" onclick="selCS(this,'🧧','新年祝福')">🧧 新年祝福</button>
+        <button class="stag" onclick="selCS(this,'⏰','自訂')">⏰ 自訂</button>
+      </div>
+    </div>
+    <button class="seal-btn" onclick="sealCap()">🫙 封存這個時光寶盒</button>
+  </div>
+</div>
+
+<!-- VOICE MODAL -->
+<div class="voice-modal" id="vmModal" onclick="closeVM(event)">
+  <div class="voice-sheet" onclick="event.stopPropagation()">
+    <div class="vs-handle"></div>
+    <div class="vs-title">🎤 用自己的聲音說台語</div>
+    <div class="vs-sub">錄製你的聲音，讓 AI 學習你的音色，用你獨特的聲音合成台語語音。由 NYCU 廖元甫教授提供技術支援。</div>
+    <div class="vs-steps">
+      <div class="vs-step"><div class="vs-num">1</div><div class="vs-txt">錄製 <strong>30句台語句子</strong>（約5分鐘）作為聲音樣本</div></div>
+      <div class="vs-step"><div class="vs-num">2</div><div class="vs-txt">AI 分析你的<strong>音色、語調、特徵</strong>，建立聲音模型</div></div>
+      <div class="vs-step"><div class="vs-num">3</div><div class="vs-txt">之後所有翻譯語音，都用<strong>你自己的聲音</strong>說出來</div></div>
+    </div>
+    <div class="vs-btns">
+      <button class="vs-notify" onclick="notifyV()">🔔 上線時通知我</button>
+      <button class="vs-close" onclick="closeVM()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="nbtn active" id="nb-tr" onclick="switchM('tr')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯機</button>
+  <button class="nbtn" id="nb-cap" onclick="switchM('cap')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>時光寶盒</button>
+  <button class="nbtn" id="nb-forum" onclick="switchM('forum')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>創作論壇</button>
+  <button class="nbtn" id="nb-learn" onclick="switchM('learn')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>台語學習</button>
+</nav>
+
+<script>
+const API='https://asr.bitfull.tw';
+let lc='auto',le='🌐',lfc='',vc='female',ovc='female';
+let si=1,osi=1,isR=false,isOR=false,rec=null;
+let olc='ja',oln='日語',olfc='f-jp',ole='🇯🇵',oltts='ja-JP',os='taigi';
+let caps=JSON.parse(localStorage.getItem('taigiCaps')||'[]');
+let csc='🎂',csn='生日驚喜';
+const spds=[0.7,1.0,1.3];
+const SP={birthday:['🎂','生日驚喜'],travel:['✈️','旅途想念'],future:['🌱','給未來的自己'],family:['🏠','家族傳承'],new_year:['🧧','新年祝福'],custom:['⏰','自訂']};
+
+function switchM(s){['tr','cap','forum','learn'].forEach(x=>{document.getElementById('ms-'+x).classList.toggle('active',x===s);document.getElementById('nb-'+x).classList.toggle('active',x===s);});}
+function switchDir(d){document.getElementById('pg-in').classList.toggle('active',d==='in');document.getElementById('pg-out').classList.toggle('active',d==='out');document.getElementById('tab-in').classList.toggle('active',d==='in');document.getElementById('tab-out').classList.toggle('active',d==='out');}
+
+let lo=true;
+function toggleLP(){lo=!lo;document.getElementById('lpBody').classList.toggle('open',lo);document.getElementById('lpChev').classList.toggle('open',lo);}
+function setFlag(id,fc,w,h){const e=document.getElementById(id);e.className='flag '+(fc||'');e.style.cssText=`width:${w}px;height:${h}px`;}
+function selAuto(){lc='auto';le='🌐';lfc='';document.getElementById('autoBtn').classList.add('active');document.querySelectorAll('#lpBody .lang-pill').forEach(b=>b.classList.remove('active'));setFlag('selFlag','',24,16);document.getElementById('selName').textContent='選擇來源語言';setFlag('inpFlag','',20,14);document.getElementById('inpLName').textContent='自動偵測';lo=false;document.getElementById('lpBody').classList.remove('open');document.getElementById('lpChev').classList.remove('open');}
+function selL(btn,code,fc,em,name){lc=code;le=em;lfc=fc;document.getElementById('autoBtn').classList.remove('active');document.querySelectorAll('#lpBody .lang-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');setFlag('selFlag',fc,24,16);document.getElementById('selName').textContent=name;setFlag('inpFlag',fc,20,14);document.getElementById('inpLName').textContent=name;lo=false;document.getElementById('lpBody').classList.remove('open');document.getElementById('lpChev').classList.remove('open');}
+
+let olo=true;
+function toggleOLP(){olo=!olo;document.getElementById('olpBody').classList.toggle('open',olo);document.getElementById('olpChev').classList.toggle('open',olo);}
+function selOL(btn,code,fc,em,name,tts){olc=code;oln=name;olfc=fc;ole=em;oltts=tts;document.querySelectorAll('#pg-out .lang-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');setFlag('oSelFlag',fc,24,16);document.getElementById('oSelName').textContent='翻譯成：'+name;setFlag('oResFlag',fc,22,15);document.getElementById('oResLName').textContent=name;olo=false;document.getElementById('olpBody').classList.remove('open');document.getElementById('olpChev').classList.remove('open');}
+function selOS(m,btn){os=m;document.querySelectorAll('.srcbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('oSrcDisp').textContent=m==='taigi'?'🗣️ 台語':'🇹🇼 華語';document.getElementById('oTA').placeholder=m==='taigi'?'輸入台語文字…':'輸入華語文字…';}
+
+function toggleTailo(){const t=document.getElementById('tailoTxt');t.style.display=t.style.display==='none'?'block':'none';}
+function setV(v,btn){vc=v;document.querySelectorAll('#pg-in .vbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function setOV(v,btn){ovc=v;document.querySelectorAll('#pg-out .vbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function setSpd(i,btn){si=i;document.querySelectorAll('#pg-in .spd').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function setOS(i,btn){osi=i;document.querySelectorAll('#pg-out .spd').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+
+function onInp(){const t=document.getElementById('inpTA').value.trim();if(!t||lc!=='auto')return;const tag=document.getElementById('detTag');const jp=/[\u3040-\u309f\u30a0-\u30ff]/.test(t),kr=/[\uac00-\ud7af]/.test(t),cn=/[\u4e00-\u9fff]/.test(t);if(jp){tag.textContent='🇯🇵 日語';tag.style.display='inline';}else if(kr){tag.textContent='🇰🇷 韓語';tag.style.display='inline';}else if(cn){tag.textContent='🇹🇼 華語';tag.style.display='inline';}else if(t.length>2){tag.textContent='🇺🇸 英語';tag.style.display='inline';}}
+
+function toggleOCR(){document.getElementById('ocrPanel').classList.toggle('show');}
+function clearAll(){document.getElementById('inpTA').value='';document.getElementById('oe1').style.display='block';document.getElementById('or1').classList.remove('show');document.getElementById('detTag').style.display='none';document.getElementById('stxt1').textContent='已連線 · asr.bitfull.tw';}
+function clearOut(){document.getElementById('oTA').value='';document.getElementById('oe2').style.display='block';document.getElementById('or2').classList.remove('show');}
+
+function toggleMic(){isR=!isR;const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');if(isR){btn.classList.add('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;w.classList.add('on');if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;rec=new SR();rec.lang=lc==='auto'?'ja-JP':lc;rec.interimResults=true;rec.onresult=e=>{document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');if(e.results[e.results.length-1].isFinal){stopMic();doTx();}};rec.onerror=()=>stopMic();rec.start();}else{setTimeout(()=>{document.getElementById('inpTA').value='Hello, I love Taiwan!';stopMic();doTx();},2000);}}else stopMic();}
+function stopMic(){isR=false;const btn=document.getElementById('micBtn');btn.classList.remove('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;document.getElementById('mw1').classList.remove('on');if(rec){try{rec.stop();}catch(e){}}}
+
+function toggleOMic(){isOR=!isOR;const btn=document.getElementById('oMicBtn'),w=document.getElementById('mw2');if(isOR){btn.classList.add('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;w.classList.add('on');setTimeout(()=>{document.getElementById('oTA').value='多謝，恁來台灣！';stopOMic();doOTx();},2000);}else stopOMic();}
+function stopOMic(){isOR=false;const btn=document.getElementById('oMicBtn');btn.classList.remove('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;document.getElementById('mw2').classList.remove('on');}
+
+async function doTx(){const text=document.getElementById('inpTA').value.trim();if(!text)return;const btn=document.getElementById('txBtn');btn.classList.add('loading');btn.innerHTML=`<div class="spin"></div>翻譯中…`;document.getElementById('stxt1').textContent='翻譯中…';const t0=Date.now();try{const r=await fetch(API+'/translate/to-taigi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sourceLang:lc})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');const ms=Date.now()-t0,el=(ms/1000).toFixed(1);document.getElementById('oe1').style.display='none';const res=document.getElementById('or1');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');document.getElementById('taigiTxt').textContent=d.taigi||d.tailo||'';const tt=document.getElementById('tailoTxt');tt.textContent=d.tailo||'';tt.style.display=document.getElementById('tailoTog').classList.contains('on')?'block':'none';const tag=document.getElementById('ttag1');tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=3000?'':' slow');document.getElementById('stxt1').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;if(document.getElementById('autoPlayTog').classList.contains('on'))setTimeout(playAudio,300);addHist(text,d.taigi||d.tailo,le,lfc);}catch(e){document.getElementById('stxt1').textContent='錯誤：'+e.message;}btn.classList.remove('loading');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;}
+
+async function doOTx(){const text=document.getElementById('oTA').value.trim();if(!text)return;const btn=document.getElementById('oTxBtn');btn.innerHTML=`<div class="spin"></div>翻譯中…`;btn.style.pointerEvents='none';const t0=Date.now();try{const ep=os==='taigi'?'/translate/from-taigi':'/translate/mandarin-to-world';const r=await fetch(API+ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,targetLang:olc})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');const el=((Date.now()-t0)/1000).toFixed(1);document.getElementById('oe2').style.display='none';const res=document.getElementById('or2');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');setFlag('oResFlag',olfc,22,15);document.getElementById('oResLName').textContent=oln;document.getElementById('oResTxt').textContent=d.translated||'';const tag=document.getElementById('ttag2');tag.textContent=el+'秒';tag.className='timer-tag';document.getElementById('stxt2').textContent=`完成 · ${el}秒`;if(document.getElementById('oAutoPlayTog').classList.contains('on'))setTimeout(playOAudio,300);}catch(e){document.getElementById('stxt2').textContent='錯誤：'+e.message;}btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;btn.style.pointerEvents='';}
+
+function playAudio(){const btn=document.getElementById('playBtn');btn.classList.add('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;const t=document.getElementById('taigiTxt').textContent;if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(t);u.lang='zh-TW';u.rate=spds[si];u.onend=stopAudio;speechSynthesis.speak(u);}else setTimeout(stopAudio,2000);}
+function stopAudio(){const btn=document.getElementById('playBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語`;}}
+function playOAudio(){const btn=document.getElementById('oPlayBtn');btn.classList.add('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;const t=document.getElementById('oResTxt').textContent;if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(t);u.lang=oltts;u.rate=spds[osi];u.onend=stopOAudio;speechSynthesis.speak(u);}else setTimeout(stopOAudio,2000);}
+function stopOAudio(){const btn=document.getElementById('oPlayBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放給對方聽`;}}
+
+function copyR(){navigator.clipboard?.writeText(document.getElementById('taigiTxt').textContent+'\n'+document.getElementById('tailoTxt').textContent);document.getElementById('stxt1').textContent='已複製 ✓';}
+function shareR(){if(navigator.share)navigator.share({title:'咱兜的台語',text:document.getElementById('taigiTxt').textContent});else copyR();}
+function copyO(){navigator.clipboard?.writeText(document.getElementById('oResTxt').textContent);document.getElementById('stxt2').textContent='已複製 ✓';}
+function shareO(){if(navigator.share)navigator.share({title:'咱兜的台語',text:document.getElementById('oResTxt').textContent});else copyO();}
+
+let hist=JSON.parse(localStorage.getItem('taigiHist')||'[]');
+function addHist(src,taigi,em,fc){hist.unshift({src,taigi,em,fc,t:Date.now()});if(hist.length>20)hist.pop();localStorage.setItem('taigiHist',JSON.stringify(hist));renderHist();}
+function renderHist(){const c=document.getElementById('histCard'),l=document.getElementById('histList');if(!hist.length){c.style.display='none';return;}c.style.display='block';l.innerHTML=hist.slice(0,5).map(h=>`<div class="hitem" onclick="document.getElementById('inpTA').value=${JSON.stringify(h.src)};doTx()"><span class="hflag ${h.fc||''}" style="width:22px;height:15px"></span><div style="flex:1;min-width:0"><div class="hsrc">${h.src}</div><div class="htaigi">${h.taigi}</div></div></div>`).join('');}
+function clearHist(){hist=[];localStorage.removeItem('taigiHist');renderHist();}
+
+function openVM(){document.getElementById('vmModal').classList.add('show');}
+function closeVM(e){if(!e||e.target===document.getElementById('vmModal'))document.getElementById('vmModal').classList.remove('show');}
+function notifyV(){alert('✅ 已記錄！上線時通知您。');closeVM();}
+
+function openCM(scene){document.getElementById('capModal').classList.add('show');const d=new Date();d.setDate(d.getDate()+1);document.getElementById('capDate').value=d.toISOString().split('T')[0];if(scene&&SP[scene]){csc=SP[scene][0];csn=SP[scene][1];document.querySelectorAll('#capSTs .stag').forEach(b=>{b.classList.toggle('active',b.textContent.trim().startsWith(csc));});}}
+function closeCM(){document.getElementById('capModal').classList.remove('show');}
+function selCS(btn,em,name){csc=em;csn=name;document.querySelectorAll('#capSTs .stag').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function toggleCV(){const btn=document.getElementById('capVBtn');btn.classList.toggle('active');btn.innerHTML=btn.classList.contains('active')?`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>錄製中…`:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>錄製語音`;}
+function sealCap(){const to=document.getElementById('capTo').value.trim()||'親愛的你',content=document.getElementById('capContent').value.trim(),date=document.getElementById('capDate').value,time=document.getElementById('capTime').value;if(!content){alert('請先寫下你想說的話 💌');return;}if(!date){alert('請選擇開啟時間 ⏰');return;}caps.unshift({id:Date.now(),to,content,date,time,scene:csc,sceneName:csn});localStorage.setItem('taigiCaps',JSON.stringify(caps));renderCaps();closeCM();document.getElementById('capContent').value='';document.getElementById('capTo').value='';setTimeout(()=>alert(`💌 時光寶盒已封存！\n\n寫給：${to}\n開啟時間：${date} ${time}\n\n在那個時刻到來之前，它會靜靜等待著。`),300);}
+function renderCaps(){const l=document.getElementById('capList');document.getElementById('capCnt').textContent=caps.length+' 個';if(!caps.length){l.innerHTML=`<div class="cap-empty"><div class="cap-empty-icon">🫙</div><div class="cap-empty-txt">還沒有時光寶盒<br>現在就封存第一個心聲吧</div></div>`;return;}l.innerHTML=caps.map(c=>{const op=new Date(c.date+'T'+(c.time||'08:00')),lk=op>new Date(),ds=op.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'}),pv=lk?'•'.repeat(Math.min(c.content.length,14)):(c.content.length>26?c.content.slice(0,26)+'…':c.content);return`<div class="citem" onclick="${lk?`alert('這個時光寶盒要等到 ${ds} 才能開啟 🔒')`:`openCap(${c.id})`}"><div class="citem-icon">${c.scene}</div><div style="flex:1;min-width:0"><div class="citem-title">${c.sceneName} · 給 ${c.to}</div><div class="citem-prev">${pv}</div><div class="citem-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${lk?ds+' 開啟':'可以開啟了 ✨'}</div></div><div class="citem-lock">${lk?'🔒':'💌'}</div></div>`;}).join('');}
+function openCap(id){const c=caps.find(x=>x.id===id);if(c)alert(`💌 時光寶盒開啟了！\n\n給 ${c.to}：\n\n「${c.content}」`);}
+
+renderHist();renderCaps();
+</script>
+</body>
+</html>
