@@ -601,7 +601,7 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
       <div style="display:flex;align-items:center;gap:12px;background:#F8F5F0;border-radius:12px;padding:14px">
         <div style="width:28px;height:28px;border-radius:50%;background:#C8352A;color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
-        <div style="font-size:13.5px;color:#2A2A50">點右上角 <strong>「⋯」</strong> 選單</div>
+        <div style="font-size:13.5px;color:#2A2A50">點右下角 <strong>「⋯」</strong> 按鈕</div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;background:#F8F5F0;border-radius:12px;padding:14px">
         <div style="width:28px;height:28px;border-radius:50%;background:#C8352A;color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
@@ -686,7 +686,14 @@ if(isLINE){
 }
 
 function openInSafari(){
-  // 顯示操作說明 modal
+  // 嘗試觸發 LINE 的分享選單（部分版本有效）
+  try{
+    if(window.webkit&&window.webkit.messageHandlers){
+      // iOS LINE LIFF
+      document.getElementById('safariGuide').style.display='flex';
+      return;
+    }
+  }catch(e){}
   document.getElementById('safariGuide').style.display='flex';
 }
 
