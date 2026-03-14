@@ -652,33 +652,51 @@ function renderResult(taigi,tailo){
 }
 
 // ════ MIC ════
+// Web Speech API 優先（邊說邊辨識，說完自動翻譯+播放）
+// MediaRecorder 備用（LINE 不支援 Web Speech 時）
 async function toggleMic(){
   if(isR){stopMic();return;}
   const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');
-  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
-    try{
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      isR=true;btn.classList.add('mic-on');
-      btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止錄音`;
-      w.classList.add('on');audioChunks=[];
-      mediaRec=new MediaRecorder(stream);
-      mediaRec.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
-      mediaRec.onstop=()=>{stream.getTracks().forEach(t=>t.stop());document.getElementById('stxt1').textContent='錄音完成，請按翻譯';};
-      mediaRec.start();
-      setTimeout(()=>{if(isR)stopMic();},30000);
-    }catch(e){
-      alert(e.name==='NotAllowedError'?'請允許麥克風權限（設定→Safari→麥克風→允許）':'無法使用麥克風：'+e.message);
-    }
-  }else if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
+
+  if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
+    // ✅ Web Speech：即時辨識，說完自動翻譯
     isR=true;btn.classList.add('mic-on');
     btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
     w.classList.add('on');
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;rec=new SR();
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    rec=new SR();
     const lmap={auto:'zh-TW','zh-TW':'zh-TW',ja:'ja-JP',en:'en-US',ko:'ko-KR',vi:'vi-VN',id:'id-ID',ms:'ms-MY',th:'th-TH',tl:'fil-PH',fr:'fr-FR',de:'de-DE',es:'es-ES',ar:'ar-SA'};
-    rec.lang=lmap[lc]||'zh-TW';rec.interimResults=true;
-    rec.onresult=e=>{document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');if(e.results[e.results.length-1].isFinal){stopMic();doTx();}};
-    rec.onerror=()=>stopMic();rec.onend=()=>{if(isR)stopMic();};rec.start();
-  }else{alert('此裝置不支援語音輸入，請直接打字');}
+    rec.lang=lmap[lc]||'zh-TW';
+    rec.interimResults=true;
+    rec.onresult=e=>{
+      document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');
+      if(e.results[e.results.length-1].isFinal){stopMic();doTx();}
+    };
+    rec.onerror=(e)=>{
+      if(e.error==='not-allowed'||e.error==='service-not-allowed')
+        alert('請在 Safari 中開啟此頁面，或允許麥克風權限');
+      stopMic();
+    };
+    rec.onend=()=>{if(isR)stopMic();};
+    rec.start();
+
+  } else if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    // 備用：MediaRecorder，錄完後手動按翻譯
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      isR=true;btn.classList.add('mic-on');
+      btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
+      w.classList.add('on');audioChunks=[];
+      mediaRec=new MediaRecorder(stream);
+      mediaRec.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
+      mediaRec.onstop=()=>{stream.getTracks().forEach(t=>t.stop());
+        document.getElementById('stxt1').textContent='錄音完成，請按翻譯';};
+      mediaRec.start();
+      setTimeout(()=>{if(isR)stopMic();},30000);
+    }catch(e){alert('無法使用麥克風：'+e.message);}
+  } else {
+    alert('此裝置不支援語音輸入，請直接打字');
+  }
 }
 function stopMic(){
   isR=false;
@@ -709,8 +727,9 @@ async function doTx(){
     renderResult(d.taigi,d.tailo);
     const tag=document.getElementById('ttag1');tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=3000?'':' slow');
     document.getElementById('stxt1').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;
-    if(document.getElementById('autoPlayTog').classList.contains('on'))setTimeout(playAudio,300);
     addHist(text,d.taigi||d.tailo,le,lfc);
+    // 修正：翻譯完成後才播放，不用 setTimeout
+    if(document.getElementById('autoPlayTog').classList.contains('on')) await playAudio();
   }catch(e){document.getElementById('stxt1').textContent='錯誤：'+e.message;}
   btn.classList.remove('loading');
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;
