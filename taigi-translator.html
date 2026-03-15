@@ -393,7 +393,12 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
             </div>
             <textarea class="inp-ta" id="inpTA" placeholder="輸入文字，或按麥克風說話…" rows="4" oninput="onInp()"></textarea>
             <div class="inp-tools">
-              <button class="tbtn" id="micBtn" onclick="toggleMic()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入</button>
+              <button class="tbtn" id="micBtn"
+                onmousedown="startMic(event)" onmouseup="stopMicAndTranslate(event)"
+                ontouchstart="startMic(event)" ontouchend="stopMicAndTranslate(event)"
+                style="user-select:none;-webkit-user-select:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+                按住說話</button>
               <label class="tbtn" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>拍照翻譯<input type="file" id="ocrFile" accept="image/*" style="display:none" onchange="handleOCR(event)"></label>
               <button class="clrbtn" onclick="clearAll()">清除</button>
             </div>
@@ -710,6 +715,42 @@ function openInSafari(){
 
 // Web Speech API 優先（邊說邊辨識，說完自動翻譯+播放）
 // MediaRecorder 備用（LINE 不支援 Web Speech 時）
+// ════ MIC 按住說話（確保在 user gesture 內播放）════
+function startMic(e){
+  if(e) e.preventDefault();
+  if(isLINE){openInSafari();return;}
+  const btn=document.getElementById('micBtn'),w=document.getElementById('mw1');
+  if(isR) return;
+  if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
+    isR=true;btn.classList.add('mic-on');
+    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><circle cx="12" cy="12" r="6"/></svg>說話中…`;
+    w.classList.add('on');
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    rec=new SR();
+    const lmap={'auto':'zh-TW','zh-TW':'zh-TW','zh':'zh-TW','ja':'ja-JP','en':'en-US','ko':'ko-KR','vi':'vi-VN','id':'id-ID','ms':'ms-MY','th':'th-TH','tl':'fil-PH','fr':'fr-FR','de':'de-DE','es':'es-ES','ar':'ar-SA','pt':'pt-BR','ru':'ru-RU','hi':'hi-IN'};
+    rec.lang=lmap[lc]||'zh-TW';
+    rec.interimResults=true;
+    rec.onresult=e=>{
+      document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');
+    };
+    rec.onerror=()=>stopMic();
+    rec.onend=()=>{};
+    rec.start();
+  } else {
+    alert('請在 Safari 中使用語音輸入');
+  }
+}
+
+function stopMicAndTranslate(e){
+  if(e) e.preventDefault();
+  if(!isR) return;
+  // 在 touch end 這個 user gesture 裡，立刻解鎖音訊
+  silentAudio.play().catch(()=>{});
+  stopMic();
+  const text=document.getElementById('inpTA').value.trim();
+  if(text) doTx();
+}
+
 async function toggleMic(){
   if(isR){stopMic();return;}
 
