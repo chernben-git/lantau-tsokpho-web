@@ -486,7 +486,7 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
           </div>
         </div>
         <div class="tx-bar">
-          <button class="txbtn" id="oTxBtn" onclick="doOTx()" style="background:linear-gradient(145deg,var(--ink2) 0%,var(--ink) 100%);box-shadow:0 4px 14px rgba(42,42,80,0.35)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看</button>
+          <button class="txbtn" id="oTxBtn" onclick="unlockAndOTx()" style="background:linear-gradient(145deg,var(--ink2) 0%,var(--ink) 100%);box-shadow:0 4px 14px rgba(42,42,80,0.35)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看</button>
           <div class="spd-ctrl"><div class="spd-lbl">語速</div><div class="spd-dots"><button class="spd" onclick="setOS(0,this)">慢</button><button class="spd active" onclick="setOS(1,this)">正</button><button class="spd" onclick="setOS(2,this)">快</button></div></div>
         </div>
         <div class="out-wrap">
@@ -822,7 +822,31 @@ function stopMic(){
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;
   document.getElementById('mw1').classList.remove('on');
 }
-function toggleOMic(){isOR=!isOR;const btn=document.getElementById('oMicBtn'),w=document.getElementById('mw2');if(isOR){btn.classList.add('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;w.classList.add('on');if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const r2=new SR();r2.lang=oltts;r2.interimResults=true;r2.onresult=e=>{document.getElementById('oTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');if(e.results[e.results.length-1].isFinal){stopOMic();doOTx();}};r2.onerror=()=>stopOMic();r2.start();}else stopOMic();}else stopOMic();}
+function toggleOMic(){
+  isOR=!isOR;
+  const btn=document.getElementById('oMicBtn'),w=document.getElementById('mw2');
+  if(isOR){
+    btn.classList.add('mic-on');
+    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
+    w.classList.add('on');
+    if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
+      const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+      const r2=new SR();
+      // 修正：語音辨識語言 = 用戶說話的語言（台語/華語都用 zh-TW）
+      r2.lang = os==='taigi' ? 'zh-TW' : 'zh-TW';
+      r2.interimResults=true;
+      r2.onresult=e=>{
+        document.getElementById('oTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');
+        if(e.results[e.results.length-1].isFinal){stopOMic();doOTx();}
+      };
+      r2.onerror=()=>stopOMic();
+      r2.onend=()=>{
+        if(isOR){stopOMic();const t=document.getElementById('oTA').value.trim();if(t)doOTx();}
+      };
+      r2.start();
+    }else stopOMic();
+  }else stopOMic();
+}
 function stopOMic(){isOR=false;const btn=document.getElementById('oMicBtn');btn.classList.remove('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;document.getElementById('mw2').classList.remove('on');}
 
 // ════ TRANSLATE ════
@@ -930,9 +954,28 @@ async function playWavBase64(base64){
   }
 }
 
+// 頁二翻譯按鈕：解鎖 AudioContext 後翻譯
+function unlockAndOTx(){
+  try{
+    if(!_ac||_ac.state==='closed') _ac=new(window.AudioContext||window.webkitAudioContext)();
+    const buf=_ac.createBuffer(1,1,22050);
+    const src=_ac.createBufferSource();
+    src.buffer=buf;src.connect(_ac.destination);src.start(0);
+    if(_acKeepAlive) clearInterval(_acKeepAlive);
+    _acKeepAlive=setInterval(()=>{
+      if(!_ac||_ac.state==='closed'){clearInterval(_acKeepAlive);return;}
+      if(_ac.state==='suspended')_ac.resume().catch(()=>{});
+      try{const b=_ac.createBuffer(1,1,22050);const s=_ac.createBufferSource();s.buffer=b;s.connect(_ac.destination);s.start(0);}catch(e){}
+    },2000);
+    audioUnlocked=true;
+  }catch(e){}
+  doOTx();
+}
+
 async function doOTx(){
   const text=document.getElementById('oTA').value.trim();if(!text)return;
   const btn=document.getElementById('oTxBtn');btn.innerHTML=`<div class="spin"></div>翻譯中…`;btn.style.pointerEvents='none';
+  const autoPlay=document.getElementById('oAutoPlayTog').classList.contains('on');
   const t0=Date.now();
   try{
     const ep=os==='taigi'?'/translate/from-taigi':'/translate/mandarin-to-world';
@@ -945,9 +988,34 @@ async function doOTx(){
     document.getElementById('oResTxt').textContent=d.translated||'';
     const tag=document.getElementById('ttag2');tag.textContent=el+'秒';tag.className='timer-tag';
     document.getElementById('stxt2').textContent=`完成 · ${el}秒`;
-    if(document.getElementById('oAutoPlayTog').classList.contains('on'))setTimeout(playOAudio,300);
+    if(autoPlay) playOAudio();
   }catch(e){document.getElementById('stxt2').textContent='錯誤：'+e.message;}
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;btn.style.pointerEvents='';
+}
+
+// 頁二播放：用 AudioContext + speechSynthesis 雙保險
+async function playOAudio(){
+  const btn=document.getElementById('oPlayBtn');
+  btn.classList.add('playing');
+  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
+  const t=document.getElementById('oResTxt').textContent;
+  if(!t){stopOAudio();return;}
+  // 優先用 speechSynthesis（目標語言發音最準）
+  if('speechSynthesis'in window){
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t);
+    u.lang=oltts;u.rate=spds[osi];
+    u.onend=stopOAudio;
+    u.onerror=stopOAudio;
+    // 先用 AudioContext resume 解鎖，再播
+    try{
+      const ac=_ac||new(window.AudioContext||window.webkitAudioContext)();
+      if(ac.state==='suspended') await ac.resume();
+    }catch(e){}
+    speechSynthesis.speak(u);
+  }else{
+    stopOAudio();
+  }
 }
 
 // ════ AUDIO UNLOCK（iOS Safari 必須先點擊一次才能播放）════
@@ -993,7 +1061,6 @@ function stopAudio(){
   const btn=document.getElementById('playBtn');
   if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語`;}
 }
-function playOAudio(){const btn=document.getElementById('oPlayBtn');btn.classList.add('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;const t=document.getElementById('oResTxt').textContent;if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(t);u.lang=oltts;u.rate=spds[osi];u.onend=stopOAudio;speechSynthesis.speak(u);}else setTimeout(stopOAudio,2000);}
 function stopOAudio(){const btn=document.getElementById('oPlayBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放給對方聽`;}}
 
 // ════ OCR ════
