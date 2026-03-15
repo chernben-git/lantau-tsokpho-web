@@ -719,7 +719,7 @@ async function toggleMic(){
     w.classList.add('on');
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     rec=new SR();
-    const lmap={auto:'zh-TW','zh-TW':'zh-TW',ja:'ja-JP',en:'en-US',ko:'ko-KR',vi:'vi-VN',id:'id-ID',ms:'ms-MY',th:'th-TH',tl:'fil-PH',fr:'fr-FR',de:'de-DE',es:'es-ES',ar:'ar-SA'};
+    const lmap={'auto':'zh-TW','zh-TW':'zh-TW','zh':'zh-TW','ja':'ja-JP','en':'en-US','ko':'ko-KR','vi':'vi-VN','id':'id-ID','ms':'ms-MY','th':'th-TH','tl':'fil-PH','fr':'fr-FR','de':'de-DE','es':'es-ES','ar':'ar-SA'};
     rec.lang=lmap[lc]||'zh-TW';
     rec.interimResults=true;
     rec.onresult=e=>{
@@ -776,8 +776,6 @@ async function doTx(){
   document.getElementById('stxt1').textContent='翻譯中…';
   const t0=Date.now();
   try{
-    // 自動播放開啟時：用 to-taigi-voice（翻譯+TTS一次完成）
-    // 自動播放關閉時：用 to-taigi（只翻譯，快）
     const endpoint = autoPlay ? '/translate/to-taigi-voice' : '/translate/to-taigi';
     const r=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sourceLang:lc,speaker:vc})});
     const d=await r.json();
@@ -789,29 +787,34 @@ async function doTx(){
     const tag=document.getElementById('ttag1');tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=5000?'':' slow');
     document.getElementById('stxt1').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;
     addHist(text,d.taigi||d.tailo,le,lfc);
-    // 記住華語文字供 TTS 使用（廖教授 TTS 送華語合成台語音）
-    lastChText = d.chText || text;
-    // 若有音訊資料直接播放
+    // 修正3：正確記住華語（非英文時 chText 是華語，英文時也是翻譯後的華語）
+    lastChText = d.chText || '';
+    // 自動播放：收到 audioBase64 直接播
     if(autoPlay && d.audioBase64){
-      const wav=atob(d.audioBase64),buf=new Uint8Array(wav.length);
-      for(let i=0;i<wav.length;i++)buf[i]=wav.charCodeAt(i);
-      const blob=new Blob([buf],{type:'audio/wav'});
-      const url=URL.createObjectURL(blob);
-      if(currentAudio){currentAudio.pause();currentAudio=null;}
-      currentAudio=new Audio(url);
-      currentAudio.playbackRate=spds[si];
-      currentAudio.onended=stopAudio;
-      const pb=document.getElementById('playBtn');
-      pb.classList.add('playing');
-      pb.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
-      currentAudio.play().catch(()=>{
-        stopAudio();
-        document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
-      });
+      playWavBase64(d.audioBase64);
     }
   }catch(e){document.getElementById('stxt1').textContent='錯誤：'+e.message;}
   btn.classList.remove('loading');
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;
+}
+
+// 播放 base64 WAV（autoplay 和手動播放共用）
+function playWavBase64(base64){
+  const wav=atob(base64),buf=new Uint8Array(wav.length);
+  for(let i=0;i<wav.length;i++)buf[i]=wav.charCodeAt(i);
+  const blob=new Blob([buf],{type:'audio/wav'});
+  const url=URL.createObjectURL(blob);
+  if(currentAudio){currentAudio.pause();currentAudio=null;}
+  currentAudio=new Audio(url);
+  currentAudio.playbackRate=spds[si];
+  currentAudio.onended=stopAudio;
+  const pb=document.getElementById('playBtn');
+  pb.classList.add('playing');
+  pb.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
+  currentAudio.play().catch(()=>{
+    stopAudio();
+    document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
+  });
 }
 
 async function doOTx(){
@@ -858,34 +861,16 @@ async function playAudio(){
   btn.classList.add('playing');
   btn.innerHTML=`<div class="spin" style="border-color:rgba(255,255,255,0.3);border-top-color:white"></div>載入中…`;
   try{
-    const ttsText = lastChText || document.getElementById('inpTA').value.trim() || tailo;
+    // 送華語給 TTS，限 150 字（太長 TTS 會 timeout）
+    const ttsText=(lastChText||document.getElementById('inpTA').value.trim()).slice(0,150);
+    if(!ttsText){stopAudio();return;}
     const r=await fetch(API+'/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:ttsText,speaker:vc})});
     const d=await r.json();
     if(!r.ok||!d.audioBase64)throw new Error('TTS失敗');
-    const wav=atob(d.audioBase64),buf=new Uint8Array(wav.length);
-    for(let i=0;i<wav.length;i++)buf[i]=wav.charCodeAt(i);
-    const blob=new Blob([buf],{type:'audio/wav'});
-    const url=URL.createObjectURL(blob);
-    currentAudio=new Audio(url);
-    currentAudio.playbackRate=spds[si];
-    currentAudio.onended=stopAudio;
-    currentAudio.play().then(()=>{
-      btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
-    }).catch(async()=>{
-      // 嘗試先解鎖再播
-      try{
-        await silentAudio.play();
-        audioUnlocked=true;
-        await currentAudio.play();
-        btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
-      }catch(e2){
-        stopAudio();
-        document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
-      }
-    });
+    playWavBase64(d.audioBase64);
   }catch(e){
     stopAudio();
-    document.getElementById('stxt1').textContent='TTS 載入失敗，請手動按播放';
+    document.getElementById('stxt1').textContent='TTS 失敗，請再試';
   }
 }
 function stopAudio(){if(currentAudio){currentAudio.pause();currentAudio=null;}const btn=document.getElementById('playBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語`;}}
