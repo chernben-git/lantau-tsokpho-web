@@ -847,14 +847,31 @@ async function doTx(){
 }
 
 // 翻譯按鈕：在 click event 裡解鎖音訊 context，保持到播放完成
-let _ac = null; // 保持 AudioContext 存活
+let _ac = null;
+let _acKeepAlive = null;
+
 function unlockAndTx(){
-  // 在 user click 裡建立 AudioContext → Safari 解鎖
   try{
-    _ac = new (window.AudioContext||window.webkitAudioContext)();
+    // 每次點按鈕都重新建立或 resume AudioContext
+    if(!_ac || _ac.state==='closed'){
+      _ac = new (window.AudioContext||window.webkitAudioContext)();
+    }
+    // 播一個極短的無聲聲音，讓 Safari 知道這個 context 是活的
     const buf=_ac.createBuffer(1,1,22050);
     const src=_ac.createBufferSource();
     src.buffer=buf;src.connect(_ac.destination);src.start(0);
+    // 啟動 keepalive：每 2 秒播一次無聲，防止 Safari suspend
+    if(_acKeepAlive) clearInterval(_acKeepAlive);
+    _acKeepAlive = setInterval(()=>{
+      if(!_ac || _ac.state==='closed'){clearInterval(_acKeepAlive);return;}
+      if(_ac.state==='suspended'){_ac.resume().catch(()=>{});}
+      // 播無聲 buffer 保持活躍
+      try{
+        const b=_ac.createBuffer(1,1,22050);
+        const s=_ac.createBufferSource();
+        s.buffer=b;s.connect(_ac.destination);s.start(0);
+      }catch(e){}
+    }, 2000);
     audioUnlocked=true;
   }catch(e){}
   doTx();
@@ -959,7 +976,13 @@ async function playAudio(){
     document.getElementById('stxt1').textContent='TTS 失敗，請再試';
   }
 }
-function stopAudio(){if(currentAudio){currentAudio.pause();currentAudio=null;}const btn=document.getElementById('playBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語`;}}
+function stopAudio(){
+  if(currentAudio){currentAudio.pause();currentAudio=null;}
+  // 播完後停止 keepalive
+  if(_acKeepAlive){clearInterval(_acKeepAlive);_acKeepAlive=null;}
+  const btn=document.getElementById('playBtn');
+  if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語`;}
+}
 function playOAudio(){const btn=document.getElementById('oPlayBtn');btn.classList.add('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;const t=document.getElementById('oResTxt').textContent;if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(t);u.lang=oltts;u.rate=spds[osi];u.onend=stopOAudio;speechSynthesis.speak(u);}else setTimeout(stopOAudio,2000);}
 function stopOAudio(){const btn=document.getElementById('oPlayBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放給對方聽`;}}
 
