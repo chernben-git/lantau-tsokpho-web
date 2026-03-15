@@ -393,18 +393,14 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
             </div>
             <textarea class="inp-ta" id="inpTA" placeholder="輸入文字，或按麥克風說話…" rows="4" oninput="onInp()"></textarea>
             <div class="inp-tools">
-              <button class="tbtn" id="micBtn"
-                onmousedown="startMic(event)" onmouseup="stopMicAndTranslate(event)"
-                ontouchstart="startMic(event)" ontouchend="stopMicAndTranslate(event)"
-                style="user-select:none;-webkit-user-select:none">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
-                按住說話</button>
+              <button class="tbtn" id="micBtn" onclick="toggleMic()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入</button>
               <label class="tbtn" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>拍照翻譯<input type="file" id="ocrFile" accept="image/*" style="display:none" onchange="handleOCR(event)"></label>
               <button class="clrbtn" onclick="clearAll()">清除</button>
             </div>
           </div>
           <div class="tx-bar">
-            <button class="txbtn" id="txBtn" onclick="doTx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語</button>
+            <button class="txbtn" id="txBtn" onclick="unlockAndTx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語</button>
             <div class="spd-ctrl"><div class="spd-lbl">語速</div><div class="spd-dots"><button class="spd" onclick="setSpd(0,this)">慢</button><button class="spd active" onclick="setSpd(1,this)">正</button><button class="spd" onclick="setSpd(2,this)">快</button></div></div>
           </div>
           <div class="out-wrap">
@@ -777,8 +773,8 @@ async function toggleMic(){
       document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');
       if(e.results[e.results.length-1].isFinal){
         stopMic();
-        // 語音辨識結束 = 用戶互動，立刻解鎖音訊
-        silentAudio.play().catch(()=>{});
+        // AudioContext 解鎖（在 speech result callback 裡仍算 user interaction）
+        try{const ac=new(window.AudioContext||window.webkitAudioContext)();const b=ac.createBuffer(1,1,22050);const s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0);}catch(e){}
         doTx();
       }
     };
@@ -850,6 +846,19 @@ async function doTx(){
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;
 }
 
+// 翻譯按鈕：在 click event 裡先解鎖音訊，再翻譯
+function unlockAndTx(){
+  // 在 user click 裡建立並播放無聲音訊 → 解鎖 Safari audio
+  try{
+    const ac=new (window.AudioContext||window.webkitAudioContext)();
+    const buf=ac.createBuffer(1,1,22050);
+    const src=ac.createBufferSource();
+    src.buffer=buf;src.connect(ac.destination);src.start(0);
+    audioUnlocked=true;
+  }catch(e){}
+  doTx();
+}
+
 // 播放 base64 WAV
 function playWavBase64(base64){
   const wav=atob(base64),buf=new Uint8Array(wav.length);
@@ -863,12 +872,9 @@ function playWavBase64(base64){
   const pb=document.getElementById('playBtn');
   pb.classList.add('playing');
   pb.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
-  // 先播無聲音訊解鎖，再播台語
-  silentAudio.play().catch(()=>{}).finally(()=>{
-    currentAudio.play().catch(()=>{
-      stopAudio();
-      document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
-    });
+  currentAudio.play().catch(()=>{
+    stopAudio();
+    document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
   });
 }
 
