@@ -635,6 +635,7 @@ let csc='🎂',csn='生日驚喜';
 const spds=[0.7,1.0,1.3];
 const SP={birthday:['🎂','生日驚喜'],travel:['✈️','旅途想念'],future:['🌱','給未來的自己'],family:['🏠','家族傳承'],new_year:['🧧','新年祝福'],custom:['⏰','自訂']};
 let lastChText = ''; // 最近一次翻譯的華語文字（用於 TTS）
+let currentAudio = null;
 let mediaRec=null,audioChunks=[];
 let hist=JSON.parse(localStorage.getItem('taigiHist')||'[]');
 
