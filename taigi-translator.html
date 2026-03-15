@@ -634,7 +634,7 @@ let caps=JSON.parse(localStorage.getItem('taigiCaps')||'[]');
 let csc='🎂',csn='生日驚喜';
 const spds=[0.7,1.0,1.3];
 const SP={birthday:['🎂','生日驚喜'],travel:['✈️','旅途想念'],future:['🌱','給未來的自己'],family:['🏠','家族傳承'],new_year:['🧧','新年祝福'],custom:['⏰','自訂']};
-let currentAudio=null;
+let lastChText = ''; // 最近一次翻譯的華語文字（用於 TTS）
 let mediaRec=null,audioChunks=[];
 let hist=JSON.parse(localStorage.getItem('taigiHist')||'[]');
 
@@ -770,23 +770,43 @@ function stopOMic(){isOR=false;const btn=document.getElementById('oMicBtn');btn.
 async function doTx(){
   const text=document.getElementById('inpTA').value.trim();if(!text)return;
   const btn=document.getElementById('txBtn');
+  const autoPlay=document.getElementById('autoPlayTog').classList.contains('on');
   btn.classList.add('loading');btn.innerHTML=`<div class="spin"></div>翻譯中…`;
   document.getElementById('stxt1').textContent='翻譯中…';
   const t0=Date.now();
   try{
-    const r=await fetch(API+'/translate/to-taigi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sourceLang:lc})});
+    // 自動播放開啟時：用 to-taigi-voice（翻譯+TTS一次完成）
+    // 自動播放關閉時：用 to-taigi（只翻譯，快）
+    const endpoint = autoPlay ? '/translate/to-taigi-voice' : '/translate/to-taigi';
+    const r=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sourceLang:lc,speaker:vc})});
     const d=await r.json();
     if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
     const ms=Date.now()-t0,el=(ms/1000).toFixed(1);
     document.getElementById('oe1').style.display='none';
     const res=document.getElementById('or1');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
     renderResult(d.taigi,d.tailo);
-    const tag=document.getElementById('ttag1');tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=3000?'':' slow');
+    const tag=document.getElementById('ttag1');tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=5000?'':' slow');
     document.getElementById('stxt1').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;
     addHist(text,d.taigi||d.tailo,le,lfc);
-    // 自動播放：直接呼叫 playAudio()，TTS API 回傳後播放
-    if(document.getElementById('autoPlayTog').classList.contains('on')){
-      playAudio();
+    // 記住華語文字供 TTS 使用（廖教授 TTS 送華語合成台語音）
+    lastChText = d.chText || text;
+    // 若有音訊資料直接播放
+    if(autoPlay && d.audioBase64){
+      const wav=atob(d.audioBase64),buf=new Uint8Array(wav.length);
+      for(let i=0;i<wav.length;i++)buf[i]=wav.charCodeAt(i);
+      const blob=new Blob([buf],{type:'audio/wav'});
+      const url=URL.createObjectURL(blob);
+      if(currentAudio){currentAudio.pause();currentAudio=null;}
+      currentAudio=new Audio(url);
+      currentAudio.playbackRate=spds[si];
+      currentAudio.onended=stopAudio;
+      const pb=document.getElementById('playBtn');
+      pb.classList.add('playing');
+      pb.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
+      currentAudio.play().catch(()=>{
+        stopAudio();
+        document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
+      });
     }
   }catch(e){document.getElementById('stxt1').textContent='錯誤：'+e.message;}
   btn.classList.remove('loading');
@@ -837,8 +857,8 @@ async function playAudio(){
   btn.classList.add('playing');
   btn.innerHTML=`<div class="spin" style="border-color:rgba(255,255,255,0.3);border-top-color:white"></div>載入中…`;
   try{
-    const srcText=document.getElementById('inpTA').value.trim()||tailo;
-    const r=await fetch(API+'/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:srcText,speaker:vc})});
+    const ttsText = lastChText || document.getElementById('inpTA').value.trim() || tailo;
+    const r=await fetch(API+'/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:ttsText,speaker:vc})});
     const d=await r.json();
     if(!r.ok||!d.audioBase64)throw new Error('TTS失敗');
     const wav=atob(d.audioBase64),buf=new Uint8Array(wav.length);
@@ -871,42 +891,38 @@ function stopAudio(){if(currentAudio){currentAudio.pause();currentAudio=null;}co
 function playOAudio(){const btn=document.getElementById('oPlayBtn');btn.classList.add('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;const t=document.getElementById('oResTxt').textContent;if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(t);u.lang=oltts;u.rate=spds[osi];u.onend=stopOAudio;speechSynthesis.speak(u);}else setTimeout(stopOAudio,2000);}
 function stopOAudio(){const btn=document.getElementById('oPlayBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放給對方聽`;}}
 
-// ════ OCR 拍照/上傳圖片翻譯 ════
-function toggleOCR(){
-  const panel=document.getElementById('ocrPanel');
-  panel.classList.toggle('show');
-}
+// ════ OCR ════
+function toggleOCR(){document.getElementById('ocrPanel').classList.toggle('show');}
 
 async function handleOCR(e){
   const file=e.target.files[0];if(!file)return;
-  document.getElementById('stxt1').textContent='圖片辨識中…';
-  document.getElementById('ocrPanel').classList.remove('show');
+  const stxt=document.getElementById('stxt1');
+  stxt.textContent='📷 圖片辨識中…';
+
   const reader=new FileReader();
   reader.onload=async(ev)=>{
-    const base64=ev.target.result.split(',')[1];
     try{
-      const r=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},
-        body:JSON.stringify({
-          model:'claude-sonnet-4-20250514',max_tokens:500,
-          messages:[{role:'user',content:[
-            {type:'image',source:{type:'base64',media_type:file.type,data:base64}},
-            {type:'text',text:'請辨識圖片中的文字，只輸出文字內容，不要任何說明。'}
-          ]}]
-        })
+      // 動態載入 Tesseract.js
+      if(!window.Tesseract){
+        const s=document.createElement('script');
+        s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+        document.head.appendChild(s);
+        await new Promise(r=>s.onload=r);
+      }
+      stxt.textContent='📷 辨識文字中（需要幾秒）…';
+      const result=await Tesseract.recognize(ev.target.result,['chi_tra','chi_sim','eng','jpn'],{
+        logger:m=>{if(m.status==='recognizing text')stxt.textContent=`📷 辨識中 ${Math.round(m.progress*100)}%…`;}
       });
-      const d=await r.json();
-      const text=d.content?.[0]?.text||'';
+      const text=result.data.text.trim();
       if(text){
         document.getElementById('inpTA').value=text;
-        document.getElementById('stxt1').textContent='辨識完成，翻譯中…';
-        await doTx();
+        stxt.textContent='辨識完成，翻譯中…';
+        doTx();
       }else{
-        document.getElementById('stxt1').textContent='無法辨識圖片文字';
+        stxt.textContent='⚠️ 無法辨識圖片文字，請確認圖片清晰';
       }
     }catch(err){
-      document.getElementById('stxt1').textContent='辨識失敗：'+err.message;
+      stxt.textContent='辨識失敗：'+err.message;
     }
   };
   reader.readAsDataURL(file);
