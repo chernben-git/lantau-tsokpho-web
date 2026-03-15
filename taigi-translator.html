@@ -367,13 +367,6 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
       </div>
 
       <div>
-        <div class="ocr-panel" id="ocrPanel">
-          <div class="ocr-drop" onclick="document.getElementById('ocrFile').click()">
-            <div class="ocr-drop-icon">📷</div>
-            <div class="ocr-drop-txt">點擊選擇圖片或拍照<br><strong>自動辨識文字並翻譯</strong></div>
-            <input type="file" id="ocrFile" accept="image/*" style="display:none" onchange="handleOCR(event)">
-          </div>
-        </div>
         <div class="tx-card">
           <div class="settings-row">
             <div class="si"><button class="tog on" id="autoPlayTog" onclick="this.classList.toggle('on')"></button>🔊 自動播放</div>
@@ -394,7 +387,7 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
             <textarea class="inp-ta" id="inpTA" placeholder="輸入文字，或按麥克風說話…" rows="4" oninput="onInp()"></textarea>
             <div class="inp-tools">
               <button class="tbtn" id="micBtn" onclick="toggleMic()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入</button>
-              <button class="tbtn" onclick="toggleOCR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>拍照翻譯</button>
+              <label class="tbtn" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>拍照翻譯<input type="file" id="ocrFile" accept="image/*" style="display:none" onchange="handleOCR(event)"></label>
               <button class="clrbtn" onclick="clearAll()">清除</button>
             </div>
           </div>
@@ -791,20 +784,9 @@ async function doTx(){
     const tag=document.getElementById('ttag1');tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=3000?'':' slow');
     document.getElementById('stxt1').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;
     addHist(text,d.taigi||d.tailo,le,lfc);
-    // 自動播放：speechSynthesis 不受 autoplay 限制，優先用
+    // 自動播放：直接呼叫 playAudio()，TTS API 回傳後播放
     if(document.getElementById('autoPlayTog').classList.contains('on')){
-      if('speechSynthesis'in window){
-        // 先用 speechSynthesis 立刻播（不卡 autoplay policy）
-        speechSynthesis.cancel();
-        const u=new SpeechSynthesisUtterance(text);
-        u.lang='zh-TW';u.rate=spds[si];
-        speechSynthesis.speak(u);
-        // 同步更新播放按鈕狀態
-        const pb=document.getElementById('playBtn');
-        pb.classList.add('playing');
-        pb.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
-        u.onend=stopAudio;
-      }
+      playAudio();
     }
   }catch(e){document.getElementById('stxt1').textContent='錯誤：'+e.message;}
   btn.classList.remove('loading');
@@ -831,14 +813,23 @@ async function doOTx(){
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;btn.style.pointerEvents='';
 }
 
-// ════ AUDIO ════
-// Safari 對自動播放有限制：必須在用戶手動互動後才能播
-// 解法：語音辨識本身是用戶互動，之後的播放應該被允許
-// TTS 失敗時 fallback 用 speechSynthesis（無限制）
-let userHasInteracted = false;
-document.addEventListener('click', ()=>{ userHasInteracted=true; }, {once:true});
-document.addEventListener('touchstart', ()=>{ userHasInteracted=true; }, {once:true});
+// ════ AUDIO UNLOCK（iOS Safari 必須先點擊一次才能播放）════
+let audioUnlocked = false;
+const silentAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
 
+function unlockAudio(){
+  if(audioUnlocked) return;
+  silentAudio.play().then(()=>{
+    audioUnlocked = true;
+    console.log('[audio] unlocked');
+  }).catch(()=>{});
+}
+
+// 任何點擊/觸摸都嘗試解鎖
+document.addEventListener('touchstart', unlockAudio, {passive:true});
+document.addEventListener('click', unlockAudio);
+
+// ════ AUDIO ════
 async function playAudio(){
   const btn=document.getElementById('playBtn');
   if(currentAudio){currentAudio.pause();currentAudio=null;stopAudio();return;}
@@ -857,25 +848,23 @@ async function playAudio(){
     currentAudio=new Audio(url);
     currentAudio.playbackRate=spds[si];
     currentAudio.onended=stopAudio;
-    // 嘗試播放，失敗改用 speechSynthesis
-    try{
-      await currentAudio.play();
-    }catch(playErr){
-      // autoplay policy 被擋，fallback 到 speechSynthesis
-      currentAudio=null;
-      throw new Error('autoplay blocked');
-    }
-    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
-  }catch(e){
-    // Fallback：用瀏覽器 speechSynthesis（不受 autoplay 限制）
-    if('speechSynthesis'in window){
-      const srcText=document.getElementById('inpTA').value.trim()||tailo;
-      const u=new SpeechSynthesisUtterance(srcText);
-      u.lang='zh-TW';u.rate=spds[si];
-      u.onend=stopAudio;
-      speechSynthesis.speak(u);
+    currentAudio.play().then(()=>{
       btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
-    }else stopAudio();
+    }).catch(async()=>{
+      // 嘗試先解鎖再播
+      try{
+        await silentAudio.play();
+        audioUnlocked=true;
+        await currentAudio.play();
+        btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
+      }catch(e2){
+        stopAudio();
+        document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
+      }
+    });
+  }catch(e){
+    stopAudio();
+    document.getElementById('stxt1').textContent='TTS 載入失敗，請手動按播放';
   }
 }
 function stopAudio(){if(currentAudio){currentAudio.pause();currentAudio=null;}const btn=document.getElementById('playBtn');if(btn){btn.classList.remove('playing');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語`;}}
