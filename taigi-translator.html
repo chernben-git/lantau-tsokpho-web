@@ -370,8 +370,8 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
         <div class="ocr-panel" id="ocrPanel">
           <div class="ocr-drop" onclick="document.getElementById('ocrFile').click()">
             <div class="ocr-drop-icon">📷</div>
-            <div class="ocr-drop-txt">點擊上傳圖片或拍照<br><strong>自動辨識文字並翻譯</strong></div>
-            <input type="file" id="ocrFile" accept="image/*" style="display:none">
+            <div class="ocr-drop-txt">點擊選擇圖片或拍照<br><strong>自動辨識文字並翻譯</strong></div>
+            <input type="file" id="ocrFile" accept="image/*" style="display:none" onchange="handleOCR(event)">
           </div>
         </div>
         <div class="tx-card">
@@ -730,7 +730,11 @@ async function toggleMic(){
     rec.interimResults=true;
     rec.onresult=e=>{
       document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');
-      if(e.results[e.results.length-1].isFinal){stopMic();doTx();}
+      if(e.results[e.results.length-1].isFinal){
+        stopMic();
+        // 辨識完立刻翻譯，autoPlay 由 doTx 內處理
+        doTx();
+      }
     };
     rec.onerror=(e)=>{
       if(e.error==='not-allowed'||e.error==='service-not-allowed')
@@ -787,8 +791,21 @@ async function doTx(){
     const tag=document.getElementById('ttag1');tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=3000?'':' slow');
     document.getElementById('stxt1').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;
     addHist(text,d.taigi||d.tailo,le,lfc);
-    // 修正：翻譯完成後才播放，不用 setTimeout
-    if(document.getElementById('autoPlayTog').classList.contains('on')) await playAudio();
+    // 自動播放：speechSynthesis 不受 autoplay 限制，優先用
+    if(document.getElementById('autoPlayTog').classList.contains('on')){
+      if('speechSynthesis'in window){
+        // 先用 speechSynthesis 立刻播（不卡 autoplay policy）
+        speechSynthesis.cancel();
+        const u=new SpeechSynthesisUtterance(text);
+        u.lang='zh-TW';u.rate=spds[si];
+        speechSynthesis.speak(u);
+        // 同步更新播放按鈕狀態
+        const pb=document.getElementById('playBtn');
+        pb.classList.add('playing');
+        pb.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
+        u.onend=stopAudio;
+      }
+    }
   }catch(e){document.getElementById('stxt1').textContent='錯誤：'+e.message;}
   btn.classList.remove('loading');
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;
@@ -871,37 +888,22 @@ function toggleOCR(){
   panel.classList.toggle('show');
 }
 
-// 監聽 ocrFile input 變更（照相或選圖片）
-document.addEventListener('DOMContentLoaded',()=>{
-  const ocrInput=document.getElementById('ocrFile');
-  if(ocrInput) ocrInput.addEventListener('change', handleOCR);
-});
-// 也立即綁定（防 DOMContentLoaded 已過）
-setTimeout(()=>{
-  const ocrInput=document.getElementById('ocrFile');
-  if(ocrInput&&!ocrInput._bound){ocrInput._bound=true;ocrInput.addEventListener('change',handleOCR);}
-},100);
-
 async function handleOCR(e){
   const file=e.target.files[0];if(!file)return;
   document.getElementById('stxt1').textContent='圖片辨識中…';
   document.getElementById('ocrPanel').classList.remove('show');
-
-  // 把圖片轉 base64
   const reader=new FileReader();
   reader.onload=async(ev)=>{
     const base64=ev.target.result.split(',')[1];
     try{
-      // 用 Claude Vision API (Anthropic) 辨識圖片文字
       const r=await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',
         headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},
         body:JSON.stringify({
-          model:'claude-sonnet-4-20250514',
-          max_tokens:500,
+          model:'claude-sonnet-4-20250514',max_tokens:500,
           messages:[{role:'user',content:[
             {type:'image',source:{type:'base64',media_type:file.type,data:base64}},
-            {type:'text',text:'請辨識圖片中的文字，只輸出文字內容，不要任何說明。如果有多國語言，保留原文。'}
+            {type:'text',text:'請辨識圖片中的文字，只輸出文字內容，不要任何說明。'}
           ]}]
         })
       });
@@ -909,7 +911,7 @@ async function handleOCR(e){
       const text=d.content?.[0]?.text||'';
       if(text){
         document.getElementById('inpTA').value=text;
-        document.getElementById('stxt1').textContent='辨識完成，自動翻譯中…';
+        document.getElementById('stxt1').textContent='辨識完成，翻譯中…';
         await doTx();
       }else{
         document.getElementById('stxt1').textContent='無法辨識圖片文字';
@@ -919,7 +921,7 @@ async function handleOCR(e){
     }
   };
   reader.readAsDataURL(file);
-  e.target.value=''; // 重置 input 讓同一張圖可以再選
+  e.target.value='';
 }
 // ════ COPY/SHARE ════
 function copyR(){navigator.clipboard?.writeText(document.getElementById('taigiTxt').textContent+'\n'+document.getElementById('tailoTxt').textContent);document.getElementById('stxt1').textContent='已複製 ✓';}
