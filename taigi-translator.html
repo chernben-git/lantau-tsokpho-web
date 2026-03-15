@@ -770,10 +770,10 @@ async function toggleMic(){
     rec.lang=lmap[lc]||'zh-TW';
     rec.interimResults=true;
     rec.onresult=e=>{
-      document.getElementById('inpTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');
+      const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+      document.getElementById('inpTA').value=t;
       if(e.results[e.results.length-1].isFinal){
         stopMic();
-        // AudioContext 解鎖（在 speech result callback 裡仍算 user interaction）
         try{const ac=new(window.AudioContext||window.webkitAudioContext)();const b=ac.createBuffer(1,1,22050);const s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0);}catch(e){}
         doTx();
       }
@@ -783,7 +783,17 @@ async function toggleMic(){
         alert('請允許麥克風權限：設定 → Safari → 麥克風 → 允許');
       stopMic();
     };
-    rec.onend=()=>{if(isR)stopMic();};
+    rec.onend=()=>{
+      // onend fallback：部分語言（如印地語）不觸發 isFinal，改在 onend 翻譯
+      if(isR){
+        stopMic();
+        const text=document.getElementById('inpTA').value.trim();
+        if(text){
+          try{const ac=new(window.AudioContext||window.webkitAudioContext)();const b=ac.createBuffer(1,1,22050);const s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0);}catch(e){}
+          doTx();
+        }
+      }
+    };
     rec.start();
 
   } else if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
