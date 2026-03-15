@@ -469,9 +469,8 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
       <div class="tx-card">
         <div class="settings-row"><div class="si"><button class="tog on" id="oAutoPlayTog" onclick="this.classList.toggle('on')"></button>🔊 自動播放目標語音</div></div>
         <div class="voice-row">
-          <span class="vlbl">🎙️ 台語語音</span>
-          <button class="vbtn active" id="ovM" onclick="setOV('male',this)">👨 男聲</button>
-          <button class="vbtn" id="ovF" onclick="setOV('female',this)">👩 女聲</button>
+          <span class="vlbl">🔊 目標語音</span>
+          <button class="vbtn active" id="ovM" onclick="setOV('system',this)">🔊 系統聲</button>
           <button class="vcustom" onclick="openVM()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4"/></svg>我的聲音 <span class="soon-tag">即將</span></button>
         </div>
         <div class="inp-wrap">
@@ -482,6 +481,7 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
           <textarea class="inp-ta" id="oTA" placeholder="輸入台語或華語，或按麥克風說話…" rows="4"></textarea>
           <div class="inp-tools">
             <button class="tbtn" id="oMicBtn" onclick="toggleOMic()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入</button>
+            <label class="tbtn" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>拍照翻譯<input type="file" id="ocrFile2" accept="image/*" style="display:none" onchange="handleOCR2(event)"></label>
             <button class="clrbtn" onclick="clearOut()">清除</button>
           </div>
         </div>
@@ -1087,32 +1087,18 @@ async function handleOCR(e){
   const file=e.target.files[0];if(!file)return;
   const stxt=document.getElementById('stxt1');
   stxt.textContent='📷 圖片辨識中…';
-
   const reader=new FileReader();
   reader.onload=async(ev)=>{
     try{
       const base64=ev.target.result.split(',')[1];
       const mediaType=file.type||'image/jpeg';
-
-      // 直接呼叫 Anthropic API（前端有內建 API 存取）
-      const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      const r=await fetch(API+'/ocr',{
         method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true'
-        },
-        body:JSON.stringify({
-          model:'claude-haiku-4-5-20251001',
-          max_tokens:1000,
-          messages:[{role:'user',content:[
-            {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
-            {type:'text',text:'請辨識圖片中的所有文字，只輸出文字內容，不要任何說明。如果是外語請保留原文。'}
-          ]}]
-        })
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({imageBase64:base64,mimeType:mediaType})
       });
-      const d=await resp.json();
-      const text=(d.content?.[0]?.text||'').trim();
+      const d=await r.json();
+      const text=(d.text||'').trim();
       if(text){
         document.getElementById('inpTA').value=text;
         stxt.textContent='辨識完成，翻譯中…';
@@ -1129,7 +1115,37 @@ async function handleOCR(e){
   reader.readAsDataURL(file);
   e.target.value='';
 }
-// ════ COPY/SHARE ════
+// 頁二 OCR：辨識外語圖片 → 填入輸入框 → 翻譯給對方看
+async function handleOCR2(e){
+  const file=e.target.files[0];if(!file)return;
+  const stxt=document.getElementById('stxt2');
+  stxt.textContent='📷 圖片辨識中…';
+  const reader=new FileReader();
+  reader.onload=async(ev)=>{
+    try{
+      const base64=ev.target.result.split(',')[1];
+      const mediaType=file.type||'image/jpeg';
+      const r=await fetch(API+'/ocr',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({imageBase64:base64,mimeType:mediaType})
+      });
+      const d=await r.json();
+      const text=(d.text||'').trim();
+      if(text){
+        document.getElementById('oTA').value=text;
+        stxt.textContent='辨識完成，翻譯中…';
+        unlockAndOTx();
+      }else{
+        stxt.textContent='⚠️ 無法辨識文字';
+      }
+    }catch(err){
+      stxt.textContent='辨識失敗，請再試';
+    }
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
 function copyR(){navigator.clipboard?.writeText(document.getElementById('taigiTxt').textContent+'\n'+document.getElementById('tailoTxt').textContent);document.getElementById('stxt1').textContent='已複製 ✓';}
 function shareR(){if(navigator.share)navigator.share({title:'咱兜的台語',text:document.getElementById('taigiTxt').textContent});else copyR();}
 function copyO(){navigator.clipboard?.writeText(document.getElementById('oResTxt').textContent);document.getElementById('stxt2').textContent='已複製 ✓';}
