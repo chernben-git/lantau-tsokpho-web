@@ -723,7 +723,7 @@ function startMic(e){
     w.classList.add('on');
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     rec=new SR();
-    const lmap={'auto':'zh-TW','zh-TW':'zh-TW','zh':'zh-TW','ja':'ja-JP','en':'en-US','ko':'ko-KR','vi':'vi-VN','id':'id-ID','ms':'ms-MY','th':'th-TH','tl':'fil-PH','fr':'fr-FR','de':'de-DE','es':'es-ES','ar':'ar-SA','pt':'pt-BR','ru':'ru-RU','hi':'hi-IN'};
+    const lmap={'auto':'zh-TW','zh-TW':'zh-TW','zh':'zh-TW','ja':'ja-JP','en':'en-US','ko':'ko-KR','vi':'vi-VN','id':'id-ID','ms':'ms-MY','th':'th-TH','tl':'en-PH','fr':'fr-FR','de':'de-DE','es':'es-ES','ar':'ar-SA','pt':'pt-BR','ru':'ru-RU','hi':'hi-IN'};
     rec.lang=lmap[lc]||'zh-TW';
     rec.interimResults=true;
     rec.onresult=e=>{
@@ -766,7 +766,7 @@ async function toggleMic(){
     w.classList.add('on');
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     rec=new SR();
-    const lmap={'auto':'zh-TW','zh-TW':'zh-TW','zh':'zh-TW','ja':'ja-JP','en':'en-US','ko':'ko-KR','vi':'vi-VN','id':'id-ID','ms':'ms-MY','th':'th-TH','tl':'fil-PH','fr':'fr-FR','de':'de-DE','es':'es-ES','ar':'ar-SA','pt':'pt-BR','ru':'ru-RU','hi':'hi-IN'};
+    const lmap={'auto':'zh-TW','zh-TW':'zh-TW','zh':'zh-TW','ja':'ja-JP','en':'en-US','ko':'ko-KR','vi':'vi-VN','id':'id-ID','ms':'ms-MY','th':'th-TH','tl':'en-PH','fr':'fr-FR','de':'de-DE','es':'es-ES','ar':'ar-SA','pt':'pt-BR','ru':'ru-RU','hi':'hi-IN'};
     rec.lang=lmap[lc]||'zh-TW';
     rec.interimResults=true;
     rec.onresult=e=>{
@@ -868,21 +868,22 @@ async function playWavBase64(base64){
   try{
     const wav=atob(base64),buf=new Uint8Array(wav.length);
     for(let i=0;i<wav.length;i++)buf[i]=wav.charCodeAt(i);
-    // 用已解鎖的 AudioContext 播放（100% 不被 autoplay policy 擋）
     const ac=_ac||new(window.AudioContext||window.webkitAudioContext)();
     if(_ac===null)_ac=ac;
-    const decoded=await ac.decodeAudioData(buf.buffer);
+    // Safari 可能把 AudioContext 暫停，先 resume
+    if(ac.state==='suspended') await ac.resume();
+    const decoded=await ac.decodeAudioData(buf.buffer.slice(0));
     const src=ac.createBufferSource();
     src.buffer=decoded;
     src.playbackRate.value=spds[si];
     src.connect(ac.destination);
     src.onended=stopAudio;
     src.start(0);
-    // 同步更新 currentAudio 為 null（AudioContext 直接播，不用 Audio 物件）
     if(currentAudio){currentAudio.pause();currentAudio=null;}
   }catch(e){
+    console.log('AudioContext play failed:',e);
     stopAudio();
-    // fallback：用 Audio 物件
+    // fallback：Audio 物件
     try{
       const wav2=atob(base64),buf2=new Uint8Array(wav2.length);
       for(let i=0;i<wav2.length;i++)buf2[i]=wav2.charCodeAt(i);
@@ -890,12 +891,12 @@ async function playWavBase64(base64){
       currentAudio=new Audio(URL.createObjectURL(blob));
       currentAudio.playbackRate=spds[si];
       currentAudio.onended=stopAudio;
+      pb.classList.add('playing');
+      pb.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
       currentAudio.play().catch(()=>{
         stopAudio();
         document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
       });
-      pb.classList.add('playing');
-      pb.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
     }catch(e2){
       document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
     }
