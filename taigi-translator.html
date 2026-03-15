@@ -846,36 +846,60 @@ async function doTx(){
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;
 }
 
-// 翻譯按鈕：在 click event 裡先解鎖音訊，再翻譯
+// 翻譯按鈕：在 click event 裡解鎖音訊 context，保持到播放完成
+let _ac = null; // 保持 AudioContext 存活
 function unlockAndTx(){
-  // 在 user click 裡建立並播放無聲音訊 → 解鎖 Safari audio
+  // 在 user click 裡建立 AudioContext → Safari 解鎖
   try{
-    const ac=new (window.AudioContext||window.webkitAudioContext)();
-    const buf=ac.createBuffer(1,1,22050);
-    const src=ac.createBufferSource();
-    src.buffer=buf;src.connect(ac.destination);src.start(0);
+    _ac = new (window.AudioContext||window.webkitAudioContext)();
+    const buf=_ac.createBuffer(1,1,22050);
+    const src=_ac.createBufferSource();
+    src.buffer=buf;src.connect(_ac.destination);src.start(0);
     audioUnlocked=true;
   }catch(e){}
   doTx();
 }
 
-// 播放 base64 WAV
-function playWavBase64(base64){
-  const wav=atob(base64),buf=new Uint8Array(wav.length);
-  for(let i=0;i<wav.length;i++)buf[i]=wav.charCodeAt(i);
-  const blob=new Blob([buf],{type:'audio/wav'});
-  const url=URL.createObjectURL(blob);
-  if(currentAudio){currentAudio.pause();currentAudio=null;}
-  currentAudio=new Audio(url);
-  currentAudio.playbackRate=spds[si];
-  currentAudio.onended=stopAudio;
+// 播放 base64 WAV - 用 AudioContext 解碼播放（Safari 最可靠）
+async function playWavBase64(base64){
   const pb=document.getElementById('playBtn');
   pb.classList.add('playing');
   pb.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
-  currentAudio.play().catch(()=>{
+  try{
+    const wav=atob(base64),buf=new Uint8Array(wav.length);
+    for(let i=0;i<wav.length;i++)buf[i]=wav.charCodeAt(i);
+    // 用已解鎖的 AudioContext 播放（100% 不被 autoplay policy 擋）
+    const ac=_ac||new(window.AudioContext||window.webkitAudioContext)();
+    if(_ac===null)_ac=ac;
+    const decoded=await ac.decodeAudioData(buf.buffer);
+    const src=ac.createBufferSource();
+    src.buffer=decoded;
+    src.playbackRate.value=spds[si];
+    src.connect(ac.destination);
+    src.onended=stopAudio;
+    src.start(0);
+    // 同步更新 currentAudio 為 null（AudioContext 直接播，不用 Audio 物件）
+    if(currentAudio){currentAudio.pause();currentAudio=null;}
+  }catch(e){
     stopAudio();
-    document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
-  });
+    // fallback：用 Audio 物件
+    try{
+      const wav2=atob(base64),buf2=new Uint8Array(wav2.length);
+      for(let i=0;i<wav2.length;i++)buf2[i]=wav2.charCodeAt(i);
+      const blob=new Blob([buf2],{type:'audio/wav'});
+      currentAudio=new Audio(URL.createObjectURL(blob));
+      currentAudio.playbackRate=spds[si];
+      currentAudio.onended=stopAudio;
+      currentAudio.play().catch(()=>{
+        stopAudio();
+        document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
+      });
+      pb.classList.add('playing');
+      pb.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
+    }catch(e2){
+      document.getElementById('stxt1').textContent='🔊 請按「播放台語」收聽';
+    }
+  }
 }
 
 async function doOTx(){
