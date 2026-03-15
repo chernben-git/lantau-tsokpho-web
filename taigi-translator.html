@@ -997,23 +997,40 @@ async function doOTx(){
 async function playOAudio(){
   const btn=document.getElementById('oPlayBtn');
   btn.classList.add('playing');
-  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
+  btn.innerHTML=`<div class="spin" style="border-color:rgba(255,255,255,0.3);border-top-color:white"></div>載入中…`;
   const t=document.getElementById('oResTxt').textContent;
   if(!t){stopOAudio();return;}
-  // 優先用 speechSynthesis（目標語言發音最準）
-  if('speechSynthesis'in window){
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(t);
-    u.lang=oltts;u.rate=spds[osi];
-    u.onend=stopOAudio;
-    u.onerror=stopOAudio;
-    // 先用 AudioContext resume 解鎖，再播
-    try{
-      const ac=_ac||new(window.AudioContext||window.webkitAudioContext)();
-      if(ac.state==='suspended') await ac.resume();
-    }catch(e){}
-    speechSynthesis.speak(u);
-  }else{
+  try{
+    // 用目標語言的 speechSynthesis（不需 TTS API，直接播）
+    // 但要先確認 AudioContext 是 running 狀態
+    if(_ac&&_ac.state==='suspended') await _ac.resume();
+    if('speechSynthesis'in window){
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(t);
+      u.lang=oltts;
+      u.rate=spds[osi];
+      u.onstart=()=>{
+        btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
+      };
+      u.onend=stopOAudio;
+      u.onerror=()=>{
+        // speechSynthesis 失敗，提示手動按
+        stopOAudio();
+        document.getElementById('stxt2').textContent='🔊 請按「播放給對方聽」';
+      };
+      // iOS speechSynthesis autoplay 需要在 user gesture 後
+      // unlockAndOTx 已解鎖，直接 speak
+      speechSynthesis.speak(u);
+      // 確認有沒有在說（有時 Safari 靜默失敗）
+      setTimeout(()=>{
+        if(speechSynthesis.speaking) return; // 正常
+        stopOAudio();
+        document.getElementById('stxt2').textContent='🔊 請按「播放給對方聽」';
+      }, 1000);
+    }else{
+      stopOAudio();
+    }
+  }catch(e){
     stopOAudio();
   }
 }
@@ -1075,14 +1092,27 @@ async function handleOCR(e){
   reader.onload=async(ev)=>{
     try{
       const base64=ev.target.result.split(',')[1];
-      // 送到 i5 server OCR 路由（server 用 Claude Vision 辨識）
-      const r=await fetch(API+'/ocr',{
+      const mediaType=file.type||'image/jpeg';
+
+      // 直接呼叫 Anthropic API（前端有內建 API 存取）
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({imageBase64:base64,mimeType:file.type||'image/jpeg'})
+        headers:{
+          'Content-Type':'application/json',
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body:JSON.stringify({
+          model:'claude-haiku-4-5-20251001',
+          max_tokens:1000,
+          messages:[{role:'user',content:[
+            {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+            {type:'text',text:'請辨識圖片中的所有文字，只輸出文字內容，不要任何說明。如果是外語請保留原文。'}
+          ]}]
+        })
       });
-      const d=await r.json();
-      const text=(d.text||'').trim();
+      const d=await resp.json();
+      const text=(d.content?.[0]?.text||'').trim();
       if(text){
         document.getElementById('inpTA').value=text;
         stxt.textContent='辨識完成，翻譯中…';
@@ -1092,7 +1122,8 @@ async function handleOCR(e){
         stxt.textContent='⚠️ 無法辨識文字，請確認圖片清晰度';
       }
     }catch(err){
-      stxt.textContent='辨識失敗：'+err.message;
+      console.error('OCR error:',err);
+      stxt.textContent='辨識失敗，請再試一次';
     }
   };
   reader.readAsDataURL(file);
