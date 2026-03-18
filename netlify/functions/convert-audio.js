@@ -9,23 +9,26 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { wavBase64 } = JSON.parse(event.body);
-    if (!wavBase64) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing wavBase64' }) };
+    const body = JSON.parse(event.body);
+
+    // 支援 wavBase64（WAV）或 audioBase64（MP3/任何格式）
+    const inputBase64 = body.wavBase64 || body.audioBase64;
+    const inputExt    = body.wavBase64 ? '.wav' : '.mp3';
+
+    if (!inputBase64) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Missing wavBase64 or audioBase64' }) };
     }
 
-    // 寫 WAV 到 /tmp
-    const inputPath  = '/tmp/input_' + Date.now() + '.wav';
-    const outputPath = '/tmp/output_' + Date.now() + '.m4a';
-    fs.writeFileSync(inputPath, Buffer.from(wavBase64, 'base64'));
+    const ts         = Date.now();
+    const inputPath  = '/tmp/input_'  + ts + inputExt;
+    const outputPath = '/tmp/output_' + ts + '.m4a';
+    fs.writeFileSync(inputPath, Buffer.from(inputBase64, 'base64'));
 
-    // ffmpeg 轉檔：WAV → M4A (AAC, 44100Hz, mono)
+    // ffmpeg 轉檔：WAV 或 MP3 → M4A (AAC, 44100Hz, mono)
     execSync(`${ffmpegPath} -y -i ${inputPath} -c:a aac -b:a 64k -ar 44100 -ac 1 ${outputPath}`);
 
-    // 讀出來轉 base64
     const m4aBase64 = fs.readFileSync(outputPath).toString('base64');
 
-    // 清理暫存
     fs.unlinkSync(inputPath);
     fs.unlinkSync(outputPath);
 
