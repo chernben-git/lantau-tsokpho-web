@@ -1030,13 +1030,14 @@ async function toggleOTaigiMic(){
         });
         const d=await r.json();
         if(d.success && d.chText){
-          // 有華語 → 直接顯示並翻目標語言（不走壞掉的 from-taigi）
+          // ASR 辨識完填入華語，oSlc 改成 zh-TW（框裡是華語，不是台語）
           document.getElementById('oTA').value=d.chText;
           document.getElementById('stxt2').textContent='✅ 辨識：'+d.chText;
-          // 強制當華語來翻
-          const origSlc=oSlc; oSlc='zh-TW';
+          oSlc='zh-TW';
+          // 更新語言顯示
+          setFlag('oInpFlag','f-tw',20,14);
+          document.getElementById('oInpLName').textContent='華語（台語辨識結果）';
           unlockAndOTx();
-          oSlc=origSlc;
         } else if(d.success && d.transcript){
           // 只有台羅，顯示台羅備用
           document.getElementById('oTA').value=d.transcript;
