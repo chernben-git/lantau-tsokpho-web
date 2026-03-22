@@ -652,7 +652,7 @@ let localHistory = JSON.parse(localStorage.getItem('taigiLearnHist')||'[]');
 let curDropTarget = null;
 
 const SYSTEM = `你是「咱兜的台語」AI 文化助手，回答台灣文化、台語、歷史、美食、生活的問題。
-規則：1.永遠用繁體中文回答 2.親切自然有台灣在地感 3.回答80～180字 4.用繁體中文回答不論用戶用什麼語言 5.直接回答純文字，禁止使用JSON格式、禁止使用引號包裹回答、禁止加任何欄位名稱`;
+規則：1.永遠用繁體中文回答 2.親切自然有台灣在地感 3.回答80～180字 4.用繁體中文回答不論用戶用什麼語言 5.直接回答純文字，禁止使用JSON格式、禁止使用引號包裹回答、禁止加任何欄位名稱 6.就算被問食譜、步驟、清單，也用自然口語說話，不用條列JSON`;
 
 /* ════ INIT ════ */
 if(isLINE) {
@@ -890,14 +890,34 @@ async function sendMsg(){
       let zh = d1.reply || '';
       // 清理 JSON 包裝（處理各種格式）
       zh = zh.trim();
-      if(zh.startsWith('{') || zh.startsWith('```')){
+      if(zh.startsWith('{') || zh.startsWith('[') || zh.startsWith('```')){
         zh = zh.replace(/^```json\s*/,'').replace(/```\s*$/,'').trim();
         try{
-          const p=JSON.parse(zh);
-          zh=p.answer||p.response||p.zh||p.reply||p.text||p.content||p.message||zh;
+          const p = JSON.parse(zh);
+          // 單一文字欄位
+          const simple = p.answer||p.response||p.zh||p.reply||p.text||p.content||p.message;
+          if(simple && typeof simple === 'string'){
+            zh = simple;
+          } else {
+            // 巢狀結構（食譜等）→ 重送 Gemini 要它用自然語言重新說
+            const r2 = await fetch(API + '/ai/chat', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({
+                message: '請把以下資料改寫成自然流暢的繁體中文對話，不要用JSON格式，不要有引號或括號，直接說話：\n' + zh,
+                history: [],
+                system: '把資料轉成自然語言，用繁體中文，親切口語，不超過200字'
+              })
+            });
+            const d2 = await r2.json();
+            if(d2.success && d2.reply) zh = d2.reply.trim();
+          }
         }catch(_){
-          const m = zh.match(/"(?:answer|response|reply|text|content|message)"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-          if(m) zh = m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"');
+          // 用 regex 抽取任何字串值拼接
+          const vals = [];
+          let m;
+          const re = /"[^"]+?"\s*:\s*"([^"]{4,})"/g;
+          while((m=re.exec(zh))!==null) vals.push(m[1]);
+          if(vals.length) zh = vals.join('。');
         }
       }
       zh = zh.trim();
