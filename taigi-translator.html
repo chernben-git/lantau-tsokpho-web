@@ -364,37 +364,37 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
     </button>
   </div>
 
-  <!-- PAGE IN -->
-  <!-- ═══ PAGE 1：台語翻譯機（台語→世界）═══ -->
+  <!-- ═══ PAGE 1：各國語言 → 台語（外國人來台用）═══ -->
   <div class="page active" id="pg-in">
     <div class="tx-grid">
-      <!-- 目標語言選擇器（台語固定輸入，選輸出語言） -->
+      <!-- 來源語言選擇器 -->
       <div class="lang-pick" id="lp">
         <div class="lp-hdr" onclick="toggleLP()">
           <div class="lp-sel">
-            <span class="flag f-jp" id="selFlag" style="width:24px;height:16px"></span>
-            <span id="selName">翻譯成：日語</span>
+            <span class="flag" id="selFlag" style="width:24px;height:16px"></span>
+            <span id="selName">選擇來源語言</span>
+            <span class="detected-tag" id="detTag"></span>
           </div>
           <svg class="lp-chev open" id="lpChev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="lp-body open" id="lpBody">
-          <div style="font-size:11px;color:var(--muted);padding:10px 4px 4px;font-weight:600;letter-spacing:0.06em;">選擇翻譯目標語言</div>
           <div class="lang-grid">
-            <button class="lang-pill active" onclick="selTaigiTarget(this,'zh-TW','f-tw','華語','zh-TW')"><span class="flag f-tw" style="width:18px;height:12px"></span>華語</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'ja','f-jp','日語','ja-JP')"><span class="flag f-jp" style="width:18px;height:12px"></span>日語</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'en','f-us','English','en-US')"><span class="flag f-us" style="width:18px;height:12px"></span>English</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'ko','f-kr','한국어','ko-KR')"><span class="flag f-kr" style="width:18px;height:12px"></span>한국어</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'vi','f-vn','Việt','vi-VN')"><span class="flag f-vn" style="width:18px;height:12px"></span>Việt</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'id','f-id','Indonesia','id-ID')"><span class="flag f-id" style="width:18px;height:12px"></span>Indonesia</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'ms','f-my','Melayu','ms-MY')"><span class="flag f-my" style="width:18px;height:12px"></span>Melayu</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'th','f-th','ไทย','th-TH')"><span class="flag f-th" style="width:18px;height:12px"></span>ไทย</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'tl','f-ph','Filipino','fil-PH')"><span class="flag f-ph" style="width:18px;height:12px"></span>Filipino</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'fr','f-fr','Français','fr-FR')"><span class="flag f-fr" style="width:18px;height:12px"></span>Français</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'de','f-de','Deutsch','de-DE')"><span class="flag f-de" style="width:18px;height:12px"></span>Deutsch</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'es','f-es','Español','es-ES')"><span class="flag f-es" style="width:18px;height:12px"></span>Español</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'pt','f-br','Português','pt-BR')"><span class="flag f-br" style="width:18px;height:12px"></span>Português</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'ru','f-ru','Русский','ru-RU')"><span class="flag f-ru" style="width:18px;height:12px"></span>Русский</button>
-            <button class="lang-pill" onclick="selTaigiTarget(this,'hi','f-in','हिन्दी','hi-IN')"><span class="flag f-in" style="width:18px;height:12px"></span>हिन्दी</button>
+            <button class="auto-pill active" id="autoBtn" onclick="selAuto()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20"/></svg>自動偵測</button>
+            <button class="lang-pill" onclick="selL(this,'zh-TW','f-tw','🇹🇼','華語')"><span class="flag f-tw" style="width:18px;height:12px"></span>華語</button>
+            <button class="lang-pill" onclick="selL(this,'ja','f-jp','🇯🇵','日語')"><span class="flag f-jp" style="width:18px;height:12px"></span>日語</button>
+            <button class="lang-pill" onclick="selL(this,'en','f-us','🇺🇸','English')"><span class="flag f-us" style="width:18px;height:12px"></span>English</button>
+            <button class="lang-pill" onclick="selL(this,'ko','f-kr','🇰🇷','한국어')"><span class="flag f-kr" style="width:18px;height:12px"></span>한국어</button>
+            <button class="lang-pill" onclick="selL(this,'vi','f-vn','🇻🇳','Việt')"><span class="flag f-vn" style="width:18px;height:12px"></span>Việt</button>
+            <button class="lang-pill" onclick="selL(this,'id','f-id','🇮🇩','Indonesia')"><span class="flag f-id" style="width:18px;height:12px"></span>Indonesia</button>
+            <button class="lang-pill" onclick="selL(this,'ms','f-my','🇲🇾','Melayu')"><span class="flag f-my" style="width:18px;height:12px"></span>Melayu</button>
+            <button class="lang-pill" onclick="selL(this,'th','f-th','🇹🇭','ไทย')"><span class="flag f-th" style="width:18px;height:12px"></span>ไทย</button>
+            <button class="lang-pill" onclick="selL(this,'tl','f-ph','🇵🇭','Filipino')"><span class="flag f-ph" style="width:18px;height:12px"></span>Filipino</button>
+            <button class="lang-pill" onclick="selL(this,'fr','f-fr','🇫🇷','Français')"><span class="flag f-fr" style="width:18px;height:12px"></span>Français</button>
+            <button class="lang-pill" onclick="selL(this,'de','f-de','🇩🇪','Deutsch')"><span class="flag f-de" style="width:18px;height:12px"></span>Deutsch</button>
+            <button class="lang-pill" onclick="selL(this,'es','f-es','🇪🇸','Español')"><span class="flag f-es" style="width:18px;height:12px"></span>Español</button>
+            <button class="lang-pill" onclick="selL(this,'pt','f-br','🇧🇷','Português')"><span class="flag f-br" style="width:18px;height:12px"></span>Português</button>
+            <button class="lang-pill" onclick="selL(this,'ru','f-ru','🇷🇺','Русский')"><span class="flag f-ru" style="width:18px;height:12px"></span>Русский</button>
+            <button class="lang-pill" onclick="selL(this,'hi','f-in','🇮🇳','हिन्दी')"><span class="flag f-in" style="width:18px;height:12px"></span>हिन्दी</button>
           </div>
         </div>
       </div>
@@ -414,32 +414,28 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
           </div>
           <div class="inp-wrap">
             <div class="inp-lang-row">
-              <div class="inp-lname"><span class="flag f-tw" style="width:20px;height:14px"></span><span>台語（廖教授ASR）</span></div>
+              <div class="inp-lname"><span class="flag" id="inpFlag" style="width:20px;height:14px"></span><span id="inpLName">自動偵測</span></div>
               <div class="micwave" id="mw1"><div class="mw"></div><div class="mw"></div><div class="mw"></div><div class="mw"></div><div class="mw"></div></div>
             </div>
-            <div style="font-size:12px;color:var(--red-d);background:var(--red-l);border-radius:8px;padding:7px 11px;margin-bottom:8px;line-height:1.6;">
-              🎙️ 按「台語語音」說台語 → 廖教授 ASR 辨識 → 自動填入台語漢字
-            </div>
-            <textarea class="inp-ta" id="inpTA" placeholder="按「台語語音」說台語，或直接打字…" rows="4"></textarea>
+            <textarea class="inp-ta" id="inpTA" placeholder="輸入文字，或按麥克風說話…" rows="4" oninput="onInp()"></textarea>
             <div class="inp-tools">
-              <button class="tbtn mic-on" id="micBtn" onclick="toggleTaigiMic()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>台語語音</button>
+              <button class="tbtn" id="micBtn" onclick="toggleMic()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入</button>
               <label class="tbtn" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>拍照翻譯<input type="file" id="ocrFile" accept="image/*" style="display:none" onchange="handleOCR(event)"></label>
               <button class="clrbtn" onclick="clearAll()">清除</button>
             </div>
           </div>
           <div class="tx-bar">
-            <button class="txbtn" id="txBtn" onclick="unlockAndTx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看</button>
+            <button class="txbtn" id="txBtn" onclick="unlockAndTx()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語</button>
             <div class="spd-ctrl"><div class="spd-lbl">語速</div><div class="spd-dots"><button class="spd" onclick="setSpd(0,this)">慢</button><button class="spd active" onclick="setSpd(1,this)">正</button><button class="spd" onclick="setSpd(2,this)">快</button></div></div>
           </div>
           <div class="out-wrap">
-            <div class="out-empty" id="oe1"><div class="out-empty-icon">🗣️</div><div class="out-empty-txt">台語翻譯結果會顯示在這裡<br>把螢幕轉給對方看</div></div>
+            <div class="out-empty" id="oe1"><div class="out-empty-icon">🎵</div><div class="out-empty-txt">台語翻譯結果會顯示在這裡</div></div>
             <div class="out-res" id="or1">
-              <div class="out-res-lang"><span class="flag f-jp" id="t1ResFlag" style="width:22px;height:15px"></span><span class="out-res-lname" id="t1ResLName">日語</span></div>
-              <div class="out-res-txt" id="taigiTxt"></div>
+              <div class="taigi-big" id="taigiTxt"></div>
               <div class="tailo-sm" id="tailoTxt"></div>
               <div class="out-acts">
-                <button class="playbtn" id="playBtn" onclick="playAudio()"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放給對方聽</button>
+                <button class="playbtn" id="playBtn" onclick="playAudio()"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>播放台語</button>
                 <button class="actbtn" onclick="copyR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>複製</button>
                 <button class="actbtn" onclick="shareR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>分享</button>
                 <span class="timer-tag" id="ttag1"></span>
@@ -1334,50 +1330,32 @@ function stopOMic(){isOR=false;const btn=document.getElementById('oMicBtn');btn.
 async function doTx(){
   const text=document.getElementById('inpTA').value.trim();if(!text)return;
   const btn=document.getElementById('txBtn');
+  const autoPlay=document.getElementById('autoPlayTog').classList.contains('on');
   btn.classList.add('loading');btn.innerHTML=`<div class="spin"></div>翻譯中…`;
   document.getElementById('stxt1').textContent='翻譯中…';
   const t0=Date.now();
   try{
-    // 台語翻譯機專用路線：台語漢字 → /translate/from-taigi → 目標語言
+    const endpoint=autoPlay?'/translate/to-taigi-voice':'/translate/to-taigi';
     const ctrl1=new AbortController();const tid1=setTimeout(()=>ctrl1.abort(),15000);
-    const r=await fetch(API+'/translate/from-taigi',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text,targetLang:taigiTargetLang}),
-      signal:ctrl1.signal
-    });
+    const r=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sourceLang:lc,speaker:vc}),signal:ctrl1.signal});
     clearTimeout(tid1);
     const d=await r.json();
     if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
     const ms=Date.now()-t0,el=(ms/1000).toFixed(1);
     document.getElementById('oe1').style.display='none';
     const res=document.getElementById('or1');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
-    // 台語翻譯機：結果欄顯示目標語言翻譯結果
-    const finalText=d.translated||d.chText||'';
-    document.getElementById('taigiTxt').textContent=finalText;
-    document.getElementById('tailoTxt').textContent='';
-    setFlag('t1ResFlag',taigiTargetFC,22,15);
-    document.getElementById('t1ResLName').textContent=taigiTargetName;
+    renderResult(d.taigi,d.tailo);
     const tag=document.getElementById('ttag1');tag.textContent=el+'秒';tag.className='timer-tag'+(ms<=5000?'':' slow');
     document.getElementById('stxt1').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;
+    addHist(text,d.taigi||d.tailo,le,lfc);
     lastChText=d.chText||'';
-    addHist(text,finalText,'🗣️','f-tw');
-    // 自動播放
-    const autoPlay=document.getElementById('autoPlayTog').classList.contains('on');
-    if(autoPlay){
-      // 用 speechSynthesis 播目標語言
-      if('speechSynthesis'in window){
-        speechSynthesis.cancel();
-        const u=new SpeechSynthesisUtterance(finalText);
-        u.lang=taigiTargetTts;
-        speechSynthesis.speak(u);
-      }
-    }
+    if(autoPlay&&d.audioBase64) playWavBase64(d.audioBase64);
   }catch(e){
     const msg=e.name==='AbortError'?'⏱ 伺服器逾時，請檢查連線後再試':'錯誤：'+e.message;
     document.getElementById('stxt1').textContent=msg;
   }
   btn.classList.remove('loading');
-  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;
+  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;
 }
 
 // 翻譯按鈕：在 click event 裡解鎖音訊 context，保持到播放完成
