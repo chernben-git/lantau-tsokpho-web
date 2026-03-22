@@ -823,10 +823,10 @@ function stopAllAudio(){
 function b64Blob(b64,mime){const bin=atob(b64),arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
 
 /* ════ SEND ════
-   模式 A：輸入語言 = 台語  → 台語翻世界語言
-           流程：/translate/from-taigi → 各目標語言
-   模式 B：輸入語言 = 其他  → AI 交談學習
-           流程：Gemini → MT→台語 + 目標語言
+   所有語言統一走 Gemini AI 對話：
+   台語輸入  → /translate/from-taigi → 華語 → Gemini → 輸出
+   其他外語  → /translate/to-taigi (取chText) → 華語 → Gemini → 輸出
+   華語輸入  → 直接 → Gemini → 輸出
 ════ */
 async function sendMsg(){
   const box = document.getElementById('inputBox');
@@ -836,93 +836,34 @@ async function sendMsg(){
   isBusy = true;
   // 不立即清空，等下次輸入時再清
 
-  setOutThinking('outABody','outAEmpty','翻譯中…');
-  setOutThinking('outBBody','outBEmpty','翻譯中…');
-  const autoPlay  = document.getElementById('autoPlayTog').classList.contains('on');
+  setOutThinking('outABody','outAEmpty','AI 思考中…');
+  setOutThinking('outBBody','outBEmpty','AI 思考中…');
   const autoPlayA = document.getElementById('autoPlayATog').classList.contains('on');
   const autoPlayB = document.getElementById('autoPlayBTog').classList.contains('on');
   const showTailo = document.getElementById('tailoTog').classList.contains('on');
   const t0 = Date.now();
 
   try{
-    // ════ 模式 A：台語 → 世界語言 ════
-    if(inLang.isTaigi || inLang.code === 'taigi'){
-      setStatus('台語辨識翻譯中…','loading','台語→各語言');
-
-      // 產生每個輸出框的翻譯任務
-      async function fromTaigiToLang(lang){
-        if(lang.isTaigi || lang.code === 'taigi'){
-          // 輸出框也選台語 → 直接回傳原文 + TTS
-          const ep = autoPlay ? '/translate/to-taigi-voice' : '/translate/to-taigi';
-          const r = await fetch(API + ep, {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({text, sourceLang:'zh-TW', speaker:vc})
-          });
-          const d = await r.json();
-          // 台語輸入走 from-taigi 先轉華語再轉台語有點多餘
-          // 直接視為台語原文，只拿 TTS
-          return {type:'taigi', taigi:text, tailo:d.tailo||'', audio:d.audioBase64||null};
-        }
-        // 台語 → 華語 → 目標語言
-        const r = await fetch(API + '/translate/from-taigi', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({text, targetLang: lang.code==='zh-TW' ? 'zh-TW' : lang.google})
-        });
-        const d = await r.json();
-        if(!r.ok || !d.success) throw new Error(d.error || '翻譯失敗');
-        return {
-          type:'other',
-          text: d.translated || d.chText || '',
-          chText: d.chText || '',
-          tts: lang.tts,
-          name: lang.name
-        };
-      }
-
-      const [resA, resB] = await Promise.all([
-        fromTaigiToLang(outALang),
-        fromTaigiToLang(outBLang)
-      ]);
-
-      const ms = Date.now() - t0;
-      setStatus(`完成 · ${(ms/1000).toFixed(1)}s · asr.bitfull.tw`, 'ok', '');
-
-      renderOut('outABody','outAEmpty','A', resA, showTailo);
-      renderOut('outBBody','outBEmpty','B', resB, showTailo);
-
-      if(autoPlayA){
-        if(resA.type==='taigi' && resA.audio) playWav(resA.audio,'playA-btn','停止','播台語');
-        else if(resA.type==='other' && resA.text) playTTS(resA.text, resA.tts, 'playA-btn','停止','播放');
-      }
-      if(autoPlayB){
-        if(resB.type==='taigi' && resB.audio) playWav(resB.audio,'playB-btn','停止','播台語');
-        else if(resB.type==='other' && resB.text) playTTS(resB.text, resB.tts, 'playB-btn','停止','播放');
-      }
-
-      const histText = resA.type==='taigi' ? resA.taigi : resA.text;
-      saveHist(text, histText, resA.type==='taigi'?'taigi':outALang.code, resA.chText||histText);
-    }
-
-    // ════ 模式 B：其他語言 → AI 交談（Gemini + MT）════
-    else {
       setStatus('Gemini 思考中…','loading','Step 1');
 
-      // Step 1：非華語先翻成華語作為 Gemini 輸入
+      // Step 1：任何非華語先轉成華語給 Gemini
       let inputZh = text;
-      if(inLang.code !== 'zh-TW'){
-        const rPre = await fetch(API + '/translate/mandarin-to-world', {
+      if(inLang.isTaigi || inLang.code === 'taigi'){
+        // 台語 → 華語：走 from-taigi（廖教授 MT）
+        const r = await fetch(API + '/translate/from-taigi', {
           method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({text, targetLang:'zh-TW', sourceLang: inLang.google})
+          body: JSON.stringify({text, targetLang:'zh-TW'})
         });
-        // 注意：此 endpoint 是華語→世界，我們反向用 Google Translate
-        // 直接用 to-taigi 的 sourceLang 參數讓 server 幫翻
-        // 改走 to-taigi（sourceLang=inLang.google）只取 chText
-        const rPre2 = await fetch(API + '/translate/to-taigi', {
+        const d = await r.json();
+        if(d.chText) inputZh = d.chText;
+      } else if(inLang.code !== 'zh-TW'){
+        // 其他外語 → 華語：走 to-taigi 取 chText
+        const r = await fetch(API + '/translate/to-taigi', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({text, sourceLang: inLang.google})
         });
-        const dPre = await rPre2.json();
-        if(dPre.chText) inputZh = dPre.chText;
+        const d = await r.json();
+        if(d.chText) inputZh = d.chText;
       }
 
       // Step 2：Gemini 回繁體中文
@@ -996,7 +937,6 @@ async function sendMsg(){
 
       const histText = resA.type==='taigi' ? resA.taigi : resA.text;
       saveHist(text, histText, resA.type==='taigi'?'taigi':outALang.code, zh);
-    }
 
   }catch(e){
     clearOutputs();
