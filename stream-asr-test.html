@@ -114,44 +114,47 @@ async function toggleStream(){
 
 async function startStream(){
   const btn = document.getElementById('recBtn');
-  const wave = document.getElementById('wave');
   const status = document.getElementById('status');
 
   try{
-    // 1. 拿 ticket
-    status.textContent = '取得 ticket…';
-    log('請求 /asr-ticket...');
+    status.textContent = '連線中…';
+    log('連接 /asr-stream WebSocket proxy...');
 
-    const ticketResp = await fetch(API + '/asr-ticket');
-    const ticketData = await ticketResp.json();
+    // 直接連 relay 的 /asr-stream，relay 幫忙處理 ticket
+    const wsUrl = API.replace('https://', 'wss://') + '/asr-stream';
+    log('wsUrl=' + wsUrl);
 
-    if(!ticketData.ticket){
-      status.textContent = '❌ 無法取得 ticket：' + JSON.stringify(ticketData);
-      log('ticket 失敗：' + JSON.stringify(ticketData));
-      return;
-    }
-
-    const ticket = encodeURIComponent(ticketData.ticket);
-    const wsUrl = `wss://140.113.30.204:8451/ws/v1/transcript?ticket=${ticket}&type=raw&rate=16000`;
-    log('ticket 取得，連接 WebSocket：' + wsUrl.slice(0,80) + '...');
-
-    // 2. 開 WebSocket
     wsConn = new WebSocket(wsUrl);
     wsConn.binaryType = 'arraybuffer';
 
     wsConn.onopen = () => {
-      log('WebSocket 連線成功！開始錄音');
-      status.textContent = '🔴 錄音中，邊說邊辨識…';
-      btn.innerHTML = `<div class="spin"></div> 停止 <div class="wave on" id="wave"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>`;
-      btn.classList.add('on');
-      streaming = true;
-      t0 = Date.now();
-      startAudio();
+      log('WebSocket proxy 連線成功！等待 ready 訊號…');
+      status.textContent = '初始化中…';
     };
 
     wsConn.onmessage = (e) => {
       try{
         const msg = JSON.parse(e.data);
+
+        // relay 說 ready → 開始錄音
+        if(msg.type === 'ready'){
+          log('上游連線就緒！開始錄音');
+          status.textContent = '🔴 錄音中，邊說邊辨識…';
+          btn.innerHTML = `<div class="spin"></div> 停止 <div class="wave on"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>`;
+          btn.classList.add('on');
+          streaming = true;
+          t0 = Date.now();
+          startAudio();
+          return;
+        }
+
+        if(msg.type === 'error'){
+          log('錯誤：' + msg.message);
+          status.textContent = '❌ ' + msg.message;
+          stopStream();
+          return;
+        }
+
         log('WS收到：' + JSON.stringify(msg).slice(0,120));
 
         const text = msg.transcript || msg.text || msg.result || '';
@@ -172,22 +175,24 @@ async function startStream(){
           }
         }
       }catch(err){
-        log('解析錯誤：' + err.message + ' | 原始：' + e.data.toString().slice(0,100));
+        log('收到非JSON：' + e.data.toString().slice(0,100));
       }
     };
 
     wsConn.onerror = (e) => {
-      log('WebSocket 錯誤：' + e.message);
+      log('WebSocket 錯誤');
       status.textContent = '❌ WebSocket 連線失敗';
       stopStream();
     };
 
     wsConn.onclose = (e) => {
-      log(`WebSocket 關閉：code=${e.code} reason=${e.reason}`);
+      log(`WebSocket 關閉：code=${e.code}`);
       streaming = false;
       btn.textContent = '🎙️ 開始說台語';
       btn.classList.remove('on');
-      status.textContent = '連線已關閉';
+      if(status.textContent === '初始化中…' || status.textContent === '連線中…'){
+        status.textContent = '連線關閉';
+      }
     };
 
   }catch(err){
