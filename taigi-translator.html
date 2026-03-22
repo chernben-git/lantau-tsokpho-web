@@ -901,51 +901,119 @@ function selMidTarget(btn,code,fc,name,tts){
 function setMidSpd(i,btn){midSpd=i;document.querySelectorAll('#pg-mid .spd').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function clearMid(){document.getElementById('midTA').value='';document.getElementById('mid-oe').style.display='block';document.getElementById('mid-or').classList.remove('show');document.getElementById('mid-stxt').textContent='已連線 · asr.bitfull.tw';}
 
-// pg-mid 台語ASR
-let midTaigiRec=null,midTaigiChunks=[],midTaigiRecording=false;
+// pg-mid 串流 ASR
+let midStreamWs=null, midStreamAudioCtx=null, midStreamProcessor=null, midStreamMedia=null;
+let midStreaming=false, midLastTranscript='', midStreamT0=0;
+
 async function toggleMidTaigiMic(){
   const btn=document.getElementById('midMicBtn'),w=document.getElementById('mw-mid');
-  if(midTaigiRecording){midTaigiRecording=false;if(midTaigiRec&&midTaigiRec.state!=='inactive')midTaigiRec.stop();return;}
+  if(midStreaming){ stopMidStream(); return; }
+
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    midTaigiRecording=true;btn.classList.add('mic-on');
-    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
-    w.classList.add('on');midTaigiChunks=[];
-    midTaigiRec=new MediaRecorder(stream);
-    midTaigiRec.ondataavailable=e=>{if(e.data.size>0)midTaigiChunks.push(e.data);};
-    midTaigiRec.onstop=async()=>{
-      stream.getTracks().forEach(t=>t.stop());
-      btn.classList.remove('mic-on');btn.innerHTML=`<div class="spin"></div>辨識中…`;w.classList.remove('on');midTaigiRecording=false;
+    // 解鎖音頻
+    silentAudio.play().catch(()=>{});
+    btn.classList.add('mic-on');
+    btn.innerHTML=`<div class="spin"></div>連線中…`;
+    w.classList.add('on');
+    document.getElementById('mid-stxt').textContent='連線中…';
+    document.getElementById('midTA').value='';
+    midLastTranscript='';
+    midStreamT0=Date.now();
+
+    // 連 relay WebSocket proxy
+    const wsUrl=API.replace('https://','wss://')+'/asr-stream';
+    midStreamWs=new WebSocket(wsUrl);
+    midStreamWs.binaryType='arraybuffer';
+
+    midStreamWs.onopen=()=>{
+      document.getElementById('mid-stxt').textContent='初始化中…';
+    };
+
+    midStreamWs.onmessage=(e)=>{
       try{
-        const blob=new Blob(midTaigiChunks,{type:'audio/webm'});
-        const b64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result.split(',')[1]);fr.onerror=rej;fr.readAsDataURL(blob);});
-        const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),20000);
-        const r=await fetch(API+'/asr-web',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audioBase64:b64,mimeType:'audio/webm'}),signal:ctrl.signal});
-        clearTimeout(tid);
-        const d=await r.json();
-        if(d.success&&(d.chText||d.transcript)){
-          // 輸入欄顯示台語漢字（transcript），chText（華語）只給後端翻譯用
-          const displayText=d.transcript||d.chText||'';
-          document.getElementById('midTA').value=displayText;
-          document.getElementById('mid-stxt').textContent='✅ 辨識完成，翻譯中…';
-          silentAudio.play().catch(()=>{});
-          // 如果有 chText（華語），直接用華語翻，比台語漢字更準
-          if(d.chText && d.chText!==displayText){
-            document.getElementById('midTA').dataset.chText=d.chText;
-          }
-          doMidTx();
-        }else if(d.error==='TOO_SHORT'){
-          document.getElementById('mid-stxt').textContent='⚠️ 錄音太短，請說長一點';
-        }else{
-          document.getElementById('mid-stxt').textContent='⚠️ 辨識失敗，請重試';
+        const msg=JSON.parse(e.data);
+        if(msg.type==='ready'){
+          // 上游就緒，開始錄音
+          midStreaming=true;
+          btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
+          document.getElementById('mid-stxt').textContent='🔴 說台語中…';
+          startMidStreamAudio();
+          return;
         }
-      }catch(e){document.getElementById('mid-stxt').textContent=e.name==='AbortError'?'⏱ 辨識逾時':'辨識錯誤：'+e.message;}
+        if(msg.type==='error'){
+          document.getElementById('mid-stxt').textContent='❌ '+msg.message;
+          stopMidStream(); return;
+        }
+        // 辨識結果
+        if(msg.result&&Array.isArray(msg.result)&&msg.result.length>0){
+          const seg=msg.result[msg.result.length-1];
+          const text=seg.transcript||'';
+          if(text){
+            midLastTranscript=text;
+            document.getElementById('midTA').value=text;
+          }
+        }
+      }catch(err){}
+    };
+
+    midStreamWs.onerror=()=>{
+      document.getElementById('mid-stxt').textContent='❌ 連線失敗';
+      stopMidStream();
+    };
+
+    midStreamWs.onclose=()=>{
+      midStreaming=false;
       btn.classList.remove('mic-on');
       btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>台語語音`;
+      w.classList.remove('on');
+      // 辨識完成，自動翻譯
+      const finalText=midLastTranscript||document.getElementById('midTA').value.trim();
+      if(finalText){
+        document.getElementById('mid-stxt').textContent='✅ 辨識完成，翻譯中…';
+        doMidTx();
+      } else {
+        document.getElementById('mid-stxt').textContent='已連線 · asr.bitfull.tw';
+      }
     };
-    midTaigiRec.start();
-    setTimeout(()=>{if(midTaigiRecording&&midTaigiRec&&midTaigiRec.state!=='inactive')midTaigiRec.stop();},30000);
-  }catch(e){alert('無法使用麥克風：'+e.message);midTaigiRecording=false;btn.classList.remove('mic-on');w.classList.remove('on');}
+
+  }catch(e){
+    alert('無法使用麥克風：'+e.message);
+    btn.classList.remove('mic-on');
+    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>台語語音`;
+    w.classList.remove('on');
+  }
+}
+
+async function startMidStreamAudio(){
+  try{
+    midStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+    midStreamAudioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+    const source=midStreamAudioCtx.createMediaStreamSource(midStreamMedia);
+    midStreamProcessor=midStreamAudioCtx.createScriptProcessor(4096,1,1);
+    midStreamProcessor.onaudioprocess=(e)=>{
+      if(!midStreaming||!midStreamWs||midStreamWs.readyState!==WebSocket.OPEN) return;
+      const f=e.inputBuffer.getChannelData(0);
+      const i16=new Int16Array(f.length);
+      for(let i=0;i<f.length;i++){const s=Math.max(-1,Math.min(1,f[i]));i16[i]=s<0?s*0x8000:s*0x7FFF;}
+      midStreamWs.send(i16.buffer);
+    };
+    source.connect(midStreamProcessor);
+    midStreamProcessor.connect(midStreamAudioCtx.destination);
+  }catch(e){
+    document.getElementById('mid-stxt').textContent='麥克風錯誤：'+e.message;
+    stopMidStream();
+  }
+}
+
+function stopMidStream(){
+  midStreaming=false;
+  if(midStreamProcessor){midStreamProcessor.disconnect();midStreamProcessor=null;}
+  if(midStreamAudioCtx){midStreamAudioCtx.close();midStreamAudioCtx=null;}
+  if(midStreamMedia){midStreamMedia.getTracks().forEach(t=>t.stop());midStreamMedia=null;}
+  if(midStreamWs&&midStreamWs.readyState===WebSocket.OPEN){
+    midStreamWs.send(new ArrayBuffer(0));
+    setTimeout(()=>{if(midStreamWs)midStreamWs.close();},1500);
+  }
 }
 
 function unlockAndMidTx(){
