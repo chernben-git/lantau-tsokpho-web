@@ -935,15 +935,30 @@ async function sendMsg(){
 
       async function getOut(lang, wantVoice){
         if(lang.isTaigi || lang.code==='taigi'){
-          const ep = wantVoice ? '/translate/to-taigi-voice' : '/translate/to-taigi';
-          const r = await fetch(API + ep, {
+          // 先拿文字版（一定成功）
+          const r = await fetch(API + '/translate/to-taigi', {
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({text:zh, sourceLang:'zh-TW', speaker:vc})
           });
           const d = await r.json();
-          console.log('[getOut taigi wantVoice='+wantVoice+']', JSON.stringify({ok:r.ok, success:d.success, hasAudio:!!d.audioBase64, keys:Object.keys(d)}));
           if(!r.ok || !d.success) throw new Error(d.error || 'MT 失敗');
-          return {type:'taigi', taigi:d.taigi||d.hanzi||d.text||'', tailo:d.tailo||'', audio:d.audioBase64||d.audio||d.wavBase64||null};
+          const taigiText = d.taigi||d.hanzi||d.text||'';
+          const tailoText = d.tailo||'';
+
+          // 如果 wantVoice，另外呼叫 /tts 取音檔
+          let audio = null;
+          if(wantVoice && taigiText){
+            try{
+              const voiceName = vc==='female' ? 'nan-TW-vs2-F01' : 'nan-TW-vs2-M01';
+              const rv = await fetch(API + '/tts', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({text:taigiText, languageCode:'nan-TW', voice:voiceName})
+              });
+              const dv = await rv.json();
+              audio = dv.audioBase64||dv.audio||dv.base64||dv.wav||null;
+            }catch(_){}
+          }
+          return {type:'taigi', taigi:taigiText, tailo:tailoText, audio};
         } else if(lang.code === 'zh-TW'){
           return {type:'other', text:zh, tts:lang.tts, name:lang.name, chText:zh};
         } else {
