@@ -451,14 +451,41 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
   <div class="page" id="pg-out">
     <div class="tx-grid">
       <div>
-        <div class="src-bar">
-          <div class="src-lbl">我要說的語言</div>
-          <div class="src-btns">
-            <button class="srcbtn active" id="osTaigi" onclick="selOS('taigi',this)">🗣️ 台語</button>
-            <button class="srcbtn" id="osMandarin" onclick="selOS('mandarin',this)">🇹🇼 華語</button>
+        <!-- 來源語言選擇器（跟 pg-in 一樣，支援全語言） -->
+        <div class="lang-pick" id="olp-src">
+          <div class="lp-hdr" onclick="toggleOSrcLP()">
+            <div class="lp-sel">
+              <span class="flag f-tw" id="oSrcSelFlag" style="width:24px;height:16px"></span>
+              <span id="oSrcSelName">選擇來源語言</span>
+              <span class="detected-tag" id="oDetTag"></span>
+            </div>
+            <svg class="lp-chev open" id="oSrcChev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="lp-body open" id="oSrcBody">
+            <div class="lang-grid">
+              <button class="auto-pill active" id="oAutoBtn" onclick="selOAuto()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20"/></svg>自動偵測</button>
+              <button class="lang-pill" onclick="selOSrc(this,'taigi','f-tw','🗣️','台語')"><span class="flag f-tw" style="width:18px;height:12px"></span>🗣️ 台語</button>
+              <button class="lang-pill" onclick="selOSrc(this,'zh-TW','f-tw','🇹🇼','華語')"><span class="flag f-tw" style="width:18px;height:12px"></span>華語</button>
+              <button class="lang-pill" onclick="selOSrc(this,'ja','f-jp','🇯🇵','日語')"><span class="flag f-jp" style="width:18px;height:12px"></span>日語</button>
+              <button class="lang-pill" onclick="selOSrc(this,'en','f-us','🇺🇸','English')"><span class="flag f-us" style="width:18px;height:12px"></span>English</button>
+              <button class="lang-pill" onclick="selOSrc(this,'ko','f-kr','🇰🇷','한국어')"><span class="flag f-kr" style="width:18px;height:12px"></span>한국어</button>
+              <button class="lang-pill" onclick="selOSrc(this,'vi','f-vn','🇻🇳','Việt')"><span class="flag f-vn" style="width:18px;height:12px"></span>Việt</button>
+              <button class="lang-pill" onclick="selOSrc(this,'id','f-id','🇮🇩','Indonesia')"><span class="flag f-id" style="width:18px;height:12px"></span>Indonesia</button>
+              <button class="lang-pill" onclick="selOSrc(this,'ms','f-my','🇲🇾','Melayu')"><span class="flag f-my" style="width:18px;height:12px"></span>Melayu</button>
+              <button class="lang-pill" onclick="selOSrc(this,'th','f-th','🇹🇭','ไทย')"><span class="flag f-th" style="width:18px;height:12px"></span>ไทย</button>
+              <button class="lang-pill" onclick="selOSrc(this,'tl','f-ph','🇵🇭','Filipino')"><span class="flag f-ph" style="width:18px;height:12px"></span>Filipino</button>
+              <button class="lang-pill" onclick="selOSrc(this,'fr','f-fr','🇫🇷','Français')"><span class="flag f-fr" style="width:18px;height:12px"></span>Français</button>
+              <button class="lang-pill" onclick="selOSrc(this,'de','f-de','🇩🇪','Deutsch')"><span class="flag f-de" style="width:18px;height:12px"></span>Deutsch</button>
+              <button class="lang-pill" onclick="selOSrc(this,'es','f-es','🇪🇸','Español')"><span class="flag f-es" style="width:18px;height:12px"></span>Español</button>
+              <button class="lang-pill" onclick="selOSrc(this,'ar','f-sa','🇸🇦','العربية')"><span class="flag f-sa" style="width:18px;height:12px"></span>العربية</button>
+              <button class="lang-pill" onclick="selOSrc(this,'pt','f-br','🇧🇷','Português')"><span class="flag f-br" style="width:18px;height:12px"></span>Português</button>
+              <button class="lang-pill" onclick="selOSrc(this,'ru','f-ru','🇷🇺','Русский')"><span class="flag f-ru" style="width:18px;height:12px"></span>Русский</button>
+              <button class="lang-pill" onclick="selOSrc(this,'hi','f-in','🇮🇳','हिन्दी')"><span class="flag f-in" style="width:18px;height:12px"></span>हिन्दी</button>
+            </div>
           </div>
         </div>
-        <div class="lang-pick" id="olp">
+        <!-- 目標語言選擇器 -->
+        <div class="lang-pick" id="olp" style="margin-top:12px;">
           <div class="lp-hdr" onclick="toggleOLP()">
             <div class="lp-sel">
               <span class="flag f-jp" id="oSelFlag" style="width:24px;height:16px"></span>
@@ -483,6 +510,7 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
               <button class="lang-pill" onclick="selOL(this,'pt','f-br','🇧🇷','Português','pt-BR')"><span class="flag f-br" style="width:18px;height:12px"></span>Português</button>
               <button class="lang-pill" onclick="selOL(this,'ru','f-ru','🇷🇺','Русский','ru-RU')"><span class="flag f-ru" style="width:18px;height:12px"></span>Русский</button>
               <button class="lang-pill" onclick="selOL(this,'hi','f-in','🇮🇳','हिन्दी','hi-IN')"><span class="flag f-in" style="width:18px;height:12px"></span>हिन्दी</button>
+              <button class="lang-pill" onclick="selOL(this,'zh-TW','f-tw','🇹🇼','華語','zh-TW')"><span class="flag f-tw" style="width:18px;height:12px"></span>華語</button>
             </div>
           </div>
         </div>
@@ -496,10 +524,14 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
         </div>
         <div class="inp-wrap">
           <div class="inp-lang-row">
-            <div class="inp-lname" id="oSrcDisp">🗣️ 台語</div>
+            <div class="inp-lname"><span class="flag" id="oInpFlag" style="width:20px;height:14px"></span><span id="oInpLName">自動偵測</span></div>
             <div class="micwave" id="mw2"><div class="mw"></div><div class="mw"></div><div class="mw"></div><div class="mw"></div><div class="mw"></div></div>
           </div>
-          <textarea class="inp-ta" id="oTA" placeholder="輸入台語或華語，或按麥克風說話…" rows="4"></textarea>
+          <!-- 台語提示（只在選台語時顯示）-->
+          <div id="taigiHint" style="display:none;font-size:12px;color:var(--red-d);background:var(--red-l);border-radius:8px;padding:7px 11px;margin-bottom:6px;line-height:1.6;">
+            💡 台語請用<strong>華語打字</strong>，系統自動轉台語；<br>或直接輸入台語漢字（如：伊真緣投）
+          </div>
+          <textarea class="inp-ta" id="oTA" placeholder="輸入文字，或按麥克風說話…" rows="4"></textarea>
           <div class="inp-tools">
             <button class="tbtn" id="oMicBtn" onclick="toggleOMic()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入</button>
             <label class="tbtn" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>拍照翻譯<input type="file" id="ocrFile2" accept="image/*" style="display:none" onchange="handleOCR2(event)"></label>
@@ -677,6 +709,8 @@ const API='https://asr.bitfull.tw';
 let lc='auto',le='🌐',lfc='',vc='male',ovc='male';
 let si=1,osi=1,isR=false,isOR=false,rec=null;
 let olc='ja',oln='日語',olfc='f-jp',ole='🇯🇵',oltts='ja-JP',os='taigi';
+// pg-out 來源語言（新增）
+let oSlc='auto',oSle='🌐',oSlfc='',oSlTts='zh-TW';
 let caps=JSON.parse(localStorage.getItem('taigiCaps')||'[]');
 let csc='🎂',csn='生日驚喜';
 const spds=[0.7,1.0,1.3];
@@ -709,6 +743,41 @@ function closeChatbot(){
   document.getElementById('nb-tr').classList.add('active');
 }
 window.addEventListener('message',e=>{if(e.data==='closeChat')closeChatbot();});
+
+// pg-out 來源語言選擇
+let oSrcLPOpen=true;
+function toggleOSrcLP(){oSrcLPOpen=!oSrcLPOpen;document.getElementById('oSrcBody').classList.toggle('open',oSrcLPOpen);document.getElementById('oSrcChev').classList.toggle('open',oSrcLPOpen);}
+function selOAuto(){
+  oSlc='auto';oSle='🌐';oSlfc='';oSlTts='zh-TW';
+  document.getElementById('oAutoBtn').classList.add('active');
+  document.querySelectorAll('#oSrcBody .lang-pill').forEach(b=>b.classList.remove('active'));
+  setFlag('oSrcSelFlag','',24,16);
+  document.getElementById('oSrcSelName').textContent='選擇來源語言';
+  setFlag('oInpFlag','',20,14);
+  document.getElementById('oInpLName').textContent='自動偵測';
+  document.getElementById('taigiHint').style.display='none';
+  document.getElementById('oMicBtn').style.display='inline-flex';
+  document.getElementById('oTA').placeholder='輸入文字，或按麥克風說話…';
+  oSrcLPOpen=false;document.getElementById('oSrcBody').classList.remove('open');document.getElementById('oSrcChev').classList.remove('open');
+}
+function selOSrc(btn,code,fc,em,name){
+  oSlc=code;oSle=em;oSlfc=fc;
+  const ttsMap={'zh-TW':'zh-TW','ja':'ja-JP','en':'en-US','ko':'ko-KR','vi':'vi-VN','id':'id-ID','ms':'ms-MY','th':'th-TH','tl':'fil-PH','fr':'fr-FR','de':'de-DE','es':'es-ES','ar':'ar-SA','pt':'pt-BR','ru':'ru-RU','hi':'hi-IN','taigi':'zh-TW'};
+  oSlTts=ttsMap[code]||'zh-TW';
+  document.getElementById('oAutoBtn').classList.remove('active');
+  document.querySelectorAll('#oSrcBody .lang-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  setFlag('oSrcSelFlag',fc==='🗣️'?'f-tw':fc,24,16);
+  document.getElementById('oSrcSelName').textContent=name;
+  setFlag('oInpFlag',fc==='🗣️'?'f-tw':fc,20,14);
+  document.getElementById('oInpLName').textContent=name;
+  // 台語特殊處理
+  const isTaigi=(code==='taigi');
+  document.getElementById('taigiHint').style.display=isTaigi?'block':'none';
+  document.getElementById('oMicBtn').style.display=isTaigi?'none':'inline-flex';
+  document.getElementById('oTA').placeholder=isTaigi?'請用華語打字（系統自動轉台語），或輸入台語漢字…':'輸入文字，或按麥克風說話…';
+  oSrcLPOpen=false;document.getElementById('oSrcBody').classList.remove('open');document.getElementById('oSrcChev').classList.remove('open');
+}
 
 // ════ NAV ════
 function switchM(s){['tr','cap','forum','learn'].forEach(x=>{document.getElementById('ms-'+x).classList.toggle('active',x===s);document.getElementById('nb-'+x).classList.toggle('active',x===s);});}
@@ -893,7 +962,7 @@ function toggleOMic(){
       const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
       const r2=new SR();
       // 修正：語音辨識語言 = 用戶說話的語言（台語/華語都用 zh-TW）
-      r2.lang = os==='taigi' ? 'zh-TW' : 'zh-TW';
+      r2.lang = oSlTts || 'zh-TW';
       r2.interimResults=true;
       r2.onresult=e=>{
         document.getElementById('oTA').value=Array.from(e.results).map(r=>r[0].transcript).join('');
@@ -1038,24 +1107,49 @@ async function doOTx(){
   const autoPlay=document.getElementById('oAutoPlayTog').classList.contains('on');
   const t0=Date.now();
   try{
-    const ep=os==='taigi'?'/translate/from-taigi':'/translate/mandarin-to-world';
-    const r=await fetch(API+ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,targetLang:olc})});
+    // 統一走：任何語言 → /translate/mandarin-to-world（server 內部會先 Google Translate → 華語）
+    // 若來源本身就是華語，直接翻；否則 server 的 Google Translate 先轉華語
+    let endpoint, body;
+    if(oSlc==='taigi'){
+      // 台語漢字 → /from-taigi → 華語 → 目標語言（兩步）
+      endpoint='/translate/from-taigi';
+      body=JSON.stringify({text,targetLang:olc});
+    } else if(oSlc==='zh-TW'){
+      // 華語直接翻目標語言
+      endpoint='/translate/mandarin-to-world';
+      body=JSON.stringify({text,targetLang:olc});
+    } else {
+      // 非華語：先 Google Translate 到華語，再翻目標語言
+      endpoint='/translate/to-taigi';
+      body=JSON.stringify({text,sourceLang:oSlc});
+    }
+    const r=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body});
     const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
+
+    let finalText='';
+    if(oSlc==='taigi'){
+      // from-taigi 直接回傳 translated
+      finalText=d.translated||d.chText||'';
+    } else if(oSlc==='zh-TW'){
+      finalText=d.translated||'';
+    } else {
+      // 取出 chText（華語），再翻目標語言
+      const chText=d.chText||'';
+      if(olc==='zh-TW'){
+        finalText=chText;
+      } else {
+        const r2=await fetch(API+'/translate/mandarin-to-world',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:chText,targetLang:olc})});
+        const d2=await r2.json();
+        finalText=d2.translated||chText;
+      }
+    }
+
     const el=((Date.now()-t0)/1000).toFixed(1);
     document.getElementById('oe2').style.display='none';
     const res=document.getElementById('or2');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
     setFlag('oResFlag',olfc,22,15);document.getElementById('oResLName').textContent=oln;
-    document.getElementById('oResTxt').textContent=d.translated||'';
-    // 顯示橋接華語（台語→華語→目標語言時，讓用戶確認）
-    const bridge=document.getElementById('oBridgeTxt');
-    if(bridge){
-      if(os==='taigi' && d.chText){
-        bridge.textContent='台語→華語：'+d.chText;
-        bridge.style.display='block';
-      } else {
-        bridge.style.display='none';
-      }
-    }
+    document.getElementById('oResTxt').textContent=finalText;
+    document.getElementById('oBridgeTxt').style.display='none';
     const tag=document.getElementById('ttag2');tag.textContent=el+'秒';tag.className='timer-tag';
     document.getElementById('stxt2').textContent=`完成 · ${el}秒`;
     if(autoPlay) playOAudio();
