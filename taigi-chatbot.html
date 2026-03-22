@@ -884,10 +884,8 @@ async function sendMsg(){
         zh = zh.replace(/^```json\s*/,'').replace(/```\s*$/,'').trim();
         try{
           const p=JSON.parse(zh);
-          // 取任何可能的文字欄位
           zh=p.answer||p.response||p.zh||p.reply||p.text||p.content||p.message||zh;
         }catch(_){
-          // 手動抽取：把 {"answer":"內容"} 這種格式的內容取出
           const m = zh.match(/"(?:answer|response|reply|text|content|message)"\s*:\s*"((?:[^"\\]|\\.)*)"/);
           if(m) zh = m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"');
         }
@@ -911,7 +909,7 @@ async function sendMsg(){
           });
           const d = await r.json();
           if(!r.ok || !d.success) throw new Error(d.error || 'MT 失敗');
-          return {type:'taigi', taigi:d.taigi, tailo:d.tailo, audio:d.audioBase64||null};
+          return {type:'taigi', taigi:d.taigi||d.hanzi||d.text||'', tailo:d.tailo||'', audio:d.audioBase64||null};
         } else if(lang.code === 'zh-TW'){
           return {type:'other', text:zh, tts:lang.tts, name:lang.name, chText:zh};
         } else {
