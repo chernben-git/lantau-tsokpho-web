@@ -924,9 +924,15 @@ async function toggleMidTaigiMic(){
         clearTimeout(tid);
         const d=await r.json();
         if(d.success&&(d.chText||d.transcript)){
-          document.getElementById('midTA').value=d.chText||d.transcript;
+          // 輸入欄顯示台語漢字（transcript），chText（華語）只給後端翻譯用
+          const displayText=d.transcript||d.chText||'';
+          document.getElementById('midTA').value=displayText;
           document.getElementById('mid-stxt').textContent='✅ 辨識完成，翻譯中…';
           silentAudio.play().catch(()=>{});
+          // 如果有 chText（華語），直接用華語翻，比台語漢字更準
+          if(d.chText && d.chText!==displayText){
+            document.getElementById('midTA').dataset.chText=d.chText;
+          }
           doMidTx();
         }else if(d.error==='TOO_SHORT'){
           document.getElementById('mid-stxt').textContent='⚠️ 錄音太短，請說長一點';
@@ -952,7 +958,11 @@ function unlockAndMidTx(){
 }
 
 async function doMidTx(){
-  const text=document.getElementById('midTA').value.trim();if(!text)return;
+  const ta=document.getElementById('midTA');
+  const displayText=ta.value.trim();if(!displayText)return;
+  // 優先用 chText（華語）送翻譯，因為 /from-taigi 接受台語漢字或華語
+  const text=ta.dataset.chText||displayText;
+  delete ta.dataset.chText; // 用完清掉
   const btn=document.getElementById('midTxBtn');
   btn.classList.add('loading');btn.innerHTML=`<div class="spin"></div>翻譯中…`;
   document.getElementById('mid-stxt').textContent='翻譯中…';
@@ -969,7 +979,20 @@ async function doMidTx(){
     const el=((Date.now()-t0)/1000).toFixed(1);
     document.getElementById('mid-oe').style.display='none';
     const res=document.getElementById('mid-or');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
-    const finalText=d.translated||d.chText||'';
+    // translated 優先，若無則用 chText 再轉一次目標語言
+    let finalText=d.translated||'';
+    if(!finalText && d.chText){
+      if(midTargetLang==='zh-TW'){
+        finalText=d.chText;
+      } else {
+        // 用 chText 再打一次 mandarin-to-world
+        try{
+          const r2=await fetch(API+'/translate/mandarin-to-world',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:d.chText,targetLang:midTargetLang})});
+          const d2=await r2.json();
+          finalText=d2.translated||d.chText;
+        }catch(e2){finalText=d.chText;}
+      }
+    }
     document.getElementById('midResTxt').textContent=finalText;
     setFlag('midResFlag',midTargetFC,22,15);
     document.getElementById('midResLName').textContent=midTargetName;
