@@ -1029,16 +1029,18 @@ async function toggleOTaigiMic(){
           body:JSON.stringify({audioBase64:b64,mimeType:'audio/webm'})
         });
         const d=await r.json();
-        if(d.success && (d.chText||d.transcript)){
-          // 顯示華語（或台羅備用）
-          const displayText = d.chText || d.transcript;
-          document.getElementById('oTA').value=displayText;
-          document.getElementById('stxt2').textContent='✅ 辨識：'+displayText;
-          // 把 oSlc 暫時切到華語再翻，翻完切回
-          const origSlc=oSlc;
-          oSlc='zh-TW';
+        if(d.success && d.chText){
+          // 有華語 → 直接顯示並翻目標語言（不走壞掉的 from-taigi）
+          document.getElementById('oTA').value=d.chText;
+          document.getElementById('stxt2').textContent='✅ 辨識：'+d.chText;
+          // 強制當華語來翻
+          const origSlc=oSlc; oSlc='zh-TW';
           unlockAndOTx();
           oSlc=origSlc;
+        } else if(d.success && d.transcript){
+          // 只有台羅，顯示台羅備用
+          document.getElementById('oTA').value=d.transcript;
+          document.getElementById('stxt2').textContent='⚠️ 僅台羅：'+d.transcript+'（請手動翻譯）';
         } else if(d.error==='TOO_SHORT'){
           document.getElementById('stxt2').textContent='⚠️ 錄音太短，請說長一點再試';
         } else {
