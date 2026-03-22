@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>串流 ASR 測試</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans TC',system-ui,sans-serif;background:#f0ebe3;padding:16px;max-width:640px;margin:0 auto;}
+h2{color:#C8352A;margin-bottom:4px;font-size:20px;}
+.sub{color:#888;font-size:12px;margin-bottom:16px;}
+.card{background:white;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+.card h3{margin:0 0 10px;font-size:13px;color:#555;font-weight:600;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+button{padding:12px 22px;border-radius:22px;border:none;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s;}
+.btn-rec{background:#C8352A;color:white;}
+.btn-rec.on{background:#555;}
+.btn-clr{background:#eee;color:#666;}
+.interim{font-size:20px;color:#aaa;min-height:40px;padding:12px;background:#fafafa;border-radius:10px;line-height:1.6;margin-bottom:8px;font-style:italic;}
+.final-txt{font-size:22px;font-weight:700;color:#1a1a3a;min-height:40px;padding:12px;background:#f0f8ff;border-radius:10px;line-height:1.6;border-left:4px solid #C8352A;}
+.log-box{background:#1a1a2e;border-radius:10px;padding:12px;font-size:11px;color:#a8d8a8;font-family:monospace;min-height:80px;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;}
+.status{font-size:13px;color:#888;margin-top:8px;min-height:20px;}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wave{display:none;align-items:center;gap:3px;height:18px;}
+.wave.on{display:inline-flex;}
+.wb{width:3px;background:white;border-radius:2px;}
+.wb:nth-child(1){height:6px;animation:wv 0.8s ease-in-out infinite 0s;}
+.wb:nth-child(2){height:14px;animation:wv 0.8s ease-in-out infinite 0.1s;}
+.wb:nth-child(3){height:18px;animation:wv 0.8s ease-in-out infinite 0.2s;}
+.wb:nth-child(4){height:12px;animation:wv 0.8s ease-in-out infinite 0.1s;}
+.wb:nth-child(5){height:7px;animation:wv 0.8s ease-in-out infinite 0s;}
+@keyframes wv{0%,100%{transform:scaleY(0.4)}50%{transform:scaleY(1)}}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:8px;font-weight:600;}
+.tag-ok{background:#e8f5e9;color:#2e7d32;}
+.tag-warn{background:#fff3e0;color:#e65100;}
+.info-box{background:#e8f0fe;border-radius:10px;padding:12px;font-size:12px;color:#1a237e;line-height:1.8;margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<h2>⚡ 串流 ASR 測試</h2>
+<p class="sub">邊說邊辨識，說完馬上出結果</p>
+
+<div class="card">
+  <h3>ℹ️ 說明</h3>
+  <div class="info-box">
+    此頁需要 relay server 新增 <b>/asr-ticket</b> endpoint<br>
+    前端拿到 ticket → 直接開 WebSocket 連廖教授<br>
+    音頻串流：PCM 16kHz 16bit → 分段送出<br>
+    延遲目標：&lt; 1秒（說完馬上出字）
+  </div>
+</div>
+
+<div class="card">
+  <h3>🎙️ 串流辨識</h3>
+  <div class="interim" id="interimTxt">（說話中的即時文字會在這裡出現…）</div>
+  <div class="final-txt" id="finalTxt">最終結果會在這裡</div>
+  <div class="btn-row">
+    <button class="btn-rec" id="recBtn" onclick="toggleStream()">
+      🎙️ 開始說台語
+      <div class="wave" id="wave">
+        <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+        <div class="wb"></div><div class="wb"></div>
+      </div>
+    </button>
+    <button class="btn-clr" onclick="clearAll()">清除</button>
+  </div>
+  <div class="status" id="status">按按鈕開始</div>
+</div>
+
+<div class="card">
+  <h3>⏱️ 速度比較</h3>
+  <div id="speedResult" style="font-size:14px;color:#444;min-height:30px;"></div>
+</div>
+
+<div class="card">
+  <h3>📋 Log</h3>
+  <div class="log-box" id="logBox">等待操作…</div>
+</div>
+
+<script>
+const API = 'https://asr.bitfull.tw';
+let streaming = false;
+let audioCtx = null;
+let wsConn = null;
+let processor = null;
+let mediaStream = null;
+let t0 = 0;
+let firstResultTime = 0;
+
+function log(msg){
+  const box = document.getElementById('logBox');
+  const ts = new Date().toLocaleTimeString('zh-TW');
+  box.textContent += `\n[${ts}] ${msg}`;
+  box.scrollTop = box.scrollHeight;
+}
+
+function clearAll(){
+  document.getElementById('interimTxt').textContent='（說話中的即時文字會在這裡出現…）';
+  document.getElementById('finalTxt').textContent='最終結果會在這裡';
+  document.getElementById('speedResult').textContent='';
+  document.getElementById('logBox').textContent='已清除';
+  document.getElementById('status').textContent='按按鈕開始';
+}
+
+async function toggleStream(){
+  if(streaming){
+    stopStream();
+    return;
+  }
+  await startStream();
+}
+
+async function startStream(){
+  const btn = document.getElementById('recBtn');
+  const wave = document.getElementById('wave');
+  const status = document.getElementById('status');
+
+  try{
+    // 1. 拿 ticket
+    status.textContent = '取得 ticket…';
+    log('請求 /asr-ticket...');
+
+    const ticketResp = await fetch(API + '/asr-ticket');
+    const ticketData = await ticketResp.json();
+
+    if(!ticketData.ticket){
+      status.textContent = '❌ 無法取得 ticket：' + JSON.stringify(ticketData);
+      log('ticket 失敗：' + JSON.stringify(ticketData));
+      return;
+    }
+
+    const ticket = encodeURIComponent(ticketData.ticket);
+    const wsUrl = `wss://140.113.30.204:8451/ws/v1/transcript?ticket=${ticket}&type=raw&rate=16000`;
+    log('ticket 取得，連接 WebSocket：' + wsUrl.slice(0,80) + '...');
+
+    // 2. 開 WebSocket
+    wsConn = new WebSocket(wsUrl);
+    wsConn.binaryType = 'arraybuffer';
+
+    wsConn.onopen = () => {
+      log('WebSocket 連線成功！開始錄音');
+      status.textContent = '🔴 錄音中，邊說邊辨識…';
+      btn.innerHTML = `<div class="spin"></div> 停止 <div class="wave on" id="wave"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>`;
+      btn.classList.add('on');
+      streaming = true;
+      t0 = Date.now();
+      startAudio();
+    };
+
+    wsConn.onmessage = (e) => {
+      try{
+        const msg = JSON.parse(e.data);
+        log('WS收到：' + JSON.stringify(msg).slice(0,120));
+
+        const text = msg.transcript || msg.text || msg.result || '';
+        const isFinal = msg.isFinal || msg.is_final || msg.final || false;
+
+        if(text){
+          if(!firstResultTime) firstResultTime = Date.now();
+          if(isFinal){
+            document.getElementById('finalTxt').textContent = text;
+            document.getElementById('interimTxt').textContent = '';
+            const elapsed = ((Date.now() - t0)/1000).toFixed(1);
+            const toFirst = ((firstResultTime - t0)/1000).toFixed(1);
+            document.getElementById('speedResult').innerHTML =
+              `總時間：<b>${elapsed}秒</b> | 首字出現：<b>${toFirst}秒</b> <span class="tag tag-ok">串流模式</span>`;
+            log(`最終結果(${elapsed}s)：${text}`);
+          } else {
+            document.getElementById('interimTxt').textContent = text;
+          }
+        }
+      }catch(err){
+        log('解析錯誤：' + err.message + ' | 原始：' + e.data.toString().slice(0,100));
+      }
+    };
+
+    wsConn.onerror = (e) => {
+      log('WebSocket 錯誤：' + e.message);
+      status.textContent = '❌ WebSocket 連線失敗';
+      stopStream();
+    };
+
+    wsConn.onclose = (e) => {
+      log(`WebSocket 關閉：code=${e.code} reason=${e.reason}`);
+      streaming = false;
+      btn.textContent = '🎙️ 開始說台語';
+      btn.classList.remove('on');
+      status.textContent = '連線已關閉';
+    };
+
+  }catch(err){
+    log('錯誤：' + err.message);
+    status.textContent = '❌ ' + err.message;
+  }
+}
+
+async function startAudio(){
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true }
+    });
+
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+    const source = audioCtx.createMediaStreamSource(mediaStream);
+
+    // ScriptProcessor 每 4096 samples 送一次（約 256ms）
+    processor = audioCtx.createScriptProcessor(4096, 1, 1);
+    processor.onaudioprocess = (e) => {
+      if(!streaming || !wsConn || wsConn.readyState !== WebSocket.OPEN) return;
+
+      const floatData = e.inputBuffer.getChannelData(0);
+      // Float32 → Int16 PCM
+      const int16 = new Int16Array(floatData.length);
+      for(let i = 0; i < floatData.length; i++){
+        const s = Math.max(-1, Math.min(1, floatData[i]));
+        int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      wsConn.send(int16.buffer);
+    };
+
+    source.connect(processor);
+    processor.connect(audioCtx.destination);
+    log('音頻串流啟動，PCM 16kHz 開始送出');
+
+  }catch(err){
+    log('音頻錯誤：' + err.message);
+    stopStream();
+  }
+}
+
+function stopStream(){
+  streaming = false;
+  const btn = document.getElementById('recBtn');
+  btn.textContent = '🎙️ 開始說台語';
+  btn.classList.remove('on');
+  document.getElementById('status').textContent = '辨識中，請稍候…';
+
+  if(processor){ processor.disconnect(); processor = null; }
+  if(audioCtx){ audioCtx.close(); audioCtx = null; }
+  if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream = null; }
+
+  // 送結束訊號給 WebSocket
+  if(wsConn && wsConn.readyState === WebSocket.OPEN){
+    // 送空的結束包
+    wsConn.send(new ArrayBuffer(0));
+    log('送出結束訊號');
+    setTimeout(() => {
+      if(wsConn) wsConn.close();
+    }, 2000);
+  }
+  log('錄音停止');
+}
+</script>
+
+<!--
+=== Relay Server 需要新增的 endpoint ===
+
+在你的 server.js 加入：
+
+app.get('/asr-ticket', async (req, res) => {
+  try {
+    // 1. 取得 ASR token
+    const loginResp = await fetch('https://140.113.30.204:8451/api/v1/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'chernben', password: 'SRGER#342sd', rememberMe: true }),
+      // 忽略自簽憑證
+      agent: httpsAgent  // 需要 const httpsAgent = new https.Agent({ rejectUnauthorized: false })
+    });
+    const loginData = await loginResp.json();
+    const token = loginData.access_token || loginData.token;
+
+    // 2. 用 token 取得 ticket
+    const ticketResp = await fetch('https://140.113.30.204:8451/api/v1/streaming/transcript/access-info', {
+      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
+      agent: httpsAgent
+    });
+    const ticketData = await ticketResp.json();
+    const ticket = ticketData.data[0].ticket;
+
+    res.json({ ticket, wsUrl: 'wss://140.113.30.204:8451/ws/v1/transcript' });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+注意：ticket 有效期只有 30 秒，要即時取即時用
+-->
+</body>
+</html>
