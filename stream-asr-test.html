@@ -157,8 +157,18 @@ async function startStream(){
 
         log('WS收到：' + JSON.stringify(msg).slice(0,120));
 
-        const text = msg.transcript || msg.text || msg.result || '';
-        const isFinal = msg.isFinal || msg.is_final || msg.final || false;
+        // 廖教授格式：{ code:200, result:[{segment, transcript, ...}] }
+        let text = '';
+        let isFinal = false;
+        if(msg.result && Array.isArray(msg.result) && msg.result.length > 0){
+          const seg = msg.result[msg.result.length - 1];
+          text = seg.transcript || '';
+          // segment 有遞增代表還在辨識，送完音頻後不再有新 segment 就是最終
+          isFinal = seg.isFinal || seg.is_final || false;
+        } else {
+          text = msg.transcript || msg.text || '';
+          isFinal = msg.isFinal || msg.is_final || msg.final || false;
+        }
 
         if(text){
           if(!firstResultTime) firstResultTime = Date.now();
@@ -190,8 +200,19 @@ async function startStream(){
       streaming = false;
       btn.textContent = '🎙️ 開始說台語';
       btn.classList.remove('on');
-      if(status.textContent === '初始化中…' || status.textContent === '連線中…'){
-        status.textContent = '連線關閉';
+      // 關閉時把最後的 interim 當最終結果
+      const interim = document.getElementById('interimTxt').textContent;
+      if(interim && interim !== '（說話中的即時文字會在這裡出現…）'){
+        document.getElementById('finalTxt').textContent = interim;
+        document.getElementById('interimTxt').textContent = '';
+        const elapsed = ((Date.now() - t0)/1000).toFixed(1);
+        const toFirst = firstResultTime ? ((firstResultTime - t0)/1000).toFixed(1) : '—';
+        document.getElementById('speedResult').innerHTML =
+          `總時間：<b>${elapsed}秒</b> | 首字出現：<b>${toFirst}秒</b> <span class="tag tag-ok">串流模式 ✅</span>`;
+        log(`最終結果(${elapsed}s)：${interim}`);
+      }
+      if(status.textContent.includes('錄音') || status.textContent === '辨識中，請稍候...'){
+        status.textContent = '✅ 完成';
       }
     };
 
