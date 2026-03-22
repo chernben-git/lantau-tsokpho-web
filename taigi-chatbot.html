@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>台語 AI 語言學習機</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ════ TOKENS ════ */
+:root{
+  --red:#C8352A; --red-d:#9B271E; --red-l:#FCECEA; --red-ll:#FEF7F6;
+  --ink:#16162A; --ink2:#2A2A50;
+  --muted:#6B7280; --subtle:#9CA3AF;
+  --bg:#F5F1EC; --bg2:#EDE8E1;
+  --surf:#FFFFFF;
+  --bd:rgba(0,0,0,0.08); --bd-m:rgba(0,0,0,0.14);
+  --r-md:14px; --r-lg:18px; --r-xl:22px;
+  --sh-sm:0 1px 4px rgba(0,0,0,0.05),0 2px 8px rgba(0,0,0,0.06);
+  --sh-btn:0 4px 14px rgba(200,53,42,0.34);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Noto Sans TC',system-ui,sans-serif;
+  background:var(--bg); color:var(--ink);
+  display:flex; flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ════ HEADER ════ */
+.header{
+  flex-shrink:0;
+  display:flex; align-items:center; gap:9px;
+  padding:0 13px; height:50px;
+  background:rgba(255,255,255,0.97);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--bd);
+  z-index:30;
+}
+.hdr-back{
+  width:30px; height:30px; border-radius:8px;
+  background:var(--bg); border:1px solid var(--bd-m);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; color:var(--ink2); text-decoration:none; flex-shrink:0;
+}
+.hdr-back svg{width:16px; height:16px;}
+.hdr-av{
+  width:30px; height:30px; border-radius:50%;
+  background:linear-gradient(145deg,var(--red),var(--red-d));
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; flex-shrink:0;
+  box-shadow:0 2px 6px rgba(200,53,42,.25);
+}
+.hdr-info{flex:1; min-width:0;}
+.hdr-title{
+  font-family:'Noto Serif TC',serif;
+  font-size:14.5px; font-weight:900; color:var(--ink); line-height:1.15;
+}
+.hdr-sub{font-size:9px; color:var(--muted);}
+.hdr-right{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+.conn-dot{width:7px; height:7px; border-radius:50%; background:#22C55E; animation:blink 2.5s infinite;}
+.conn-dot.loading{background:#D4A017; animation:blink .5s infinite;}
+.conn-dot.err{background:#EF4444; animation:none;}
+.hdr-menu{
+  width:28px; height:28px; border-radius:7px; background:none; border:none;
+  cursor:pointer; color:var(--muted); display:flex; align-items:center; justify-content:center;
+}
+.hdr-menu:hover{background:var(--bg);}
+.hdr-menu svg{width:15px; height:15px;}
+
+/* ════ STATUS ════ */
+.status-bar{
+  flex-shrink:0; display:flex; align-items:center; gap:6px;
+  padding:3px 12px; background:var(--bg); border-bottom:1px solid var(--bd);
+  font-size:10px; color:var(--muted); min-height:24px;
+}
+.status-bar .conn-dot{width:5px; height:5px;}
+#statusTxt{flex:1;}
+.flow-tag{
+  font-size:9px; padding:1px 6px; border-radius:4px;
+  background:rgba(200,53,42,.08); color:var(--red-d); font-weight:600;
+}
+
+/* ════ MAIN — 4 個框 ════ */
+.main{
+  flex:1; overflow:hidden;
+  display:flex; flex-direction:column;
+  padding:8px 10px calc(6px + env(safe-area-inset-bottom));
+  gap:7px;
+}
+
+/* ── 通用框樣式 ── */
+.box{
+  background:var(--surf);
+  border-radius:var(--r-xl);
+  border:1px solid var(--bd);
+  box-shadow:var(--sh-sm);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ── 框標題列 ── */
+.box-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:7px 12px 0;
+  flex-shrink:0;
+}
+.box-label{
+  display:flex; align-items:center; gap:6px;
+  font-size:10px; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted);
+}
+.box-label-dot{
+  width:7px; height:7px; border-radius:50%; flex-shrink:0;
+}
+.dot-red{background:var(--red);}
+.dot-blue{background:var(--ink2);}
+.dot-green{background:#22C55E;}
+.dot-gold{background:#D4A017;}
+
+/* 語言選擇器（點擊下拉）*/
+.lang-sel{
+  display:flex; align-items:center; gap:5px;
+  padding:3px 8px 3px 6px;
+  background:var(--bg); border:1px solid var(--bd-m);
+  border-radius:10px; cursor:pointer;
+  transition:all .15s; flex-shrink:0;
+}
+.lang-sel:hover{border-color:var(--red); background:var(--red-ll);}
+.lang-sel-flag{
+  width:16px; height:10px; border-radius:1.5px;
+  background-size:cover; background-position:center;
+  box-shadow:0 1px 2px rgba(0,0,0,.15);
+}
+.lang-sel-name{font-size:11px; font-weight:600; color:var(--ink2);}
+.lang-sel-arr{font-size:9px; color:var(--muted);}
+
+/* ════ 框1：輸入框 ════ */
+.box-input{flex:0 0 auto;}
+.inp-body{padding:6px 12px 8px; display:flex; flex-direction:column; gap:6px;}
+.inp-ta{
+  width:100%; background:transparent; border:none; outline:none;
+  font-family:'Noto Sans TC',sans-serif; font-size:14.5px; color:var(--ink);
+  resize:none; line-height:1.6; min-height:48px; max-height:80px;
+  caret-color:var(--red);
+}
+.inp-ta::placeholder{color:#C0C6CF;}
+.inp-tools{
+  display:flex; align-items:center; gap:7px;
+}
+.tool-btn{
+  display:inline-flex; align-items:center; gap:4px;
+  padding:5px 10px; border-radius:10px;
+  border:1.5px solid var(--bd-m); background:var(--bg);
+  font-family:'Noto Sans TC',sans-serif; font-size:11px; color:var(--muted);
+  cursor:pointer; transition:all .18s; flex-shrink:0;
+}
+.tool-btn:hover{border-color:var(--red); color:var(--red);}
+.tool-btn.mic-on{background:var(--red); border-color:var(--red); color:white; animation:pulse 1.5s infinite;}
+.tool-btn svg{width:12px; height:12px;}
+.mic-wave{display:none; align-items:center; gap:2px; height:12px;}
+.mic-wave.on{display:flex;}
+.mw{width:2.5px; border-radius:2px; background:var(--red); animation:wave .8s ease-in-out infinite;}
+.mw:nth-child(1){height:4px;} .mw:nth-child(2){height:9px;animation-delay:.1s;}
+.mw:nth-child(3){height:12px;animation-delay:.2s;} .mw:nth-child(4){height:7px;animation-delay:.3s;}
+.mw:nth-child(5){height:4px;animation-delay:.4s;}
+.inp-right{margin-left:auto; display:flex; align-items:center; gap:6px;}
+.clear-btn{
+  font-size:11px; color:var(--muted); background:none; border:none;
+  cursor:pointer; font-family:'Noto Sans TC',sans-serif; padding:2px 6px;
+}
+.clear-btn:hover{color:var(--red);}
+.send-btn{
+  width:36px; height:36px; border-radius:11px; border:none;
+  background:var(--red); color:white;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; box-shadow:var(--sh-btn); transition:all .18s; flex-shrink:0;
+}
+.send-btn:hover{background:var(--red-d);}
+.send-btn:disabled{background:var(--subtle); box-shadow:none; cursor:default;}
+.send-btn svg{width:15px; height:15px;}
+
+/* ════ 框2/3：輸出框 ════ */
+.box-out{flex:1; min-height:0;}
+.out-body{
+  flex:1; padding:6px 12px 8px;
+  overflow-y:auto; display:flex; flex-direction:column; gap:4px;
+}
+.out-body::-webkit-scrollbar{width:3px;}
+.out-body::-webkit-scrollbar-thumb{background:var(--bd-m); border-radius:2px;}
+.out-empty{
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center; padding:8px;
+}
+.out-empty-icon{font-size:24px; margin-bottom:4px; opacity:.4;}
+.out-empty-txt{font-size:11px; color:var(--subtle); line-height:1.6;}
+
+/* 台語輸出 */
+.out-taigi{
+  font-family:'Noto Serif TC',serif;
+  font-size:20px; font-weight:900;
+  color:var(--red-d); line-height:1.5;
+  word-break:break-all;
+}
+.out-tailo{
+  font-size:10.5px; color:var(--muted);
+  font-style:italic; line-height:1.55;
+}
+/* 其他語言輸出 */
+.out-text{
+  font-size:16px; font-weight:700;
+  color:var(--ink2); line-height:1.55;
+}
+.out-acts{
+  display:flex; align-items:center; gap:5px; flex-wrap:wrap;
+  margin-top:3px;
+}
+.act-btn{
+  display:inline-flex; align-items:center; gap:4px;
+  padding:4px 10px; border-radius:9px;
+  font-family:'Noto Sans TC',sans-serif; font-size:10.5px; font-weight:600;
+  cursor:pointer; transition:all .18s;
+}
+.act-btn.play-taigi{
+  border:1.5px solid rgba(200,53,42,.2); background:var(--red-ll); color:var(--red-d);
+}
+.act-btn.play-taigi:hover,.act-btn.play-taigi.on{background:var(--red); color:white; border-color:var(--red);}
+.act-btn.play-other{
+  border:1.5px solid rgba(42,42,80,.15); background:rgba(42,42,80,.06); color:var(--ink2);
+}
+.act-btn.play-other:hover,.act-btn.play-other.on{background:var(--ink2); color:white; border-color:var(--ink2);}
+.act-btn.copy-btn{
+  border:1.5px solid var(--bd-m); background:var(--bg); color:var(--muted);
+}
+.act-btn.copy-btn:hover{border-color:var(--ink2); color:var(--ink2);}
+.act-btn svg{width:10px; height:10px;}
+.thinking-dots{
+  display:flex; align-items:center; gap:6px;
+  padding:8px 0; font-size:12px; color:var(--muted);
+}
+.dots span{
+  display:inline-block; width:5px; height:5px; border-radius:50%;
+  background:var(--muted); margin:0 1.5px; animation:bounce 1.2s infinite;
+}
+.dots span:nth-child(2){animation-delay:.2s;}
+.dots span:nth-child(3){animation-delay:.4s;}
+
+/* ════ 框4：歷史對話框 ════ */
+/* 手機：排在最後（order:4），高度限制 120px */
+.box-hist{flex:0 0 auto; max-height:120px; order:4;}
+/* 右欄包裝：手機 flex:1 縱向排列，order 正常 */
+.right-col{flex:1; display:flex; flex-direction:column; gap:7px; min-height:0; order:1;}
+
+/* ════ 電腦版（≥740px）雙欄 layout ════ */
+@media(min-width:740px){
+  body{background:var(--bg2);}
+
+  /* main 改成左右雙欄 */
+  .main{
+    flex-direction:row;
+    align-items:stretch;
+    padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+    gap:12px;
+    max-width:1100px; margin:0 auto; width:100%;
+  }
+
+  /* 左欄：歷史框獨立，佔固定寬度，撐滿高度 */
+  .box-hist{
+    flex:0 0 240px;
+    max-height:none;    /* 取消手機版的最大高度限制 */
+    order:-1;           /* 移到最左邊 */
+    display:flex;
+    flex-direction:column;
+  }
+  .box-hist .hist-body{
+    flex:1;
+    max-height:none;
+  }
+
+  /* 右欄：其他三個框垂直排列，撐滿剩餘空間 */
+  .right-col{
+    flex:1; min-width:0;
+    display:flex; flex-direction:column;
+    gap:12px;
+  }
+
+  /* 輸入框：固定高度，不伸縮 */
+  .box-input{flex:0 0 auto;}
+
+  /* 兩個輸出框：平分剩餘空間 */
+  .box-out{flex:1; min-height:0;}
+
+  /* 電腦版框的圓角稍大一點，有呼吸感 */
+  .box{border-radius:20px;}
+}
+.hist-body{
+  flex:1; overflow-y:auto; padding:4px 12px 8px;
+  display:flex; flex-direction:column; gap:5px;
+}
+.hist-body::-webkit-scrollbar{width:3px;}
+.hist-body::-webkit-scrollbar-thumb{background:var(--bd-m); border-radius:2px;}
+.hist-empty{
+  font-size:11px; color:var(--subtle);
+  text-align:center; padding:10px; line-height:1.6;
+}
+.hist-item{
+  display:flex; align-items:flex-start; gap:7px;
+  padding:5px 0; border-bottom:1px solid var(--bd); cursor:pointer;
+  transition:opacity .15s;
+}
+.hist-item:last-child{border-bottom:none;}
+.hist-item:hover{opacity:.75;}
+.hist-q{font-size:11px; color:var(--muted); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.hist-a{
+  font-size:11.5px; font-family:'Noto Serif TC',serif;
+  color:var(--red-d); flex:1.5; min-width:0;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.hist-time{font-size:9px; color:var(--subtle); flex-shrink:0; white-space:nowrap;}
+
+/* ════ LANG DROPDOWN ════ */
+.lang-dropdown{
+  display:none; position:fixed;
+  background:var(--surf); border:1px solid var(--bd-m);
+  border-radius:var(--r-lg); box-shadow:0 8px 30px rgba(0,0,0,.14);
+  z-index:500; min-width:180px;
+  max-height:260px; overflow-y:auto;
+}
+.lang-dropdown.open{display:block; animation:fadeUp .18s ease;}
+.lang-dropdown::-webkit-scrollbar{width:3px;}
+.lang-dropdown::-webkit-scrollbar-thumb{background:var(--bd-m);}
+.ld-head{
+  padding:8px 12px 6px;
+  font-size:10px; font-weight:700; letter-spacing:.07em;
+  color:var(--muted); text-transform:uppercase;
+  border-bottom:1px solid var(--bd);
+}
+.ld-item{
+  display:flex; align-items:center; gap:9px;
+  padding:9px 14px; cursor:pointer; font-size:13px; color:var(--ink);
+  transition:background .13s;
+}
+.ld-item:hover{background:var(--bg);}
+.ld-item.active{background:var(--red-ll); color:var(--red-d); font-weight:600;}
+.ld-flag{width:20px; height:13px; border-radius:2px; background-size:cover; box-shadow:0 1px 2px rgba(0,0,0,.15);}
+
+/* ════ SETTING MODAL ════ */
+.modal-overlay{display:none; position:fixed; inset:0; z-index:400; background:rgba(0,0,0,.5);}
+.modal-overlay.open{display:flex; align-items:flex-end; justify-content:center;}
+.modal-sheet{
+  background:var(--surf); border-radius:22px 22px 0 0;
+  padding:20px 18px calc(20px + env(safe-area-inset-bottom));
+  width:100%; max-width:480px;
+  animation:slideUp .25s ease;
+}
+.modal-handle{width:36px; height:4px; background:var(--bd-m); border-radius:2px; margin:0 auto 16px;}
+.modal-title{font-family:'Noto Serif TC',serif; font-size:17px; font-weight:900; color:var(--ink); margin-bottom:14px;}
+.modal-row{display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--bd);}
+.modal-row:last-child{border-bottom:none;}
+.modal-row-lbl{font-size:13.5px; color:var(--ink2);}
+.modal-row-sub{font-size:11px; color:var(--muted); margin-top:2px;}
+.tog{width:32px; height:18px; border-radius:9px; border:none; background:var(--bd-m); cursor:pointer; position:relative; transition:background .2s;}
+.tog::after{content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:white; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:transform .2s;}
+.tog.on{background:var(--red);}
+.tog.on::after{transform:translateX(14px);}
+.v-btns{display:flex; gap:4px;}
+.v-btn{padding:3px 10px; border-radius:9px; border:1.5px solid var(--bd-m); background:var(--surf); font-family:'Noto Sans TC',sans-serif; font-size:11px; color:var(--muted); cursor:pointer; transition:all .15s;}
+.v-btn.on{background:var(--ink2); border-color:var(--ink2); color:white;}
+.modal-close{
+  width:100%; padding:13px; background:var(--bg); color:var(--muted);
+  border:none; border-radius:12px; font-family:'Noto Sans TC',sans-serif;
+  font-size:14px; cursor:pointer; margin-top:14px;
+}
+
+/* ════ FLAGS ════ */
+.f-tw{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23FE0000'/%3E%3Crect width='11' height='7.5' fill='%23000095'/%3E%3Ccircle cx='5.5' cy='3.75' r='2.3' fill='white'/%3E%3C/svg%3E");}
+.f-jp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='white'/%3E%3Ccircle cx='11' cy='7.5' r='4.2' fill='%23BC002D'/%3E%3C/svg%3E");}
+.f-us{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23B22234'/%3E%3Crect y='1.15' width='22' height='1.15' fill='white'/%3E%3Crect y='3.46' width='22' height='1.15' fill='white'/%3E%3Crect y='5.77' width='22' height='1.15' fill='white'/%3E%3Crect y='8.08' width='22' height='1.15' fill='white'/%3E%3Crect y='10.38' width='22' height='1.15' fill='white'/%3E%3Crect y='12.69' width='22' height='1.15' fill='white'/%3E%3Crect width='9' height='8' fill='%233C3B6E'/%3E%3C/svg%3E");}
+.f-kr{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='white'/%3E%3Ccircle cx='11' cy='7.5' r='3.5' fill='%23CD2E3A'/%3E%3C/svg%3E");}
+.f-vn{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23DA251D'/%3E%3Cpolygon points='11,3.5 12.3,7.3 16.3,7.3 13.1,9.6 14.4,13.4 11,11.1 7.6,13.4 8.9,9.6 5.7,7.3 9.7,7.3' fill='%23FFFF00'/%3E%3C/svg%3E");}
+.f-id{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='7.5' fill='%23CE1126'/%3E%3Crect y='7.5' width='22' height='7.5' fill='white'/%3E%3C/svg%3E");}
+.f-th{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23A51931'/%3E%3Crect y='2.5' width='22' height='10' fill='white'/%3E%3Crect y='5' width='22' height='5' fill='%232D2A4A'/%3E%3C/svg%3E");}
+.f-ph{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='7.5' fill='%230038A8'/%3E%3Crect y='7.5' width='22' height='7.5' fill='%23CE1126'/%3E%3Cpolygon points='0,0 10,7.5 0,15' fill='white'/%3E%3C/svg%3E");}
+.f-my{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23CC0001'/%3E%3Crect y='1.07' width='22' height='1.07' fill='white'/%3E%3Crect y='3.21' width='22' height='1.07' fill='white'/%3E%3Crect y='7.5' width='22' height='1.07' fill='white'/%3E%3Crect width='10' height='8' fill='%23010066'/%3E%3C/svg%3E");}
+.f-fr{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='7.3' height='15' fill='%23002395'/%3E%3Crect x='7.3' width='7.4' height='15' fill='white'/%3E%3Crect x='14.7' width='7.3' height='15' fill='%23ED2939'/%3E%3C/svg%3E");}
+.f-de{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='5' fill='%23000'/%3E%3Crect y='5' width='22' height='5' fill='%23DD0000'/%3E%3Crect y='10' width='22' height='5' fill='%23FFCE00'/%3E%3C/svg%3E");}
+.f-es{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='15' fill='%23AA151B'/%3E%3Crect y='3.75' width='22' height='7.5' fill='%23F1BF00'/%3E%3C/svg%3E");}
+.f-ru{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='5' fill='white'/%3E%3Crect y='5' width='22' height='5' fill='%230039A6'/%3E%3Crect y='10' width='22' height='5' fill='%23D52B1E'/%3E%3C/svg%3E");}
+.f-ar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='5' fill='%23006C35'/%3E%3Crect y='5' width='22' height='5' fill='white'/%3E%3Crect y='10' width='22' height='5' fill='black'/%3E%3C/svg%3E");}
+.f-in{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 15'%3E%3Crect width='22' height='5' fill='%23FF9933'/%3E%3Crect y='5' width='22' height='5' fill='white'/%3E%3Crect y='10' width='22' height='5' fill='%23138808'/%3E%3C/svg%3E");}
+/* 台語自訂旗 */
+.f-taigi{background:linear-gradient(135deg,#FE0000 50%,#000095 50%); position:relative;}
+
+/* ════ SAFARI GUIDE ════ */
+#safariGuide{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);align-items:flex-end;justify-content:center;}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#22C55E;color:white;padding:6px 16px;border-radius:16px;font-size:12.5px;z-index:999;animation:fadeUp .2s ease;pointer-events:none;}
+
+/* ════ ANIMATIONS ════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(200,53,42,.4)}50%{box-shadow:0 0 0 8px rgba(200,53,42,0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes wave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <a class="hdr-back" href="index.html" id="backBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <div class="hdr-av">🗣️</div>
+  <div class="hdr-info">
+    <div class="hdr-title">台語 AI 語言學習機</div>
+    <div class="hdr-sub">Gemini + 廖教授MT + TTS</div>
+  </div>
+  <div class="hdr-right">
+    <div class="conn-dot" id="connDot"></div>
+    <button class="hdr-menu" onclick="openSettings()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div class="status-bar">
+  <div class="conn-dot" id="connDot2" style="width:5px;height:5px;"></div>
+  <span id="statusTxt">已連線 · asr.bitfull.tw</span>
+  <span class="flow-tag" id="flowTag"></span>
+</div>
+
+<!-- MAIN：4 個框 -->
+<div class="main">
+
+  <!-- ══ 框4：歷史（手機在底部，電腦在左欄）══ -->
+  <!-- 手機版：order 預設為 0，HTML 順序最後；電腦版：order:-1 自動移到最左 -->
+  <div class="box box-hist">
+    <div class="box-head">
+      <div class="box-label">
+        <span class="box-label-dot dot-green"></span>歷史對話
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="lang-sel" id="histLangSel" onclick="openDrop('hist',this)" style="font-size:10px;">
+          <div class="lang-sel-flag f-tw" id="histFlag"></div>
+          <span class="lang-sel-name" id="histLangName">台語</span>
+          <span class="lang-sel-arr">▾</span>
+        </div>
+        <button onclick="clearHistory()" style="font-size:10px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">清除</button>
+      </div>
+    </div>
+    <div class="hist-body" id="histBody">
+      <div class="hist-empty" id="histEmpty">還沒有對話記錄</div>
+    </div>
+  </div>
+
+  <!-- ══ 右欄包裝（電腦版用）══ -->
+  <div class="right-col">
+
+  <!-- ══ 框1：輸入框 ══ -->
+  <div class="box box-input">
+    <div class="box-head">
+      <div class="box-label">
+        <span class="box-label-dot dot-blue"></span>我說的語言
+      </div>
+      <div class="lang-sel" id="inSel" onclick="openDrop('in',this)">
+        <div class="lang-sel-flag f-tw" id="inFlag"></div>
+        <span class="lang-sel-name" id="inName">華語</span>
+        <span class="lang-sel-arr">▾</span>
+      </div>
+    </div>
+    <div class="inp-body">
+      <textarea class="inp-ta" id="inputBox"
+        placeholder="輸入文字或按麥克風說話…"
+        oninput="onInpChange(this)"
+        onkeydown="onKey(event)"></textarea>
+      <div class="inp-tools">
+        <button class="tool-btn" id="micBtn" onclick="toggleMic()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+          </svg>語音
+        </button>
+        <div class="mic-wave" id="micWave">
+          <div class="mw"></div><div class="mw"></div><div class="mw"></div>
+          <div class="mw"></div><div class="mw"></div>
+        </div>
+        <div class="inp-right">
+          <button class="clear-btn" onclick="clearInput()">清除</button>
+          <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 框2：輸出框 A（預設台語）══ -->
+  <div class="box box-out">
+    <div class="box-head">
+      <div class="box-label">
+        <span class="box-label-dot dot-red"></span>輸出語言 A
+      </div>
+      <div class="lang-sel" id="outASel" onclick="openDrop('outA',this)">
+        <div class="lang-sel-flag f-tw" id="outAFlag"></div>
+        <span class="lang-sel-name" id="outAName">台語</span>
+        <span class="lang-sel-arr">▾</span>
+      </div>
+    </div>
+    <div class="out-body" id="outABody">
+      <div class="out-empty" id="outAEmpty">
+        <div class="out-empty-icon">🗣️</div>
+        <div class="out-empty-txt">輸出語言 A 顯示在這裡</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 框3：輸出框 B（預設華語）══ -->
+  <div class="box box-out">
+    <div class="box-head">
+      <div class="box-label">
+        <span class="box-label-dot dot-gold"></span>輸出語言 B
+      </div>
+      <div class="lang-sel" id="outBSel" onclick="openDrop('outB',this)">
+        <div class="lang-sel-flag f-tw" id="outBFlag"></div>
+        <span class="lang-sel-name" id="outBName">華語</span>
+        <span class="lang-sel-arr">▾</span>
+      </div>
+    </div>
+    <div class="out-body" id="outBBody">
+      <div class="out-empty" id="outBEmpty">
+        <div class="out-empty-icon">🌐</div>
+        <div class="out-empty-txt">輸出語言 B 顯示在這裡</div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /右欄 right-col -->
+
+</div><!-- /main -->
+
+<!-- LANG DROPDOWN（共用，動態定位）-->
+<div class="lang-dropdown" id="langDropdown">
+  <div class="ld-head" id="ldHead">選擇語言</div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal" onclick="closeSettings()">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚙️ 設定</div>
+    <div class="modal-row">
+      <div>
+        <div class="modal-row-lbl">🔊 自動播音</div>
+        <div class="modal-row-sub">回覆後自動播放台語</div>
+      </div>
+      <button class="tog on" id="autoPlayTog" onclick="this.classList.toggle('on')"></button>
+    </div>
+    <div class="modal-row">
+      <div>
+        <div class="modal-row-lbl">台羅拼音</div>
+        <div class="modal-row-sub">顯示台語羅馬拼音</div>
+      </div>
+      <button class="tog on" id="tailoTog" onclick="this.classList.toggle('on')"></button>
+    </div>
+    <div class="modal-row">
+      <div class="modal-row-lbl">台語聲音</div>
+      <div class="v-btns">
+        <button class="v-btn on" id="vM" onclick="setVoice('male',this)">👨 男聲</button>
+        <button class="v-btn" id="vF" onclick="setVoice('female',this)">👩 女聲</button>
+      </div>
+    </div>
+    <button class="modal-close" onclick="closeSettings()">完成</button>
+  </div>
+</div>
+
+<!-- SAFARI GUIDE -->
+<div id="safariGuide" onclick="this.style.display='none'">
+  <div onclick="event.stopPropagation()" style="background:white;border-radius:20px 20px 0 0;padding:28px 24px 48px;width:100%;max-width:480px;">
+    <div style="font-size:20px;font-weight:900;color:var(--ink);margin-bottom:6px;font-family:'Noto Serif TC',serif;">語音功能需要 Safari</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.7;">LINE 內建瀏覽器無法使用麥克風<br>請點右上角「⋯」→「在瀏覽器中開啟」</div>
+    <button onclick="document.getElementById('safariGuide').style.display='none'" style="width:100%;padding:15px;background:var(--ink);color:white;border:none;border-radius:14px;font-family:'Noto Serif TC',serif;font-size:16px;font-weight:700;cursor:pointer;">我知道了</button>
+  </div>
+</div>
+
+<script>
+/* ════ LANG DATA ════ */
+const LANGS_IN = [
+  {code:'taigi', name:'台語',      flag:'f-tw', isTaigi:true,  tts:'zh-TW'},
+  {code:'zh-TW', name:'華語',      flag:'f-tw', google:'zh-TW',tts:'zh-TW'},
+  {code:'ja',    name:'日語',      flag:'f-jp', google:'ja',   tts:'ja-JP'},
+  {code:'en',    name:'English',   flag:'f-us', google:'en',   tts:'en-US'},
+  {code:'ko',    name:'한국어',    flag:'f-kr', google:'ko',   tts:'ko-KR'},
+  {code:'vi',    name:'Tiếng Việt',flag:'f-vn', google:'vi',   tts:'vi-VN'},
+  {code:'id',    name:'Indonesia', flag:'f-id', google:'id',   tts:'id-ID'},
+  {code:'th',    name:'ภาษาไทย',  flag:'f-th', google:'th',   tts:'th-TH'},
+  {code:'tl',    name:'Filipino',  flag:'f-ph', google:'tl',   tts:'fil-PH'},
+  {code:'ms',    name:'Melayu',    flag:'f-my', google:'ms',   tts:'ms-MY'},
+  {code:'fr',    name:'Français',  flag:'f-fr', google:'fr',   tts:'fr-FR'},
+  {code:'de',    name:'Deutsch',   flag:'f-de', google:'de',   tts:'de-DE'},
+  {code:'es',    name:'Español',   flag:'f-es', google:'es',   tts:'es-ES'},
+  {code:'ru',    name:'Русский',   flag:'f-ru', google:'ru',   tts:'ru-RU'},
+  {code:'ar',    name:'العربية',   flag:'f-ar', google:'ar',   tts:'ar-SA'},
+  {code:'hi',    name:'हिन्दी',    flag:'f-in', google:'hi',   tts:'hi-IN'},
+];
+// 輸出語言：加台語
+const LANGS_OUT = [
+  {code:'taigi', name:'台語',    flag:'f-tw', isTaigi:true},
+  ...LANGS_IN
+];
+
+/* ════ STATE ════ */
+const API = 'https://asr.bitfull.tw';
+const isLINE = /Line/i.test(navigator.userAgent);
+let vc = 'male';
+let inLang   = LANGS_IN[0];   // 輸入：預設台語
+let outALang = LANGS_OUT[0];  // 輸出A：預設台語
+let outBLang = LANGS_IN[1];   // 輸出B：預設華語（LANGS_IN[1]）
+let histLang = LANGS_OUT[0];  // 歷史：預設台語
+let isRecording = false, rec = null;
+let isBusy = false;
+let currentAudio = null, silentAC = null;
+let chatHistory = [];
+const MAX_HIST = 32;
+let localHistory = JSON.parse(localStorage.getItem('taigiLearnHist')||'[]');
+let curDropTarget = null;
+
+const SYSTEM = `你是「咱兜的台語」AI 文化助手，回答台灣文化、台語、歷史、美食、生活的問題。
+規則：1.永遠用繁體中文回答 2.親切自然有台灣在地感 3.回答80～180字 4.用繁體中文回答不論用戶用什麼語言`;
+
+/* ════ INIT ════ */
+if(isLINE) {
+  const b = document.createElement('div');
+  b.style.cssText='flex-shrink:0;background:#2B7A0B;color:white;font-size:12px;padding:6px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;';
+  b.innerHTML='<span>💡 語音功能請用 Safari 開啟</span><button onclick="document.getElementById(\'safariGuide\').style.display=\'flex\'" style="background:white;color:#2B7A0B;border:none;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">開啟</button>';
+  document.body.insertBefore(b, document.body.firstChild);
+}
+const silentAudio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+silentAudio.volume=0.01;
+function unlockAudio(){
+  silentAudio.play().catch(()=>{});
+  try{if(!silentAC)silentAC=new(window.AudioContext||window.webkitAudioContext)();if(silentAC.state==='suspended')silentAC.resume();}catch(_){}
+}
+renderHistBody();
+renderLangUI();
+document.addEventListener('click', e=>{ if(!e.target.closest('.lang-sel')&&!e.target.closest('.lang-dropdown')) closeDrop(); });
+
+/* ════ LANG UI ════ */
+function renderLangUI(){
+  setSelUI('inFlag','inName', inLang);
+  setSelUI('outAFlag','outAName', outALang);
+  setSelUI('outBFlag','outBName', outBLang);
+  setSelUI('histFlag','histLangName', histLang);
+}
+function setSelUI(flagId, nameId, lang){
+  const f=document.getElementById(flagId);
+  f.className='lang-sel-flag '+(lang.flag||'f-tw');
+  document.getElementById(nameId).textContent=lang.name;
+}
+
+/* ════ DROPDOWN ════ */
+function openDrop(target, triggerEl){
+  if(curDropTarget===target){closeDrop();return;}
+  curDropTarget=target;
+  const dd=document.getElementById('langDropdown');
+  const head=document.getElementById('ldHead');
+  const isOut = target==='outA'||target==='outB'||target==='hist';
+  const langs = isOut ? LANGS_OUT : LANGS_IN;
+  const cur = target==='in'?inLang:target==='outA'?outALang:target==='outB'?outBLang:histLang;
+
+  head.textContent = target==='in'?'選擇輸入語言':target==='hist'?'選擇歷史顯示語言':'選擇輸出語言';
+  // 清除舊選項
+  dd.querySelectorAll('.ld-item').forEach(el=>el.remove());
+  langs.forEach(lang=>{
+    const d=document.createElement('div');
+    d.className='ld-item'+(lang.code===cur.code?' active':'');
+    d.innerHTML=`<div class="ld-flag ${lang.flag}"></div>${lang.name}`;
+    d.onclick=(e)=>{e.stopPropagation();selectLang(target,lang);};
+    dd.appendChild(d);
+  });
+
+  // 定位到觸發元素下方
+  const rect=triggerEl.getBoundingClientRect();
+  dd.style.top=(rect.bottom+4)+'px';
+  dd.style.right=(window.innerWidth-rect.right)+'px';
+  dd.style.left='auto';
+  dd.classList.add('open');
+}
+function closeDrop(){
+  document.getElementById('langDropdown').classList.remove('open');
+  curDropTarget=null;
+}
+function selectLang(target, lang){
+  if(target==='in')      inLang=lang;
+  else if(target==='outA') outALang=lang;
+  else if(target==='outB') outBLang=lang;
+  else histLang=lang;
+  closeDrop();
+  renderLangUI();
+  renderHistBody();
+  // 切換輸入語言時，更新 placeholder 提示
+  if(target==='in'){
+    const box = document.getElementById('inputBox');
+    if(lang.isTaigi || lang.code==='taigi'){
+      box.placeholder = '輸入台語文字，翻譯成各語言…';
+    } else {
+      box.placeholder = `輸入${lang.name}，或按麥克風說話…`;
+    }
+    // 清空輸出
+    clearOutputs();
+  }
+}
+
+/* ════ INPUT ════ */
+function onInpChange(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,80)+'px';
+  document.getElementById('sendBtn').disabled=!el.value.trim();
+}
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!document.getElementById('sendBtn').disabled)sendMsg();}}
+function clearInput(){document.getElementById('inputBox').value='';document.getElementById('inputBox').style.height='auto';document.getElementById('sendBtn').disabled=true;}
+
+/* ════ SETTINGS ════ */
+function setVoice(v,btn){vc=v;document.querySelectorAll('.v-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+function openSettings(){document.getElementById('settingsModal').classList.add('open');}
+function closeSettings(){document.getElementById('settingsModal').classList.remove('open');}
+
+/* ════ STATUS ════ */
+function setStatus(txt,type='ok',badge=''){
+  ['connDot','connDot2'].forEach(id=>{const d=document.getElementById(id);if(d)d.className='conn-dot'+(type==='err'?' err':type==='loading'?' loading':'');});
+  document.getElementById('statusTxt').textContent=txt;
+  document.getElementById('flowTag').textContent=badge;
+}
+
+/* ════ OUTPUT RENDER ════ */
+function setOutThinking(bodyId, emptyId, label){
+  document.getElementById(emptyId).style.display='none';
+  const body=document.getElementById(bodyId);
+  // 清除舊內容（保留 empty div）
+  body.querySelectorAll('.out-result').forEach(el=>el.remove());
+  const d=document.createElement('div');
+  d.className='out-result thinking-dots';
+  d.innerHTML=`<div class="dots"><span></span><span></span><span></span></div>${label}`;
+  body.appendChild(d);
+}
+
+function setOutResult(bodyId, emptyId, html){
+  document.getElementById(emptyId).style.display='none';
+  const body=document.getElementById(bodyId);
+  body.querySelectorAll('.out-result').forEach(el=>el.remove());
+  const d=document.createElement('div');
+  d.className='out-result';
+  d.innerHTML=html;
+  body.appendChild(d);
+}
+
+function clearOutputs(){
+  ['outABody','outBBody'].forEach((bid,i)=>{
+    document.getElementById(bid).querySelectorAll('.out-result').forEach(el=>el.remove());
+    document.getElementById(i===0?'outAEmpty':'outBEmpty').style.display='flex';
+  });
+}
+
+/* ════ AUDIO ════ */
+const PLAY_SVG='<svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+const STOP_SVG='<svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+
+function playWav(b64, btnId, labelOn, labelOff){
+  unlockAudio();
+  stopAllAudio();
+  const btn=document.getElementById(btnId);
+  const blob=b64Blob(b64,'audio/wav');
+  const url=URL.createObjectURL(blob);
+  currentAudio=new Audio(url);
+  if(btn){btn.classList.add('on');btn.innerHTML=STOP_SVG+labelOn;}
+  currentAudio.onended=()=>{URL.revokeObjectURL(url);if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
+  currentAudio.play().catch(()=>{if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}});
+}
+function playTTS(txt, ttsLang, btnId, labelOn, labelOff){
+  unlockAudio();
+  stopAllAudio();
+  if(!('speechSynthesis' in window))return;
+  const btn=document.getElementById(btnId);
+  const u=new SpeechSynthesisUtterance(txt);
+  u.lang=ttsLang; u.rate=1.0;
+  if(btn){btn.classList.add('on');btn.innerHTML=STOP_SVG+labelOn;}
+  u.onend=()=>{if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
+  u.onerror=()=>{if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
+  speechSynthesis.speak(u);
+}
+function stopAllAudio(){
+  if(currentAudio){currentAudio.pause();currentAudio=null;}
+  if(speechSynthesis.speaking) speechSynthesis.cancel();
+}
+function b64Blob(b64,mime){const bin=atob(b64),arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
+
+/* ════ SEND ════
+   模式 A：輸入語言 = 台語  → 台語翻世界語言
+           流程：/translate/from-taigi → 各目標語言
+   模式 B：輸入語言 = 其他  → AI 交談學習
+           流程：Gemini → MT→台語 + 目標語言
+════ */
+async function sendMsg(){
+  const box = document.getElementById('inputBox');
+  const text = box.value.trim();
+  if(!text || isBusy) return;
+  unlockAudio();
+  isBusy = true;
+  clearInput();
+
+  setOutThinking('outABody','outAEmpty','翻譯中…');
+  setOutThinking('outBBody','outBEmpty','翻譯中…');
+  const autoPlay  = document.getElementById('autoPlayTog').classList.contains('on');
+  const showTailo = document.getElementById('tailoTog').classList.contains('on');
+  const t0 = Date.now();
+
+  try{
+    // ════ 模式 A：台語 → 世界語言 ════
+    if(inLang.isTaigi || inLang.code === 'taigi'){
+      setStatus('台語辨識翻譯中…','loading','台語→各語言');
+
+      // 產生每個輸出框的翻譯任務
+      async function fromTaigiToLang(lang){
+        if(lang.isTaigi || lang.code === 'taigi'){
+          // 輸出框也選台語 → 直接回傳原文 + TTS
+          const ep = autoPlay ? '/translate/to-taigi-voice' : '/translate/to-taigi';
+          const r = await fetch(API + ep, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({text, sourceLang:'zh-TW', speaker:vc})
+          });
+          const d = await r.json();
+          // 台語輸入走 from-taigi 先轉華語再轉台語有點多餘
+          // 直接視為台語原文，只拿 TTS
+          return {type:'taigi', taigi:text, tailo:d.tailo||'', audio:d.audioBase64||null};
+        }
+        // 台語 → 華語 → 目標語言
+        const r = await fetch(API + '/translate/from-taigi', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({text, targetLang: lang.code==='zh-TW' ? 'zh-TW' : lang.google})
+        });
+        const d = await r.json();
+        if(!r.ok || !d.success) throw new Error(d.error || '翻譯失敗');
+        return {
+          type:'other',
+          text: d.translated || d.chText || '',
+          chText: d.chText || '',
+          tts: lang.tts,
+          name: lang.name
+        };
+      }
+
+      const [resA, resB] = await Promise.all([
+        fromTaigiToLang(outALang),
+        fromTaigiToLang(outBLang)
+      ]);
+
+      const ms = Date.now() - t0;
+      setStatus(`完成 · ${(ms/1000).toFixed(1)}s · asr.bitfull.tw`, 'ok', '');
+
+      renderOut('outABody','outAEmpty','A', resA, showTailo);
+      renderOut('outBBody','outBEmpty','B', resB, showTailo);
+
+      if(autoPlay){
+        if(resA.type==='taigi' && resA.audio) playWav(resA.audio,'playA-btn','停止','播台語');
+        else if(resA.type==='other' && resA.text) playTTS(resA.text, resA.tts, 'playA-btn','停止','播放');
+      }
+
+      const histText = resA.type==='taigi' ? resA.taigi : resA.text;
+      saveHist(text, histText, resA.type==='taigi'?'taigi':outALang.code, resA.chText||histText);
+    }
+
+    // ════ 模式 B：其他語言 → AI 交談（Gemini + MT）════
+    else {
+      setStatus('Gemini 思考中…','loading','Step 1');
+
+      // Step 1：非華語先翻成華語作為 Gemini 輸入
+      let inputZh = text;
+      if(inLang.code !== 'zh-TW'){
+        const rPre = await fetch(API + '/translate/mandarin-to-world', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({text, targetLang:'zh-TW', sourceLang: inLang.google})
+        });
+        // 注意：此 endpoint 是華語→世界，我們反向用 Google Translate
+        // 直接用 to-taigi 的 sourceLang 參數讓 server 幫翻
+        // 改走 to-taigi（sourceLang=inLang.google）只取 chText
+        const rPre2 = await fetch(API + '/translate/to-taigi', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({text, sourceLang: inLang.google})
+        });
+        const dPre = await rPre2.json();
+        if(dPre.chText) inputZh = dPre.chText;
+      }
+
+      // Step 2：Gemini 回繁體中文
+      const r1 = await fetch(API + '/ai/chat', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          message: inputZh,
+          history: chatHistory.slice(-MAX_HIST),
+          system: SYSTEM
+        })
+      });
+      const d1 = await r1.json();
+      if(!r1.ok || !d1.success) throw new Error(d1.error || 'Gemini 失敗');
+      let zh = d1.reply || '';
+      try{const p=JSON.parse(zh); zh=p.zh||p.reply||p.text||zh;}catch(_){}
+      zh = zh.trim();
+      if(!zh) throw new Error('Gemini 回覆空白');
+
+      chatHistory.push({role:'user', content:inputZh});
+      chatHistory.push({role:'assistant', content:zh});
+      if(chatHistory.length > MAX_HIST) chatHistory = chatHistory.slice(-MAX_HIST);
+
+      // Step 3：同時產生兩個輸出
+      setStatus('轉換語言中…','loading','Step 2');
+
+      async function getOut(lang){
+        if(lang.isTaigi || lang.code==='taigi'){
+          const ep = autoPlay ? '/translate/to-taigi-voice' : '/translate/to-taigi';
+          const r = await fetch(API + ep, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({text:zh, sourceLang:'zh-TW', speaker:vc})
+          });
+          const d = await r.json();
+          if(!r.ok || !d.success) throw new Error(d.error || 'MT 失敗');
+          return {type:'taigi', taigi:d.taigi, tailo:d.tailo, audio:d.audioBase64||null};
+        } else if(lang.code === 'zh-TW'){
+          return {type:'other', text:zh, tts:lang.tts, name:lang.name, chText:zh};
+        } else {
+          const r = await fetch(API + '/translate/mandarin-to-world', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({text:zh, targetLang:lang.google})
+          });
+          const d = await r.json();
+          return {type:'other', text:d.translated||zh, tts:lang.tts, name:lang.name, chText:zh};
+        }
+      }
+
+      const [resA, resB] = await Promise.all([getOut(outALang), getOut(outBLang)]);
+      const ms = Date.now() - t0;
+      setStatus(`完成 · ${(ms/1000).toFixed(1)}s · asr.bitfull.tw`, 'ok', '');
+
+      renderOut('outABody','outAEmpty','A', resA, showTailo);
+      renderOut('outBBody','outBEmpty','B', resB, showTailo);
+
+      if(autoPlay){
+        if(resA.type==='taigi' && resA.audio) playWav(resA.audio,'playA-btn','停止','播台語');
+        else if(resA.type==='other' && resA.text) playTTS(resA.text, resA.tts, 'playA-btn','停止','播放');
+      }
+
+      const histText = resA.type==='taigi' ? resA.taigi : resA.text;
+      saveHist(text, histText, resA.type==='taigi'?'taigi':outALang.code, zh);
+    }
+
+  }catch(e){
+    clearOutputs();
+    const errHtml = `<div style="font-size:12px;color:#DC2626;padding:4px 0;">⚠️ ${esc(e.message)}</div>`;
+    setOutResult('outABody','outAEmpty', errHtml);
+    setOutResult('outBBody','outBEmpty', errHtml);
+    setStatus('錯誤：' + e.message, 'err', '');
+  }
+  isBusy = false;
+}
+
+function renderOut(bodyId, emptyId, side, res, showTailo){
+  const btnId  = `play${side}-btn`;
+  const cpId   = `copy${side}-btn`;
+  let html = '';
+
+  if(res.type === 'taigi'){
+    html = `
+      <div class="out-taigi">${esc(res.taigi||'')}</div>
+      ${showTailo && res.tailo ? `<div class="out-tailo">${esc(res.tailo)}</div>` : ''}
+      <div class="out-acts">
+        ${res.audio ? `<button class="act-btn play-taigi" id="${btnId}"
+          onclick="playWav(document.getElementById('aud-${side}').value,'${btnId}','停止','播台語')">
+          ${PLAY_SVG}播台語</button>` : ''}
+        <button class="act-btn copy-btn" id="${cpId}" onclick="doCopy('txt-${side}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>複製</button>
+      </div>
+      <input type="hidden" id="aud-${side}" value="${esc(res.audio||'')}">
+      <input type="hidden" id="txt-${side}" value="${esc(res.taigi||'')}">`;
+
+  } else {
+    // 其他語言輸出
+    const bridgeHtml = res.chText && res.chText !== res.text
+      ? `<div style="font-size:10px;color:var(--subtle);margin-top:4px;padding:4px 8px;background:var(--bg);border-radius:7px;border:1px solid var(--bd);">
+           <span style="font-weight:700;letter-spacing:.04em;">橋接華語</span>　${esc(res.chText)}</div>`
+      : '';
+    html = `
+      <div class="out-text">${esc(res.text||'')}</div>
+      ${bridgeHtml}
+      <div class="out-acts">
+        <button class="act-btn play-other" id="${btnId}"
+          onclick="playTTS(document.getElementById('txt-${side}').value,'${res.tts}','${btnId}','停止','播放')">
+          ${PLAY_SVG}播放</button>
+        <button class="act-btn copy-btn" id="${cpId}" onclick="doCopy('txt-${side}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>複製</button>
+      </div>
+      <input type="hidden" id="txt-${side}" value="${esc(res.text||'')}">`;
+  }
+  setOutResult(bodyId, emptyId, html);
+}
+
+function doCopy(inputId){
+  const el=document.getElementById(inputId);
+  if(!el)return;
+  navigator.clipboard.writeText(el.value).then(()=>showToast('✓ 已複製')).catch(()=>alert(el.value));
+}
+
+/* ════ MIC ════ */
+function toggleMic(){
+  if(isLINE){document.getElementById('safariGuide').style.display='flex';return;}
+  isRecording?stopMic():startMic();
+}
+function startMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('此裝置不支援語音輸入，請直接打字');return;}
+  unlockAudio();
+  isRecording=true;
+  document.getElementById('micBtn').classList.add('mic-on');
+  document.getElementById('micWave').classList.add('on');
+  rec=new SR();
+  rec.lang=inLang.tts||'zh-TW'; rec.interimResults=true;
+  rec.onresult=e=>{
+    const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+    const box=document.getElementById('inputBox');
+    box.value=t; onInpChange(box);
+    if(e.results[e.results.length-1].isFinal){stopMic();if(t.trim())sendMsg();}
+  };
+  rec.onerror=()=>stopMic();
+  rec.onend=()=>{if(isRecording){stopMic();const t=document.getElementById('inputBox').value.trim();if(t)sendMsg();}};
+  rec.start();
+}
+function stopMic(){
+  isRecording=false;try{rec?.stop();}catch(_){}
+  document.getElementById('micBtn').classList.remove('mic-on');
+  document.getElementById('micWave').classList.remove('on');
+}
+
+/* ════ HISTORY ════ */
+function saveHist(q, text, langCode, zh){
+  const item={
+    id:Date.now(), q, text, langCode, zh,
+    time:new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})
+  };
+  localHistory.unshift(item);
+  if(localHistory.length>80)localHistory=localHistory.slice(0,80);
+  localStorage.setItem('taigiLearnHist',JSON.stringify(localHistory));
+  renderHistBody();
+}
+function renderHistBody(){
+  const body=document.getElementById('histBody');
+  const empty=document.getElementById('histEmpty');
+  body.querySelectorAll('.hist-item').forEach(el=>el.remove());
+  if(!localHistory.length){empty.style.display='block';return;}
+  empty.style.display='none';
+  // 依 histLang 顯示對應語言
+  localHistory.forEach(item=>{
+    const showTaigi=histLang.isTaigi||histLang.code==='taigi';
+    const displayText=showTaigi&&item.langCode==='taigi'?item.text:(item.zh||item.text);
+    const d=document.createElement('div');
+    d.className='hist-item';
+    d.innerHTML=`
+      <span class="hist-q">${esc(item.q)}</span>
+      <span class="hist-a">${esc(displayText)}</span>
+      <span class="hist-time">${item.time}</span>`;
+    body.appendChild(d);
+  });
+}
+function clearHistory(){
+  if(!localHistory.length)return;
+  if(!confirm('清除所有歷史記錄？'))return;
+  localHistory=[];localStorage.removeItem('taigiLearnHist');renderHistBody();
+}
+
+/* ════ UTILS ════ */
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showToast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),1800);}
+document.getElementById('backBtn').addEventListener('click',e=>{if(window.parent!==window){e.preventDefault();window.parent.postMessage('closeChat','*');}});
+</script>
+</body>
+</html>
