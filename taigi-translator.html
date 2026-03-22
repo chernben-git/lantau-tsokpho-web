@@ -1030,13 +1030,12 @@ async function toggleOTaigiMic(){
         });
         const d=await r.json();
         if(d.success && d.chText){
-          // ASR 辨識完填入華語，oSlc 改成 zh-TW（框裡是華語，不是台語）
+          // ASR → Gemini → 英文，填入框，走英文→目標語言
           document.getElementById('oTA').value=d.chText;
           document.getElementById('stxt2').textContent='✅ 辨識：'+d.chText;
-          oSlc='zh-TW';
-          // 更新語言顯示
-          setFlag('oInpFlag','f-tw',20,14);
-          document.getElementById('oInpLName').textContent='華語（台語辨識結果）';
+          oSlc='en';  // 現在是英文
+          setFlag('oInpFlag','f-us',20,14);
+          document.getElementById('oInpLName').textContent='English（台語辨識結果）';
           unlockAndOTx();
         } else if(d.success && d.transcript){
           // 只有台羅，顯示台羅備用
