@@ -267,14 +267,22 @@ function stopStream(){
   if(audioCtx){ audioCtx.close(); audioCtx = null; }
   if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream = null; }
 
-  // 送結束訊號給 WebSocket
+  // 送結束訊號給 WebSocket（試多種格式）
   if(wsConn && wsConn.readyState === WebSocket.OPEN){
-    // 送空的結束包
+    // 方式1：空 ArrayBuffer
     wsConn.send(new ArrayBuffer(0));
-    log('送出結束訊號');
+    // 方式2：JSON 結束訊號
+    setTimeout(() => {
+      if(wsConn && wsConn.readyState === WebSocket.OPEN){
+        wsConn.send(JSON.stringify({ type: 'end' }));
+        wsConn.send(JSON.stringify({ eof: true }));
+        wsConn.send(JSON.stringify({ command: 'stop' }));
+      }
+    }, 200);
+    log('送出結束訊號（多種格式）');
     setTimeout(() => {
       if(wsConn) wsConn.close();
-    }, 2000);
+    }, 3000);
   }
   log('錄音停止');
 }
