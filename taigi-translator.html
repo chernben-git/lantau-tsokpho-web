@@ -1024,10 +1024,13 @@ async function toggleOTaigiMic(){
           fr.onerror=rej;
           fr.readAsDataURL(blob);
         });
+        const asrCtrl=new AbortController();const asrTid=setTimeout(()=>asrCtrl.abort(),20000);
         const r=await fetch(API+'/asr-web',{
           method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({audioBase64:b64,mimeType:'audio/webm'})
+          body:JSON.stringify({audioBase64:b64,mimeType:'audio/webm'}),
+          signal:asrCtrl.signal
         });
+        clearTimeout(asrTid);
         const d=await r.json();
         if(d.success && d.chText){
           // 顯示台語漢字，翻譯走台語專用路線（保持 oSlc='taigi'）
@@ -1048,7 +1051,8 @@ async function toggleOTaigiMic(){
           document.getElementById('stxt2').textContent='⚠️ 辨識失敗，請重試';
         }
       }catch(e){
-        document.getElementById('stxt2').textContent='辨識錯誤：'+e.message;
+        const msg=e.name==='AbortError'?'⏱ 辨識逾時，請再試一次':'辨識錯誤：'+e.message;
+        document.getElementById('stxt2').textContent=msg;
       }
       btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>台語語音`;
     };
@@ -1074,7 +1078,9 @@ async function doTx(){
   const t0=Date.now();
   try{
     const endpoint = autoPlay ? '/translate/to-taigi-voice' : '/translate/to-taigi';
-    const r=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sourceLang:lc,speaker:vc})});
+    const ctrl1=new AbortController();const tid1=setTimeout(()=>ctrl1.abort(),15000);
+    const r=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,sourceLang:lc,speaker:vc}),signal:ctrl1.signal});
+    clearTimeout(tid1);
     const d=await r.json();
     if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
     const ms=Date.now()-t0,el=(ms/1000).toFixed(1);
@@ -1090,7 +1096,10 @@ async function doTx(){
     if(autoPlay && d.audioBase64){
       playWavBase64(d.audioBase64);
     }
-  }catch(e){document.getElementById('stxt1').textContent='錯誤：'+e.message;}
+  }catch(e){
+    const msg=e.name==='AbortError'?'⏱ 伺服器逾時，請檢查連線後再試':'錯誤：'+e.message;
+    document.getElementById('stxt1').textContent=msg;
+  }
   btn.classList.remove('loading');
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯成台語`;
 }
@@ -1209,7 +1218,9 @@ async function doOTx(){
       endpoint='/translate/to-taigi';
       body=JSON.stringify({text,sourceLang:oSlc});
     }
-    const r=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body});
+    const ctrl2=new AbortController();const tid2=setTimeout(()=>ctrl2.abort(),15000);
+    const r=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body,signal:ctrl2.signal});
+    clearTimeout(tid2);
     const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
 
     let finalText='';
@@ -1239,7 +1250,10 @@ async function doOTx(){
     const tag=document.getElementById('ttag2');tag.textContent=el+'秒';tag.className='timer-tag';
     document.getElementById('stxt2').textContent=`完成 · ${el}秒`;
     if(autoPlay) playOAudio();
-  }catch(e){document.getElementById('stxt2').textContent='錯誤：'+e.message;}
+  }catch(e){
+    const msg=e.name==='AbortError'?'⏱ 伺服器逾時，請檢查連線後再試':'錯誤：'+e.message;
+    document.getElementById('stxt2').textContent=msg;
+  }
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;btn.style.pointerEvents='';
 }
 
