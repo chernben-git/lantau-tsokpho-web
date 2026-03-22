@@ -1004,7 +1004,14 @@ async function doMidTx(){
     document.getElementById('mid-ttag').textContent=el+'秒';
     document.getElementById('mid-stxt').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;
     const autoPlay=document.getElementById('midAutoPlayTog').classList.contains('on');
-    if(autoPlay&&'speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(finalText);u.lang=midTargetTts;u.rate=spds[midSpd];speechSynthesis.speak(u);}
+    if(autoPlay){
+      if(midTargetLang==='en'){
+        const spk=document.getElementById('midVM').classList.contains('active')?'nan-TW-vs2-M02':'nan-TW-vs2-F01';
+        playNanTwTts(finalText,spk,'mid-stxt');
+      } else if('speechSynthesis'in window){
+        speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(finalText);u.lang=midTargetTts;u.rate=spds[midSpd];speechSynthesis.speak(u);
+      }
+    }
   }catch(e){document.getElementById('mid-stxt').textContent=e.name==='AbortError'?'⏱ 伺服器逾時，請再試':'錯誤：'+e.message;}
   btn.classList.remove('loading');
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;
@@ -1012,7 +1019,31 @@ async function doMidTx(){
 
 function playMidAudio(){
   const t=document.getElementById('midResTxt').textContent;if(!t)return;
-  if('speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang=midTargetTts;u.rate=spds[midSpd];speechSynthesis.speak(u);}
+  if(midTargetLang==='en'){
+    // 英文用廖教授 nan-TW TTS（台語腔英文）
+    const spk=document.getElementById('midVM').classList.contains('active')?'nan-TW-vs2-M02':'nan-TW-vs2-F01';
+    playNanTwTts(t,spk,'mid-stxt');
+  } else if('speechSynthesis'in window){
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t);
+    u.lang=midTargetTts;u.rate=spds[midSpd];
+    speechSynthesis.speak(u);
+  }
+}
+
+// 廖教授 nan-TW TTS（讀英文）
+async function playNanTwTts(text, speaker, statusId){
+  try{
+    const r=await fetch(API+'/tts',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text,speaker})
+    });
+    const d=await r.json();
+    if(d.audioBase64) playWavBase64(d.audioBase64);
+    else if(statusId) document.getElementById(statusId).textContent='🔊 TTS 失敗，請再試';
+  }catch(e){
+    if(statusId) document.getElementById(statusId).textContent='🔊 TTS 錯誤：'+e.message;
+  }
 }
 let taigiTargetLang='zh-TW', taigiTargetName='華語', taigiTargetFC='f-tw', taigiTargetTts='zh-TW';
 function selTaigiTarget(btn,code,name,tts){
