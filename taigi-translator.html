@@ -960,39 +960,44 @@ function unlockAndMidTx(){
 async function doMidTx(){
   const ta=document.getElementById('midTA');
   const displayText=ta.value.trim();if(!displayText)return;
-  // 優先用 chText（華語）送翻譯，因為 /from-taigi 接受台語漢字或華語
-  const text=ta.dataset.chText||displayText;
-  delete ta.dataset.chText; // 用完清掉
+  // chText 是華語，優先走 mandarin-to-world；沒有就走 from-taigi
+  const chText=ta.dataset.chText||'';
+  delete ta.dataset.chText;
   const btn=document.getElementById('midTxBtn');
   btn.classList.add('loading');btn.innerHTML=`<div class="spin"></div>翻譯中…`;
   document.getElementById('mid-stxt').textContent='翻譯中…';
   const t0=Date.now();
   try{
     const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),15000);
-    const r=await fetch(API+'/translate/from-taigi',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text,targetLang:midTargetLang}),signal:ctrl.signal
-    });
-    clearTimeout(tid);
-    const d=await r.json();
-    if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
+    let finalText='';
+    if(chText){
+      // 有華語直接翻目標語言
+      if(midTargetLang==='zh-TW'){
+        finalText=chText;
+      } else {
+        const r=await fetch(API+'/translate/mandarin-to-world',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({text:chText,targetLang:midTargetLang}),signal:ctrl.signal
+        });
+        clearTimeout(tid);
+        const d=await r.json();
+        if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
+        finalText=d.translated||chText;
+      }
+    } else {
+      // 沒有華語，用台語漢字走 from-taigi
+      const r=await fetch(API+'/translate/from-taigi',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text:displayText,targetLang:midTargetLang}),signal:ctrl.signal
+      });
+      clearTimeout(tid);
+      const d=await r.json();
+      if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
+      finalText=d.translated||d.chText||displayText;
+    }
     const el=((Date.now()-t0)/1000).toFixed(1);
     document.getElementById('mid-oe').style.display='none';
     const res=document.getElementById('mid-or');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
-    // translated 優先，若無則用 chText 再轉一次目標語言
-    let finalText=d.translated||'';
-    if(!finalText && d.chText){
-      if(midTargetLang==='zh-TW'){
-        finalText=d.chText;
-      } else {
-        // 用 chText 再打一次 mandarin-to-world
-        try{
-          const r2=await fetch(API+'/translate/mandarin-to-world',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:d.chText,targetLang:midTargetLang})});
-          const d2=await r2.json();
-          finalText=d2.translated||d.chText;
-        }catch(e2){finalText=d.chText;}
-      }
-    }
     document.getElementById('midResTxt').textContent=finalText;
     setFlag('midResFlag',midTargetFC,22,15);
     document.getElementById('midResLName').textContent=midTargetName;
