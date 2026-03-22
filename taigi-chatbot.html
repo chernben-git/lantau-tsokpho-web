@@ -364,12 +364,11 @@ body{
 .modal-row-lbl{font-size:13.5px; color:var(--ink2);}
 .modal-row-sub{font-size:11px; color:var(--muted); margin-top:2px;}
 .tog{width:32px; height:18px; border-radius:9px; border:none; background:var(--bd-m); cursor:pointer; position:relative; transition:background .2s;}
-.tog.on{background:var(--red);}
+.tog.on{background:#22C55E;}
 .tog::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:white;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
 .tog.on::after{transform:translateX(14px);}
-.tog::after{content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:white; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:transform .2s;}
-.tog.on{background:var(--red);}
-.tog.on::after{transform:translateX(14px);}
+/* 設定裡的台羅拼音 toggle 用紅色 */
+#tailoTog.on{background:var(--red);}
 .v-btns{display:flex; gap:4px;}
 .v-btn{padding:3px 10px; border-radius:9px; border:1.5px solid var(--bd-m); background:var(--surf); font-family:'Noto Sans TC',sans-serif; font-size:11px; color:var(--muted); cursor:pointer; transition:all .15s;}
 .v-btn.on{background:var(--ink2); border-color:var(--ink2); color:white;}
@@ -519,7 +518,7 @@ body{
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);">
-          🔊<button class="tog on" id="autoPlayATog" onclick="this.classList.toggle('on')" style="width:28px;height:16px;border-radius:8px;background:var(--bd-m);border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;"></button>
+          🔊<button class="tog on" id="autoPlayATog" onclick="this.classList.toggle('on')" style="width:28px;height:16px;border-radius:8px;border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;"></button>
         </div>
         <div class="lang-sel" id="outASel" onclick="openDrop('outA',this)">
           <div class="lang-sel-flag f-tw" id="outAFlag"></div>
@@ -544,7 +543,7 @@ body{
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);">
-          🔊<button class="tog on" id="autoPlayBTog" onclick="this.classList.toggle('on')" style="width:28px;height:16px;border-radius:8px;background:var(--bd-m);border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;"></button>
+          🔊<button class="tog on" id="autoPlayBTog" onclick="this.classList.toggle('on')" style="width:28px;height:16px;border-radius:8px;border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;"></button>
         </div>
         <div class="lang-sel" id="outBSel" onclick="openDrop('outB',this)">
           <div class="lang-sel-flag f-tw" id="outBFlag"></div>
@@ -645,6 +644,7 @@ let outBLang = LANGS_IN[1];   // 輸出B：預設華語（LANGS_IN[1]）
 let histLang = LANGS_OUT[0];  // 歷史：預設台語
 let isRecording = false, rec = null;
 let isBusy = false;
+let pendingClear = false;
 let currentAudio = null, silentAC = null;
 let chatHistory = [];
 const MAX_HIST = 32;
@@ -739,6 +739,8 @@ function selectLang(target, lang){
 
 /* ════ INPUT ════ */
 function onInpChange(el){
+  // 如果上一則訊息已送出（isBusy=false 且有 pendingClear），先清空再計算
+  if(pendingClear){pendingClear=false;el.value='';el.style.height='auto';document.getElementById('sendBtn').disabled=true;return;}
   el.style.height='auto';
   el.style.height=Math.min(el.scrollHeight,80)+'px';
   document.getElementById('sendBtn').disabled=!el.value.trim();
@@ -832,7 +834,7 @@ async function sendMsg(){
   if(!text || isBusy) return;
   unlockAudio();
   isBusy = true;
-  clearInput();
+  // 不立即清空，等下次輸入時再清
 
   setOutThinking('outABody','outAEmpty','翻譯中…');
   setOutThinking('outBBody','outBEmpty','翻譯中…');
@@ -1004,6 +1006,7 @@ async function sendMsg(){
     setStatus('錯誤：' + e.message, 'err', '');
   }
   isBusy = false;
+  pendingClear = true;
 }
 
 function renderOut(bodyId, emptyId, side, res, showTailo){
@@ -1013,8 +1016,6 @@ function renderOut(bodyId, emptyId, side, res, showTailo){
 
   if(res.type === 'taigi'){
     html = `
-      <div class="out-taigi">${esc(res.taigi||'')}</div>
-      ${showTailo && res.tailo ? `<div class="out-tailo">${esc(res.tailo)}</div>` : ''}
       <div class="out-acts">
         ${res.audio ? `<button class="act-btn play-taigi" id="${btnId}"
           onclick="playWav(document.getElementById('aud-${side}').value,'${btnId}','停止','播台語')">
@@ -1024,6 +1025,11 @@ function renderOut(bodyId, emptyId, side, res, showTailo){
             <rect x="9" y="9" width="13" height="13" rx="2"/>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
           </svg>複製</button>
+        <button class="act-btn copy-btn" onclick="toggleTaigiText('taigi-txt-${side}')" style="font-size:10px;">台語文字</button>
+      </div>
+      <div id="taigi-txt-${side}" style="display:none;">
+        <div class="out-taigi">${esc(res.taigi||'')}</div>
+        ${res.tailo ? `<div class="out-tailo">${esc(res.tailo)}</div>` : ''}
       </div>
       <input type="hidden" id="aud-${side}" value="${esc(res.audio||'')}">
       <input type="hidden" id="txt-${side}" value="${esc(res.taigi||'')}">`;
@@ -1056,6 +1062,11 @@ function doCopy(inputId){
   const el=document.getElementById(inputId);
   if(!el)return;
   navigator.clipboard.writeText(el.value).then(()=>showToast('✓ 已複製')).catch(()=>alert(el.value));
+}
+function toggleTaigiText(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.style.display=el.style.display==='none'?'block':'none';
 }
 
 /* ════ MIC ════ */
