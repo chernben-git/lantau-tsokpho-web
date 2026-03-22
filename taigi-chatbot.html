@@ -941,8 +941,9 @@ async function sendMsg(){
             body: JSON.stringify({text:zh, sourceLang:'zh-TW', speaker:vc})
           });
           const d = await r.json();
+          console.log('[getOut taigi wantVoice='+wantVoice+']', JSON.stringify({ok:r.ok, success:d.success, hasAudio:!!d.audioBase64, keys:Object.keys(d)}));
           if(!r.ok || !d.success) throw new Error(d.error || 'MT 失敗');
-          return {type:'taigi', taigi:d.taigi||d.hanzi||d.text||'', tailo:d.tailo||'', audio:d.audioBase64||null};
+          return {type:'taigi', taigi:d.taigi||d.hanzi||d.text||'', tailo:d.tailo||'', audio:d.audioBase64||d.audio||d.wavBase64||null};
         } else if(lang.code === 'zh-TW'){
           return {type:'other', text:zh, tts:lang.tts, name:lang.name, chText:zh};
         } else {
