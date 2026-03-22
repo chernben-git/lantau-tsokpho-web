@@ -529,7 +529,7 @@ span.flag{display:inline-block;border-radius:2px;vertical-align:middle;backgroun
           </div>
           <!-- 台語提示（只在選台語時顯示）-->
           <div id="taigiHint" style="display:none;font-size:12px;color:var(--red-d);background:var(--red-l);border-radius:8px;padding:7px 11px;margin-bottom:6px;line-height:1.6;">
-            💡 台語請用<strong>華語打字</strong>，系統自動轉台語；<br>或直接輸入台語漢字（如：伊真緣投）
+            🎙️ 按「台語語音」說台語 → 廖教授 ASR 辨識 → 自動填入台語漢字
           </div>
           <textarea class="inp-ta" id="oTA" placeholder="輸入文字，或按麥克風說話…" rows="4"></textarea>
           <div class="inp-tools">
@@ -771,11 +771,18 @@ function selOSrc(btn,code,fc,em,name){
   document.getElementById('oSrcSelName').textContent=name;
   setFlag('oInpFlag',fc==='🗣️'?'f-tw':fc,20,14);
   document.getElementById('oInpLName').textContent=name;
-  // 台語特殊處理
+  // 台語特殊處理：語音按鈕改為 NYCU ASR 模式（不隱藏，改標籤）
   const isTaigi=(code==='taigi');
   document.getElementById('taigiHint').style.display=isTaigi?'block':'none';
-  document.getElementById('oMicBtn').style.display=isTaigi?'none':'inline-flex';
-  document.getElementById('oTA').placeholder=isTaigi?'請用華語打字（系統自動轉台語），或輸入台語漢字…':'輸入文字，或按麥克風說話…';
+  const micBtn=document.getElementById('oMicBtn');
+  if(isTaigi){
+    micBtn.style.display='inline-flex';
+    micBtn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>台語語音`;
+  } else {
+    micBtn.style.display='inline-flex';
+    micBtn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;
+  }
+  document.getElementById('oTA').placeholder=isTaigi?'按「台語語音」說台語，或直接打字…':'輸入文字，或按麥克風說話…';
   oSrcLPOpen=false;document.getElementById('oSrcBody').classList.remove('open');document.getElementById('oSrcChev').classList.remove('open');
 }
 
@@ -952,6 +959,12 @@ function stopMic(){
   document.getElementById('mw1').classList.remove('on');
 }
 function toggleOMic(){
+  if(oSlc==='taigi'){
+    // 台語：用 MediaRecorder 錄音 → /asr-web（廖教授 NYCU ASR）
+    toggleOTaigiMic();
+    return;
+  }
+  // 其他語言：Web Speech API
   isOR=!isOR;
   const btn=document.getElementById('oMicBtn'),w=document.getElementById('mw2');
   if(isOR){
@@ -961,7 +974,6 @@ function toggleOMic(){
     if('SpeechRecognition'in window||'webkitSpeechRecognition'in window){
       const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
       const r2=new SR();
-      // 修正：語音辨識語言 = 用戶說話的語言（台語/華語都用 zh-TW）
       r2.lang = oSlTts || 'zh-TW';
       r2.interimResults=true;
       r2.onresult=e=>{
@@ -975,6 +987,70 @@ function toggleOMic(){
       r2.start();
     }else stopOMic();
   }else stopOMic();
+}
+
+// 台語語音：MediaRecorder → /asr-web → 填入台語漢字
+let oTaigiRec=null, oTaigiChunks=[], oTaigiRecording=false;
+async function toggleOTaigiMic(){
+  const btn=document.getElementById('oMicBtn'),w=document.getElementById('mw2');
+  if(oTaigiRecording){
+    // 停止錄音
+    oTaigiRecording=false;
+    if(oTaigiRec&&oTaigiRec.state!=='inactive') oTaigiRec.stop();
+    return;
+  }
+  // 開始錄音
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    oTaigiRecording=true;
+    btn.classList.add('mic-on');
+    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
+    w.classList.add('on');
+    oTaigiChunks=[];
+    oTaigiRec=new MediaRecorder(stream);
+    oTaigiRec.ondataavailable=e=>{if(e.data.size>0)oTaigiChunks.push(e.data);};
+    oTaigiRec.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      btn.classList.remove('mic-on');
+      btn.innerHTML=`<div class="spin"></div>辨識中…`;
+      w.classList.remove('on');
+      oTaigiRecording=false;
+      // 轉 base64 送 /asr-web
+      try{
+        const blob=new Blob(oTaigiChunks,{type:'audio/webm'});
+        const b64=await new Promise((res,rej)=>{
+          const fr=new FileReader();
+          fr.onload=()=>res(fr.result.split(',')[1]);
+          fr.onerror=rej;
+          fr.readAsDataURL(blob);
+        });
+        const r=await fetch(API+'/asr-web',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({audioBase64:b64,mimeType:'audio/webm'})
+        });
+        const d=await r.json();
+        if(d.transcript){
+          document.getElementById('oTA').value=d.transcript;
+          document.getElementById('stxt2').textContent='台語辨識完成：'+d.transcript;
+          // 自動翻譯
+          unlockAndOTx();
+        } else {
+          document.getElementById('stxt2').textContent='台語辨識失敗，請重試';
+        }
+      }catch(e){
+        document.getElementById('stxt2').textContent='辨識錯誤：'+e.message;
+      }
+      btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>台語語音`;
+    };
+    oTaigiRec.start();
+    // 最長 30 秒自動停止
+    setTimeout(()=>{if(oTaigiRecording&&oTaigiRec&&oTaigiRec.state!=='inactive')oTaigiRec.stop();},30000);
+  }catch(e){
+    alert('無法使用麥克風：'+e.message);
+    oTaigiRecording=false;
+    btn.classList.remove('mic-on');
+    w.classList.remove('on');
+  }
 }
 function stopOMic(){isOR=false;const btn=document.getElementById('oMicBtn');btn.classList.remove('mic-on');btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;document.getElementById('mw2').classList.remove('on');}
 
