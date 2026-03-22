@@ -652,7 +652,7 @@ let localHistory = JSON.parse(localStorage.getItem('taigiLearnHist')||'[]');
 let curDropTarget = null;
 
 const SYSTEM = `你是「咱兜的台語」AI 文化助手，回答台灣文化、台語、歷史、美食、生活的問題。
-規則：1.永遠用繁體中文回答 2.親切自然有台灣在地感 3.回答80～180字 4.用繁體中文回答不論用戶用什麼語言`;
+規則：1.永遠用繁體中文回答 2.親切自然有台灣在地感 3.回答80～180字 4.用繁體中文回答不論用戶用什麼語言 5.直接回答純文字，禁止使用JSON格式、禁止使用引號包裹回答、禁止加任何欄位名稱`;
 
 /* ════ INIT ════ */
 if(isLINE) {
@@ -884,8 +884,13 @@ async function sendMsg(){
         zh = zh.replace(/^```json\s*/,'').replace(/```\s*$/,'').trim();
         try{
           const p=JSON.parse(zh);
-          zh=p.response||p.zh||p.reply||p.text||p.content||zh;
-        }catch(_){}
+          // 取任何可能的文字欄位
+          zh=p.answer||p.response||p.zh||p.reply||p.text||p.content||p.message||zh;
+        }catch(_){
+          // 手動抽取：把 {"answer":"內容"} 這種格式的內容取出
+          const m = zh.match(/"(?:answer|response|reply|text|content|message)"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+          if(m) zh = m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"');
+        }
       }
       zh = zh.trim();
       if(!zh) throw new Error('Gemini 回覆空白');
@@ -965,12 +970,10 @@ function renderOut(bodyId, emptyId, side, res, showTailo){
             <rect x="9" y="9" width="13" height="13" rx="2"/>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
           </svg>複製</button>
-        <button class="act-btn copy-btn" onclick="toggleTaigiText('taigi-txt-${side}')" style="font-size:10px;">台語文字</button>
+        ${res.tailo ? `<button class="act-btn copy-btn" onclick="toggleTaigiText('taigi-tailo-${side}')" style="font-size:10px;">台羅拼音</button>` : ''}
       </div>
-      <div id="taigi-txt-${side}" style="display:none;">
-        <div class="out-taigi">${esc(res.taigi||'')}</div>
-        ${res.tailo ? `<div class="out-tailo">${esc(res.tailo)}</div>` : ''}
-      </div>
+      <div class="out-taigi">${esc(res.taigi||'')}</div>
+      ${res.tailo ? `<div id="taigi-tailo-${side}" style="display:none;"><div class="out-tailo">${esc(res.tailo)}</div></div>` : ''}
       <input type="hidden" id="aud-${side}" value="${esc(res.audio||'')}">
       <input type="hidden" id="txt-${side}" value="${esc(res.taigi||'')}">`;
 
