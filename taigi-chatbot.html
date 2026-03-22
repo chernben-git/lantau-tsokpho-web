@@ -820,6 +820,16 @@ function stopAllAudio(){
   if(currentAudio){currentAudio.pause();currentAudio=null;}
   if(speechSynthesis.speaking) speechSynthesis.cancel();
 }
+function togglePlayWav(b64, btnId, labelOn, labelOff){
+  const btn=document.getElementById(btnId);
+  if(btn && btn.classList.contains('on')){stopAllAudio();btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;return;}
+  playWav(b64, btnId, labelOn, labelOff);
+}
+function togglePlayTTS(txt, ttsLang, btnId, labelOn, labelOff){
+  const btn=document.getElementById(btnId);
+  if(btn && btn.classList.contains('on')){stopAllAudio();btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;return;}
+  playTTS(txt, ttsLang, btnId, labelOn, labelOff);
+}
 function b64Blob(b64,mime){const bin=atob(b64),arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
 
 /* ════ SEND ════
@@ -961,7 +971,7 @@ function renderOut(bodyId, emptyId, side, res, showTailo){
     html = `
       <div class="out-acts">
         ${res.audio ? `<button class="act-btn play-taigi" id="${btnId}"
-          onclick="playWav(document.getElementById('aud-${side}').value,'${btnId}','停止','播台語')">
+          onclick="togglePlayWav(document.getElementById('aud-${side}').value,'${btnId}','停止','播台語')">
           ${PLAY_SVG}播台語</button>` : ''}
         <button class="act-btn copy-btn" id="${cpId}" onclick="doCopy('txt-${side}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10">
@@ -986,7 +996,7 @@ function renderOut(bodyId, emptyId, side, res, showTailo){
       ${bridgeHtml}
       <div class="out-acts">
         <button class="act-btn play-other" id="${btnId}"
-          onclick="playTTS(document.getElementById('txt-${side}').value,'${res.tts}','${btnId}','停止','播放')">
+          onclick="togglePlayTTS(document.getElementById('txt-${side}').value,'${res.tts}','${btnId}','停止','播放')">
           ${PLAY_SVG}播放</button>
         <button class="act-btn copy-btn" id="${cpId}" onclick="doCopy('txt-${side}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10">
