@@ -1029,13 +1029,20 @@ async function toggleOTaigiMic(){
           body:JSON.stringify({audioBase64:b64,mimeType:'audio/webm'})
         });
         const d=await r.json();
-        if(d.transcript){
-          document.getElementById('oTA').value=d.transcript;
-          document.getElementById('stxt2').textContent='台語辨識完成：'+d.transcript;
-          // 自動翻譯
+        if(d.success && (d.chText||d.transcript)){
+          // 顯示華語（或台羅備用）
+          const displayText = d.chText || d.transcript;
+          document.getElementById('oTA').value=displayText;
+          document.getElementById('stxt2').textContent='✅ 辨識：'+displayText;
+          // 把 oSlc 暫時切到華語再翻，翻完切回
+          const origSlc=oSlc;
+          oSlc='zh-TW';
           unlockAndOTx();
+          oSlc=origSlc;
+        } else if(d.error==='TOO_SHORT'){
+          document.getElementById('stxt2').textContent='⚠️ 錄音太短，請說長一點再試';
         } else {
-          document.getElementById('stxt2').textContent='台語辨識失敗，請重試';
+          document.getElementById('stxt2').textContent='⚠️ 辨識失敗，請重試';
         }
       }catch(e){
         document.getElementById('stxt2').textContent='辨識錯誤：'+e.message;
