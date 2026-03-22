@@ -1030,17 +1030,14 @@ async function toggleOTaigiMic(){
         });
         const d=await r.json();
         if(d.success && d.chText){
-          // 顯示台語漢字，翻譯走華語路線
+          // 顯示台語漢字，翻譯走台語專用路線（保持 oSlc='taigi'）
           document.getElementById('oTA').value=d.transcript||d.chText;
           document.getElementById('stxt2').textContent='✅ 台語：'+(d.transcript||'');
-          oSlc='zh-TW';
+          oSlc='taigi';   // ← 保持台語路線，讓 doOTx 走 /from-taigi
           setFlag('oInpFlag','f-tw',20,14);
           document.getElementById('oInpLName').textContent='台語（廖教授ASR）';
-          // 用 chText（華語）翻目標語言
-          const origTA=document.getElementById('oTA').value;
-          document.getElementById('oTA').value=d.chText;
+          // 直接翻譯，doOTx 會用 oTA 的台語漢字走 /from-taigi
           unlockAndOTx();
-          document.getElementById('oTA').value=origTA;
         } else if(d.success && d.transcript){
           // 只有台羅，顯示台羅備用
           document.getElementById('oTA').value=d.transcript;
