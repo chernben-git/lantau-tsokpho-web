@@ -921,6 +921,9 @@ async function sendMsg(){
         }
       }
       zh = zh.trim();
+      // 最終清理：刷掉任何殘留的 JSON 符號
+      zh = zh.replace(/^[\s{"']+/, '').replace(/[}\"']+$/, '').trim();
+      zh = zh.replace(/^response\s*:\s*/i, '').replace(/^answer\s*:\s*/i, '').trim();
       if(!zh) throw new Error('Gemini 回覆空白');
 
       chatHistory.push({role:'user', content:inputZh});
