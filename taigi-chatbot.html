@@ -945,17 +945,16 @@ async function sendMsg(){
           const taigiText = d.taigi||d.hanzi||d.text||'';
           const tailoText = d.tailo||'';
 
-          // 如果 wantVoice，另外呼叫 /tts 取音檔
+          // 如果 wantVoice，另外呼叫 /tts 取音檔（格式同翻譯機）
           let audio = null;
           if(wantVoice && taigiText){
             try{
-              const voiceName = vc==='female' ? 'nan-TW-vs2-F01' : 'nan-TW-vs2-M01';
               const rv = await fetch(API + '/tts', {
                 method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({text:taigiText, languageCode:'nan-TW', voice:voiceName})
+                body: JSON.stringify({text:taigiText, speaker:vc})
               });
               const dv = await rv.json();
-              audio = dv.audioBase64||dv.audio||dv.base64||dv.wav||null;
+              audio = dv.audioBase64||null;
             }catch(_){}
           }
           return {type:'taigi', taigi:taigiText, tailo:tailoText, audio};
