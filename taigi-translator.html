@@ -863,7 +863,9 @@ function selOSrc(btn,code,fc,em,name){
     micBtn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音輸入`;
   }
   document.getElementById('oTA').placeholder=isTaigi?'按「台語語音」說台語，或直接打字…':'輸入文字，或按麥克風說話…';
+  // 收合來源和目標兩個下拉
   oSrcLPOpen=false;document.getElementById('oSrcBody').classList.remove('open');document.getElementById('oSrcChev').classList.remove('open');
+  olo=false;document.getElementById('olpBody').classList.remove('open');document.getElementById('olpChev').classList.remove('open');
 }
 
 // ════ NAV ════
@@ -1057,7 +1059,7 @@ async function toggleTaigiMic(){
 
 let olo=true;
 function toggleOLP(){olo=!olo;document.getElementById('olpBody').classList.toggle('open',olo);document.getElementById('olpChev').classList.toggle('open',olo);}
-function selOL(btn,code,fc,em,name,tts){olc=code;oln=name;olfc=fc;ole=em;oltts=tts;document.querySelectorAll('#pg-out .lang-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');setFlag('oSelFlag',fc,24,16);document.getElementById('oSelName').textContent='翻譯成：'+name;setFlag('oResFlag',fc,22,15);document.getElementById('oResLName').textContent=name;olo=false;document.getElementById('olpBody').classList.remove('open');document.getElementById('olpChev').classList.remove('open');}
+function selOL(btn,code,fc,em,name,tts){olc=code;oln=name;olfc=fc;ole=em;oltts=tts;document.querySelectorAll('#pg-out .lang-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');setFlag('oSelFlag',fc,24,16);document.getElementById('oSelName').textContent='翻譯成：'+name;setFlag('oResFlag',fc,22,15);document.getElementById('oResLName').textContent=name;olo=false;document.getElementById('olpBody').classList.remove('open');document.getElementById('olpChev').classList.remove('open');oSrcLPOpen=false;document.getElementById('oSrcBody').classList.remove('open');document.getElementById('oSrcChev').classList.remove('open');}
 function selOS(m,btn){os=m;document.querySelectorAll('.srcbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('oSrcDisp').textContent=m==='taigi'?'🗣️ 台語':'🇹🇼 華語';}
 
 // ════ SETTINGS ════
@@ -1500,7 +1502,6 @@ async function doOTx(){
     const res=document.getElementById('or2');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
     setFlag('oResFlag',olfc,22,15);document.getElementById('oResLName').textContent=oln;
     document.getElementById('oResTxt').textContent=finalText;
-    document.getElementById('oBridgeTxt').style.display='none';
     const tag=document.getElementById('ttag2');tag.textContent=el+'秒';tag.className='timer-tag';
     document.getElementById('stxt2').textContent=`完成 · ${el}秒`;
     if(autoPlay) playOAudio();
@@ -1511,46 +1512,26 @@ async function doOTx(){
   btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8l6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>翻譯給對方看`;btn.style.pointerEvents='';
 }
 
-// 頁二播放：用 AudioContext + speechSynthesis 雙保險
+// 多國翻譯機播放
 async function playOAudio(){
   const btn=document.getElementById('oPlayBtn');
-  btn.classList.add('playing');
-  btn.innerHTML=`<div class="spin" style="border-color:rgba(255,255,255,0.3);border-top-color:white"></div>載入中…`;
   const t=document.getElementById('oResTxt').textContent;
   if(!t){stopOAudio();return;}
+  btn.classList.add('playing');
+  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
   try{
-    // 用目標語言的 speechSynthesis（不需 TTS API，直接播）
-    // 但要先確認 AudioContext 是 running 狀態
     if(_ac&&_ac.state==='suspended') await _ac.resume();
     if('speechSynthesis'in window){
       speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(t);
-      u.lang=oltts;
-      u.rate=spds[osi];
-      u.onstart=()=>{
-        btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>播放中…`;
-      };
+      u.lang=oltts||'zh-TW';
+      u.rate=spds[osi]||1;
       u.onend=stopOAudio;
-      u.onerror=()=>{
-        // speechSynthesis 失敗，提示手動按
-        stopOAudio();
-        document.getElementById('stxt2').textContent='🔊 請按「播放給對方聽」';
-      };
-      // iOS speechSynthesis autoplay 需要在 user gesture 後
-      // unlockAndOTx 已解鎖，直接 speak
+      u.onerror=()=>{stopOAudio();document.getElementById('stxt2').textContent='🔊 請按「播放給對方聽」';};
       speechSynthesis.speak(u);
-      // 確認有沒有在說（有時 Safari 靜默失敗）
-      setTimeout(()=>{
-        if(speechSynthesis.speaking) return; // 正常
-        stopOAudio();
-        document.getElementById('stxt2').textContent='🔊 請按「播放給對方聽」';
-      }, 1000);
-    }else{
-      stopOAudio();
-    }
-  }catch(e){
-    stopOAudio();
-  }
+      setTimeout(()=>{if(!speechSynthesis.speaking&&!speechSynthesis.pending){stopOAudio();}},1200);
+    }else stopOAudio();
+  }catch(e){stopOAudio();}
 }
 
 // ════ AUDIO UNLOCK（iOS Safari 必須先點擊一次才能播放）════
