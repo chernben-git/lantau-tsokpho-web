@@ -990,12 +990,37 @@ async function startMidStreamAudio(){
     midStreamAudioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
     const source=midStreamAudioCtx.createMediaStreamSource(midStreamMedia);
     midStreamProcessor=midStreamAudioCtx.createScriptProcessor(4096,1,1);
+
+    let silenceTimer=null;
+    const SILENCE_MS=1500; // 靜音超過 1.5 秒自動停
+
     midStreamProcessor.onaudioprocess=(e)=>{
       if(!midStreaming||!midStreamWs||midStreamWs.readyState!==WebSocket.OPEN) return;
       const f=e.inputBuffer.getChannelData(0);
+      // 計算音量 RMS
+      let sum=0;for(let i=0;i<f.length;i++) sum+=f[i]*f[i];
+      const rms=Math.sqrt(sum/f.length);
+
+      // 送音頻給 ASR
       const i16=new Int16Array(f.length);
       for(let i=0;i<f.length;i++){const s=Math.max(-1,Math.min(1,f[i]));i16[i]=s<0?s*0x8000:s*0x7FFF;}
       midStreamWs.send(i16.buffer);
+
+      // 靜音偵測（RMS < 0.01 視為靜音）
+      if(rms < 0.01){
+        if(!silenceTimer){
+          silenceTimer=setTimeout(()=>{
+            // 有辨識結果才自動停
+            if(midLastTranscript && midStreaming){
+              document.getElementById('mid-stxt').textContent='偵測到停頓，自動停止…';
+              stopMidStream();
+            }
+          }, SILENCE_MS);
+        }
+      } else {
+        // 有聲音，清除靜音計時器
+        if(silenceTimer){clearTimeout(silenceTimer);silenceTimer=null;}
+      }
     };
     source.connect(midStreamProcessor);
     midStreamProcessor.connect(midStreamAudioCtx.destination);

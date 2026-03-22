@@ -299,6 +299,7 @@ body{
 .hist-body{
   flex:1; overflow-y:auto; padding:4px 12px 8px;
   display:flex; flex-direction:column; gap:5px;
+  -webkit-overflow-scrolling:touch;
 }
 .hist-body::-webkit-scrollbar{width:3px;}
 .hist-body::-webkit-scrollbar-thumb{background:var(--bd-m); border-radius:2px;}
@@ -363,6 +364,9 @@ body{
 .modal-row-lbl{font-size:13.5px; color:var(--ink2);}
 .modal-row-sub{font-size:11px; color:var(--muted); margin-top:2px;}
 .tog{width:32px; height:18px; border-radius:9px; border:none; background:var(--bd-m); cursor:pointer; position:relative; transition:background .2s;}
+.tog.on{background:var(--red);}
+.tog::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:white;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.tog.on::after{transform:translateX(14px);}
 .tog::after{content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:white; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:transform .2s;}
 .tog.on{background:var(--red);}
 .tog.on::after{transform:translateX(14px);}
@@ -414,7 +418,7 @@ body{
 
 <!-- HEADER -->
 <div class="header">
-  <a class="hdr-back" href="index.html" id="backBtn">
+  <a class="hdr-back" href="taigi-translator.html" id="backBtn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
   </a>
   <div class="hdr-av">🗣️</div>
@@ -513,10 +517,15 @@ body{
       <div class="box-label">
         <span class="box-label-dot dot-red"></span>輸出語言 A
       </div>
-      <div class="lang-sel" id="outASel" onclick="openDrop('outA',this)">
-        <div class="lang-sel-flag f-tw" id="outAFlag"></div>
-        <span class="lang-sel-name" id="outAName">台語</span>
-        <span class="lang-sel-arr">▾</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);">
+          🔊<button class="tog on" id="autoPlayATog" onclick="this.classList.toggle('on')" style="width:28px;height:16px;border-radius:8px;background:var(--bd-m);border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;"></button>
+        </div>
+        <div class="lang-sel" id="outASel" onclick="openDrop('outA',this)">
+          <div class="lang-sel-flag f-tw" id="outAFlag"></div>
+          <span class="lang-sel-name" id="outAName">台語</span>
+          <span class="lang-sel-arr">▾</span>
+        </div>
       </div>
     </div>
     <div class="out-body" id="outABody">
@@ -533,10 +542,15 @@ body{
       <div class="box-label">
         <span class="box-label-dot dot-gold"></span>輸出語言 B
       </div>
-      <div class="lang-sel" id="outBSel" onclick="openDrop('outB',this)">
-        <div class="lang-sel-flag f-tw" id="outBFlag"></div>
-        <span class="lang-sel-name" id="outBName">華語</span>
-        <span class="lang-sel-arr">▾</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);">
+          🔊<button class="tog on" id="autoPlayBTog" onclick="this.classList.toggle('on')" style="width:28px;height:16px;border-radius:8px;background:var(--bd-m);border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;"></button>
+        </div>
+        <div class="lang-sel" id="outBSel" onclick="openDrop('outB',this)">
+          <div class="lang-sel-flag f-tw" id="outBFlag"></div>
+          <span class="lang-sel-name" id="outBName">華語</span>
+          <span class="lang-sel-arr">▾</span>
+        </div>
       </div>
     </div>
     <div class="out-body" id="outBBody">
@@ -823,6 +837,8 @@ async function sendMsg(){
   setOutThinking('outABody','outAEmpty','翻譯中…');
   setOutThinking('outBBody','outBEmpty','翻譯中…');
   const autoPlay  = document.getElementById('autoPlayTog').classList.contains('on');
+  const autoPlayA = document.getElementById('autoPlayATog').classList.contains('on');
+  const autoPlayB = document.getElementById('autoPlayBTog').classList.contains('on');
   const showTailo = document.getElementById('tailoTog').classList.contains('on');
   const t0 = Date.now();
 
@@ -872,9 +888,13 @@ async function sendMsg(){
       renderOut('outABody','outAEmpty','A', resA, showTailo);
       renderOut('outBBody','outBEmpty','B', resB, showTailo);
 
-      if(autoPlay){
+      if(autoPlayA){
         if(resA.type==='taigi' && resA.audio) playWav(resA.audio,'playA-btn','停止','播台語');
         else if(resA.type==='other' && resA.text) playTTS(resA.text, resA.tts, 'playA-btn','停止','播放');
+      }
+      if(autoPlayB){
+        if(resB.type==='taigi' && resB.audio) playWav(resB.audio,'playB-btn','停止','播台語');
+        else if(resB.type==='other' && resB.text) playTTS(resB.text, resB.tts, 'playB-btn','停止','播放');
       }
 
       const histText = resA.type==='taigi' ? resA.taigi : resA.text;
@@ -915,7 +935,15 @@ async function sendMsg(){
       const d1 = await r1.json();
       if(!r1.ok || !d1.success) throw new Error(d1.error || 'Gemini 失敗');
       let zh = d1.reply || '';
-      try{const p=JSON.parse(zh); zh=p.zh||p.reply||p.text||zh;}catch(_){}
+      // 清理 JSON 包裝（處理各種格式）
+      zh = zh.trim();
+      if(zh.startsWith('{') || zh.startsWith('```')){
+        zh = zh.replace(/^```json\s*/,'').replace(/```\s*$/,'').trim();
+        try{
+          const p=JSON.parse(zh);
+          zh=p.response||p.zh||p.reply||p.text||p.content||zh;
+        }catch(_){}
+      }
       zh = zh.trim();
       if(!zh) throw new Error('Gemini 回覆空白');
 
@@ -926,9 +954,9 @@ async function sendMsg(){
       // Step 3：同時產生兩個輸出
       setStatus('轉換語言中…','loading','Step 2');
 
-      async function getOut(lang){
+      async function getOut(lang, wantVoice){
         if(lang.isTaigi || lang.code==='taigi'){
-          const ep = autoPlay ? '/translate/to-taigi-voice' : '/translate/to-taigi';
+          const ep = wantVoice ? '/translate/to-taigi-voice' : '/translate/to-taigi';
           const r = await fetch(API + ep, {
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({text:zh, sourceLang:'zh-TW', speaker:vc})
@@ -948,16 +976,20 @@ async function sendMsg(){
         }
       }
 
-      const [resA, resB] = await Promise.all([getOut(outALang), getOut(outBLang)]);
+      const [resA, resB] = await Promise.all([getOut(outALang, autoPlayA), getOut(outBLang, autoPlayB)]);
       const ms = Date.now() - t0;
       setStatus(`完成 · ${(ms/1000).toFixed(1)}s · asr.bitfull.tw`, 'ok', '');
 
       renderOut('outABody','outAEmpty','A', resA, showTailo);
       renderOut('outBBody','outBEmpty','B', resB, showTailo);
 
-      if(autoPlay){
+      if(autoPlayA){
         if(resA.type==='taigi' && resA.audio) playWav(resA.audio,'playA-btn','停止','播台語');
         else if(resA.type==='other' && resA.text) playTTS(resA.text, resA.tts, 'playA-btn','停止','播放');
+      }
+      if(autoPlayB){
+        if(resB.type==='taigi' && resB.audio) playWav(resB.audio,'playB-btn','停止','播台語');
+        else if(resB.type==='other' && resB.text) playTTS(resB.text, resB.tts, 'playB-btn','停止','播放');
       }
 
       const histText = resA.type==='taigi' ? resA.taigi : resA.text;
