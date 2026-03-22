@@ -1030,13 +1030,17 @@ async function toggleOTaigiMic(){
         });
         const d=await r.json();
         if(d.success && d.chText){
-          // ASR → Gemini → 英文，填入框，走英文→目標語言
+          // 顯示台語漢字，翻譯走華語路線
+          document.getElementById('oTA').value=d.transcript||d.chText;
+          document.getElementById('stxt2').textContent='✅ 台語：'+(d.transcript||'');
+          oSlc='zh-TW';
+          setFlag('oInpFlag','f-tw',20,14);
+          document.getElementById('oInpLName').textContent='台語（廖教授ASR）';
+          // 用 chText（華語）翻目標語言
+          const origTA=document.getElementById('oTA').value;
           document.getElementById('oTA').value=d.chText;
-          document.getElementById('stxt2').textContent='✅ 辨識：'+d.chText;
-          oSlc='en';  // 現在是英文
-          setFlag('oInpFlag','f-us',20,14);
-          document.getElementById('oInpLName').textContent='English（台語辨識結果）';
           unlockAndOTx();
+          document.getElementById('oTA').value=origTA;
         } else if(d.success && d.transcript){
           // 只有台羅，顯示台羅備用
           document.getElementById('oTA').value=d.transcript;
