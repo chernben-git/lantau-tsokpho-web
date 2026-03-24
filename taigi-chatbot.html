@@ -1067,7 +1067,8 @@ let taigiConnecting=false; // 防止重複連線
 function toggleMic(){
   if(isLINE){document.getElementById('safariGuide').style.display='flex';return;}
   if(inLang.isTaigi||inLang.code==='taigi'){
-    taigiStreaming?stopTaigiStream():startTaigiStream();
+    if(taigiStreaming||taigiConnecting){stopTaigiStream();}
+    else{startTaigiStream();}
     return;
   }
   isRecording?stopMic():startMic();
@@ -1136,7 +1137,7 @@ async function startTaigiStream(){
       btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音';
       document.getElementById('micWave').classList.remove('on');
       box.placeholder='輸入台語文字，翻譯成各語言…';
-      const finalText=taigiLastTranscript||box.value.trim();
+      const finalText=taigiLastTranscript.trim()||box.value.trim();
       if(finalText){
         setStatus('辨識完成','ok','');
         box.value=finalText;
@@ -1159,12 +1160,23 @@ async function startTaigiStream(){
 
 
 async function startTaigiStreamAudio(){
+  const box=document.getElementById('inputBox');
   try{
+    setStatus('step1:getUserMedia…','loading','debug');
+    box.placeholder='step1:getUserMedia…';
     // 完全照翻譯機實作
     taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+    setStatus('step2:AudioContext…','loading','debug');
+    box.placeholder='step2:AudioContext…';
     taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+    setStatus('step3:createSource…','loading','debug');
+    box.placeholder='step3:createSource…';
     const source=taigiStreamACtx.createMediaStreamSource(taigiStreamMedia);
+    setStatus('step4:createProc…','loading','debug');
+    box.placeholder='step4:createProc…';
     taigiStreamProc=taigiStreamACtx.createScriptProcessor(4096,1,1);
+    setStatus('step5:connecting…','loading','debug');
+    box.placeholder='🔴 說台語…';
     let silenceTimer=null;
     const SILENCE_MS=2000, SILENCE_RMS=0.02;
     taigiMaxTimer=setTimeout(()=>{if(taigiStreaming)stopTaigiStream();},15000);
@@ -1185,8 +1197,9 @@ async function startTaigiStreamAudio(){
     source.connect(taigiStreamProc);
     taigiStreamProc.connect(taigiStreamACtx.destination);
   }catch(e){
-    alert('麥克風/AudioContext 錯誤：'+e.name+': '+e.message);
-    setStatus('麥克風錯誤：'+e.message,'err','');
+    const box2=document.getElementById('inputBox');
+    box2.placeholder='錯誤：'+e.name+': '+e.message;
+    setStatus('錯誤：'+e.name+': '+e.message,'err','ERR');
     stopTaigiStream();
   }
 }
@@ -1194,6 +1207,7 @@ async function startTaigiStreamAudio(){
 function stopTaigiStream(){
   taigiConnecting=false;
   taigiStreaming=false;
+  if(taigiStreamWs){taigiStreamWs.onclose=null;taigiStreamWs.onerror=null;taigiStreamWs.onmessage=null;}
   if(taigiMaxTimer){clearTimeout(taigiMaxTimer);taigiMaxTimer=null;}
   if(taigiStreamProc){taigiStreamProc.disconnect();taigiStreamProc=null;}
   if(taigiStreamACtx){taigiStreamACtx.close();taigiStreamACtx=null;}
