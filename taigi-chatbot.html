@@ -1130,7 +1130,10 @@ async function startTaigiStream(){
       setStatus('串流連線失敗','err','');
       stopTaigiStream();
     };
+    let wsClosedHandled=false;
     taigiStreamWs.onclose=()=>{
+      if(wsClosedHandled)return;
+      wsClosedHandled=true;
       taigiConnecting=false;
       taigiStreaming=false;
       btn.classList.remove('mic-on');
@@ -1139,12 +1142,13 @@ async function startTaigiStream(){
       box.placeholder='輸入台語文字，翻譯成各語言…';
       const finalText=taigiLastTranscript.trim()||box.value.trim();
       if(finalText){
-        setStatus('辨識完成','ok','');
+        setStatus('辨識完成，送出中…','ok','');
         box.value=finalText;
         box.style.height='auto';
         box.style.height=Math.min(box.scrollHeight,80)+'px';
         document.getElementById('sendBtn').disabled=false;
         pendingClear=false;
+        taigiLastTranscript=''; // 清掉防止重複送
         sendMsg();
       }else{
         setStatus('已連線 · asr.bitfull.tw','ok','');
@@ -1198,12 +1202,15 @@ function stopTaigiStream(){
   taigiConnecting=false;
   taigiStreaming=false;
   if(taigiMaxTimer){clearTimeout(taigiMaxTimer);taigiMaxTimer=null;}
+  // 強制把 WS 關掉，不等 onclose（onclose 自己會處理後續）
   if(taigiStreamProc){taigiStreamProc.disconnect();taigiStreamProc=null;}
   if(taigiStreamACtx){taigiStreamACtx.close();taigiStreamACtx=null;}
   if(taigiStreamMedia){taigiStreamMedia.getTracks().forEach(t=>t.stop());taigiStreamMedia=null;}
   if(taigiStreamWs&&taigiStreamWs.readyState===WebSocket.OPEN){
     taigiStreamWs.send(new ArrayBuffer(0));
-    setTimeout(()=>{if(taigiStreamWs)taigiStreamWs.close();},1500);
+    setTimeout(()=>{if(taigiStreamWs){taigiStreamWs.close();taigiStreamWs=null;}},1500);
+  } else if(taigiStreamWs){
+    taigiStreamWs=null;
   }
 }
 
