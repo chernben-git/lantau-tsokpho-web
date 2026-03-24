@@ -1162,21 +1162,11 @@ async function startTaigiStream(){
 async function startTaigiStreamAudio(){
   const box=document.getElementById('inputBox');
   try{
-    setStatus('step1:getUserMedia…','loading','debug');
-    box.placeholder='step1:getUserMedia…';
     // 完全照翻譯機實作
     taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
-    setStatus('step2:AudioContext…','loading','debug');
-    box.placeholder='step2:AudioContext…';
     taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
-    setStatus('step3:createSource…','loading','debug');
-    box.placeholder='step3:createSource…';
     const source=taigiStreamACtx.createMediaStreamSource(taigiStreamMedia);
-    setStatus('step4:createProc…','loading','debug');
-    box.placeholder='step4:createProc…';
     taigiStreamProc=taigiStreamACtx.createScriptProcessor(4096,1,1);
-    setStatus('step5:connecting…','loading','debug');
-    box.placeholder='🔴 說台語…';
     let silenceTimer=null;
     const SILENCE_MS=2000, SILENCE_RMS=0.02;
     taigiMaxTimer=setTimeout(()=>{if(taigiStreaming)stopTaigiStream();},15000);
@@ -1207,7 +1197,6 @@ async function startTaigiStreamAudio(){
 function stopTaigiStream(){
   taigiConnecting=false;
   taigiStreaming=false;
-  if(taigiStreamWs){taigiStreamWs.onclose=null;taigiStreamWs.onerror=null;taigiStreamWs.onmessage=null;}
   if(taigiMaxTimer){clearTimeout(taigiMaxTimer);taigiMaxTimer=null;}
   if(taigiStreamProc){taigiStreamProc.disconnect();taigiStreamProc=null;}
   if(taigiStreamACtx){taigiStreamACtx.close();taigiStreamACtx=null;}
