@@ -1062,6 +1062,7 @@ function toggleTaigiText(id){
 ════ */
 let taigiStreamWs=null,taigiStreamACtx=null,taigiStreamProc=null,taigiStreamMedia=null;
 let taigiStreaming=false,taigiLastTranscript='',taigiMaxTimer=null;
+let taigiConnecting=false; // 防止重複連線
 
 function toggleMic(){
   if(isLINE){document.getElementById('safariGuide').style.display='flex';return;}
@@ -1073,6 +1074,8 @@ function toggleMic(){
 }
 
 async function startTaigiStream(){
+  if(taigiConnecting||taigiStreaming)return;
+  taigiConnecting=true;
   const btn=document.getElementById('micBtn');
   const box=document.getElementById('inputBox');
   try{
@@ -1086,34 +1089,35 @@ async function startTaigiStream(){
     taigiStreamWs=new WebSocket(wsUrl);
     taigiStreamWs.binaryType='arraybuffer';
     taigiStreamWs.onopen=()=>{
-      box.placeholder='已連上，準備中…';
-      setStatus('WS已連上，啟動錄音…','loading','ASR');
-      taigiStreaming=true;
-      btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
-      box.placeholder='🔴 說台語…';
-      startTaigiStreamAudio();
+      box.placeholder='ASR 初始化中，請稍候…';
+      setStatus('等待 ASR 就緒…','loading','code:100');
+      // 等 code:180 才開始錄音，不主動啟動
     };
     taigiStreamWs.onmessage=(e)=>{
       try{
         const msg=JSON.parse(e.data);
+        if(msg.code===100||msg.code==='100'){
+          setStatus('ASR 準備中…','loading','code:100');
+          return;
+        }
         const isReady=msg.type==='ready'||msg.code===180||msg.code==='180';
         const isResult=msg.code===200||msg.code==='200';
         const isError=msg.type==='error'||msg.code===408||msg.code==='408';
         if(isReady&&!taigiStreaming){
           taigiStreaming=true;
+          taigiConnecting=false;
           btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
           box.placeholder='🔴 說台語…';
           setStatus('說台語中…','loading','串流');
           startTaigiStreamAudio();
           return;
         }
-        if(isError){setStatus('串流錯誤，請重試','err','');stopTaigiStream();return;}
+        if(isError){setStatus('串流逾時，請重試','err','');stopTaigiStream();return;}
         if(isResult&&msg.result&&msg.result.length>0){
           const text=msg.result[msg.result.length-1].transcript||'';
           if(text){
             taigiLastTranscript=text;
             box.value=text;
-            // 直接設高度，不走 onInpChange（避免 pendingClear 清掉）
             box.style.height='auto';
             box.style.height=Math.min(box.scrollHeight,80)+'px';
             document.getElementById('sendBtn').disabled=false;
@@ -1121,13 +1125,13 @@ async function startTaigiStream(){
         }
       }catch(_){}
     };
-    taigiStreamWs.onerror=(err)=>{
-      const msg='WS錯誤：'+API.replace('https://','wss://')+'/asr-stream';
-      setStatus(msg,'err','');
-      box.placeholder=msg;
+    taigiStreamWs.onerror=()=>{
+      taigiConnecting=false;
+      setStatus('串流連線失敗','err','');
       stopTaigiStream();
     };
     taigiStreamWs.onclose=()=>{
+      taigiConnecting=false;
       taigiStreaming=false;
       btn.classList.remove('mic-on');
       btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音';
@@ -1140,12 +1144,14 @@ async function startTaigiStream(){
         box.style.height='auto';
         box.style.height=Math.min(box.scrollHeight,80)+'px';
         document.getElementById('sendBtn').disabled=false;
+        pendingClear=false; // 防止被清空
         sendMsg();
       }else{
         setStatus('已連線 · asr.bitfull.tw','ok','');
       }
     };
   }catch(e){
+    taigiConnecting=false;
     alert('無法使用麥克風：'+e.message);
     btn.classList.remove('mic-on');
     document.getElementById('micWave').classList.remove('on');
@@ -1184,6 +1190,7 @@ async function startTaigiStreamAudio(){
 }
 
 function stopTaigiStream(){
+  taigiConnecting=false;
   taigiStreaming=false;
   if(taigiMaxTimer){clearTimeout(taigiMaxTimer);taigiMaxTimer=null;}
   if(taigiStreamProc){taigiStreamProc.disconnect();taigiStreamProc=null;}
