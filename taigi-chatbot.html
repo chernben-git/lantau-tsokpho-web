@@ -1160,7 +1160,9 @@ async function startTaigiStreamAudio(){
     const source = taigiStreamAudioCtx.createMediaStreamSource(taigiStreamMedia);
     taigiStreamProcessor = taigiStreamAudioCtx.createScriptProcessor(4096,1,1);
     let silenceTimer = null;
-    const SILENCE_MS = 1500;
+    const SILENCE_MS = 2000;   // 靜音 2 秒斷句
+    const SILENCE_RMS = 0.02;  // 靜音閾值（背景雜訊約 0.005~0.015）
+    let maxTimer = setTimeout(()=>{ if(taigiStreaming) stopTaigiStream(); }, 15000); // 最長 15 秒保底
 
     taigiStreamProcessor.onaudioprocess = (e)=>{
       if(!taigiStreaming||!taigiStreamWs||taigiStreamWs.readyState!==WebSocket.OPEN) return;
@@ -1170,10 +1172,10 @@ async function startTaigiStreamAudio(){
       const i16 = new Int16Array(f.length);
       for(let i=0;i<f.length;i++){const s=Math.max(-1,Math.min(1,f[i]));i16[i]=s<0?s*0x8000:s*0x7FFF;}
       taigiStreamWs.send(i16.buffer);
-      if(rms < 0.01){
+      if(rms < SILENCE_RMS){
         if(!silenceTimer){
           silenceTimer = setTimeout(()=>{
-            if(taigiLastTranscript && taigiStreaming) stopTaigiStream();
+            if(taigiStreaming) stopTaigiStream();
           }, SILENCE_MS);
         }
       } else {
@@ -1190,6 +1192,7 @@ async function startTaigiStreamAudio(){
 
 function stopTaigiStream(){
   taigiStreaming = false;
+  if(typeof maxTimer!=='undefined'){clearTimeout(maxTimer);}
   if(taigiStreamProcessor){taigiStreamProcessor.disconnect();taigiStreamProcessor=null;}
   if(taigiStreamAudioCtx){taigiStreamAudioCtx.close();taigiStreamAudioCtx=null;}
   if(taigiStreamMedia){taigiStreamMedia.getTracks().forEach(t=>t.stop());taigiStreamMedia=null;}
