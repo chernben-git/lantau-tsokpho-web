@@ -646,6 +646,7 @@ let isRecording = false, rec = null;
 let isBusy = false;
 let pendingClear = false;
 let currentAudio = null, silentAC = null;
+let _ac = null; // AudioContext for WAV playback (Safari-safe)
 let chatHistory = [];
 const MAX_HIST = 32;
 let localHistory = JSON.parse(localStorage.getItem('taigiLearnHist')||'[]');
@@ -665,7 +666,11 @@ const silentAudio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAA
 silentAudio.volume=0.01;
 function unlockAudio(){
   silentAudio.play().catch(()=>{});
-  try{if(!silentAC)silentAC=new(window.AudioContext||window.webkitAudioContext)();if(silentAC.state==='suspended')silentAC.resume();}catch(_){}
+  try{
+    if(!_ac||_ac.state==='closed') _ac=new(window.AudioContext||window.webkitAudioContext)();
+    if(_ac.state==='suspended') _ac.resume();
+    silentAC=_ac;
+  }catch(_){}
 }
 renderHistBody();
 renderLangUI();
@@ -793,16 +798,36 @@ function clearOutputs(){
 const PLAY_SVG='<svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
 const STOP_SVG='<svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
 
-function playWav(b64, btnId, labelOn, labelOff){
+async function playWav(b64, btnId, labelOn, labelOff){
   unlockAudio();
   stopAllAudio();
   const btn=document.getElementById(btnId);
-  const blob=b64Blob(b64,'audio/wav');
-  const url=URL.createObjectURL(blob);
-  currentAudio=new Audio(url);
   if(btn){btn.classList.add('on');btn.innerHTML=STOP_SVG+labelOn;}
-  currentAudio.onended=()=>{URL.revokeObjectURL(url);if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
-  currentAudio.play().catch(()=>{if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}});
+  try{
+    const wav=atob(b64), buf=new Uint8Array(wav.length);
+    for(let i=0;i<wav.length;i++) buf[i]=wav.charCodeAt(i);
+    if(!_ac||_ac.state==='closed') _ac=new(window.AudioContext||window.webkitAudioContext)();
+    if(_ac.state==='suspended') await _ac.resume();
+    const decoded=await _ac.decodeAudioData(buf.buffer.slice(0));
+    const src=_ac.createBufferSource();
+    src.buffer=decoded;
+    src.connect(_ac.destination);
+    src.onended=()=>{if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
+    src.start(0);
+    // 存起來方便 stop
+    currentAudio={stop:()=>{try{src.stop();}catch(_){}},pause:()=>{try{src.stop();}catch(_){}}};
+  }catch(e){
+    // fallback: Audio 物件
+    try{
+      const wav2=atob(b64),buf2=new Uint8Array(wav2.length);
+      for(let i=0;i<wav2.length;i++) buf2[i]=wav2.charCodeAt(i);
+      const blob=new Blob([buf2],{type:'audio/wav'});
+      const url=URL.createObjectURL(blob);
+      currentAudio=new Audio(url);
+      currentAudio.onended=()=>{URL.revokeObjectURL(url);if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
+      currentAudio.play().catch(()=>{if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}});
+    }catch(e2){if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}}
+  }
 }
 function playTTS(txt, ttsLang, btnId, labelOn, labelOff){
   unlockAudio();
@@ -817,7 +842,7 @@ function playTTS(txt, ttsLang, btnId, labelOn, labelOff){
   speechSynthesis.speak(u);
 }
 function stopAllAudio(){
-  if(currentAudio){currentAudio.pause();currentAudio=null;}
+  if(currentAudio){try{currentAudio.pause();}catch(_){try{currentAudio.stop();}catch(_){}}currentAudio=null;}
   if(speechSynthesis.speaking) speechSynthesis.cancel();
 }
 function togglePlayWav(b64, btnId, labelOn, labelOff){
