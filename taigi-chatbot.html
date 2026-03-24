@@ -1096,19 +1096,27 @@ async function startTaigiStream(){
     taigiStreamWs.onopen = ()=>{
       box.placeholder = '初始化中…';
       setStatus('串流 ASR 連線中…','loading','ASR');
+      // 連上後直接開始錄音，同時等 ready 確認
+      // （部分 relay 版本不送 ready，直接開始即可）
+      setTimeout(()=>{
+        if(!taigiStreaming && taigiStreamWs && taigiStreamWs.readyState===WebSocket.OPEN){
+          taigiStreaming = true;
+          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
+          box.placeholder = '🔴 說台語…';
+          setStatus('說台語中…','loading','串流');
+          startTaigiStreamAudio();
+        }
+      }, 800);
     };
 
     taigiStreamWs.onmessage = (e)=>{
       try{
         const msg = JSON.parse(e.data);
-        console.log('[asr-stream]', JSON.stringify(msg).substring(0,200));
-        // relay 包裝格式：type:'ready'
-        // NYCU 原生格式：code:180（就緒）, code:200（有結果）
         const isReady = msg.type==='ready' || msg.code===180 || msg.code==='180';
         const isResult = msg.code===200 || msg.code==='200';
         const isError = msg.type==='error' || msg.code===408 || msg.code==='408';
 
-        if(isReady){
+        if(isReady && !taigiStreaming){
           taigiStreaming = true;
           btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
           box.placeholder = '🔴 說台語…';
@@ -1120,7 +1128,6 @@ async function startTaigiStream(){
           setStatus('串流逾時或錯誤，請重試','err','');
           stopTaigiStream(); return;
         }
-        // 即時辨識結果
         if(isResult && msg.result && Array.isArray(msg.result) && msg.result.length>0){
           const text = msg.result[msg.result.length-1].transcript||'';
           if(text){
