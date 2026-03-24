@@ -1083,15 +1083,20 @@ async function startTaigiStream(){
     btn.classList.add('mic-on');
     btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>連線中…';
     document.getElementById('micWave').classList.add('on');
-    box.value=''; box.placeholder='連線中…';
+    box.value=''; box.placeholder='取得麥克風中…';
     taigiLastTranscript='';
+
+    // ★ 先在用戶點擊的當下取得麥克風（Safari 要求在互動事件中）
+    taigiStreamMedia = await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+
+    box.placeholder='連線中…';
     const wsUrl=API.replace('https://','wss://')+'/asr-stream';
     taigiStreamWs=new WebSocket(wsUrl);
     taigiStreamWs.binaryType='arraybuffer';
     taigiStreamWs.onopen=()=>{
       box.placeholder='ASR 初始化中，請稍候…';
       setStatus('等待 ASR 就緒…','loading','code:100');
-      // 等 code:180 才開始錄音，不主動啟動
+      // 等 code:180 才開始錄音
     };
     taigiStreamWs.onmessage=(e)=>{
       try{
@@ -1160,7 +1165,7 @@ async function startTaigiStream(){
 
 async function startTaigiStreamAudio(){
   try{
-    taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+    // 麥克風已在 startTaigiStream 取得，直接使用
     taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
     const source=taigiStreamACtx.createMediaStreamSource(taigiStreamMedia);
     taigiStreamProc=taigiStreamACtx.createScriptProcessor(4096,1,1);
