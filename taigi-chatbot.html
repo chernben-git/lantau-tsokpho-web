@@ -1066,6 +1066,7 @@ function toggleTaigiText(id){
 ════ */
 let taigiStreamWs=null, taigiStreamAudioCtx=null, taigiStreamProcessor=null, taigiStreamMedia=null;
 let taigiStreaming=false, taigiLastTranscript='';
+let taigiMaxTimer=null;
 
 function toggleMic(){
   if(isLINE){document.getElementById('safariGuide').style.display='flex';return;}
@@ -1100,7 +1101,14 @@ async function startTaigiStream(){
     taigiStreamWs.onmessage = (e)=>{
       try{
         const msg = JSON.parse(e.data);
-        if(msg.type==='ready'){
+        console.log('[asr-stream]', JSON.stringify(msg).substring(0,200));
+        // relay 包裝格式：type:'ready'
+        // NYCU 原生格式：code:180（就緒）, code:200（有結果）
+        const isReady = msg.type==='ready' || msg.code===180 || msg.code==='180';
+        const isResult = msg.code===200 || msg.code==='200';
+        const isError = msg.type==='error' || msg.code===408 || msg.code==='408';
+
+        if(isReady){
           taigiStreaming = true;
           btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
           box.placeholder = '🔴 說台語…';
@@ -1108,12 +1116,12 @@ async function startTaigiStream(){
           startTaigiStreamAudio();
           return;
         }
-        if(msg.type==='error'){
-          setStatus('串流錯誤：'+msg.message,'err','');
+        if(isError){
+          setStatus('串流逾時或錯誤，請重試','err','');
           stopTaigiStream(); return;
         }
         // 即時辨識結果
-        if(msg.result && Array.isArray(msg.result) && msg.result.length>0){
+        if(isResult && msg.result && Array.isArray(msg.result) && msg.result.length>0){
           const text = msg.result[msg.result.length-1].transcript||'';
           if(text){
             taigiLastTranscript = text;
@@ -1162,7 +1170,7 @@ async function startTaigiStreamAudio(){
     let silenceTimer = null;
     const SILENCE_MS = 2000;   // 靜音 2 秒斷句
     const SILENCE_RMS = 0.02;  // 靜音閾值（背景雜訊約 0.005~0.015）
-    let maxTimer = setTimeout(()=>{ if(taigiStreaming) stopTaigiStream(); }, 15000); // 最長 15 秒保底
+    taigiMaxTimer = setTimeout(()=>{ if(taigiStreaming) stopTaigiStream(); }, 15000); // 最長 15 秒保底
 
     taigiStreamProcessor.onaudioprocess = (e)=>{
       if(!taigiStreaming||!taigiStreamWs||taigiStreamWs.readyState!==WebSocket.OPEN) return;
@@ -1192,7 +1200,7 @@ async function startTaigiStreamAudio(){
 
 function stopTaigiStream(){
   taigiStreaming = false;
-  if(typeof maxTimer!=='undefined'){clearTimeout(maxTimer);}
+  if(taigiMaxTimer){clearTimeout(taigiMaxTimer);taigiMaxTimer=null;}
   if(taigiStreamProcessor){taigiStreamProcessor.disconnect();taigiStreamProcessor=null;}
   if(taigiStreamAudioCtx){taigiStreamAudioCtx.close();taigiStreamAudioCtx=null;}
   if(taigiStreamMedia){taigiStreamMedia.getTracks().forEach(t=>t.stop());taigiStreamMedia=null;}
