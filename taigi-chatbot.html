@@ -1083,20 +1083,14 @@ async function startTaigiStream(){
     btn.classList.add('mic-on');
     btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>連線中…';
     document.getElementById('micWave').classList.add('on');
-    box.value=''; box.placeholder='取得麥克風中…';
+    box.value=''; box.placeholder='連線中…';
     taigiLastTranscript='';
-
-    // ★ 先在用戶點擊的當下取得麥克風（Safari 要求在互動事件中）
-    taigiStreamMedia = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1}});
-
-    box.placeholder='連線中…';
     const wsUrl=API.replace('https://','wss://')+'/asr-stream';
     taigiStreamWs=new WebSocket(wsUrl);
     taigiStreamWs.binaryType='arraybuffer';
     taigiStreamWs.onopen=()=>{
       box.placeholder='ASR 初始化中，請稍候…';
       setStatus('等待 ASR 就緒…','loading','code:100');
-      // 等 code:180 才開始錄音
     };
     taigiStreamWs.onmessage=(e)=>{
       try{
@@ -1114,12 +1108,7 @@ async function startTaigiStream(){
           btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
           box.placeholder='🔴 說台語…';
           setStatus('說台語中…','loading','串流');
-          // 等麥克風 stream 準備好再開始（getUserMedia 可能還在 await）
-          const waitMedia=()=>{
-            if(taigiStreamMedia){ startTaigiStreamAudio(); }
-            else { setTimeout(waitMedia, 100); }
-          };
-          waitMedia();
+          startTaigiStreamAudio();
           return;
         }
         if(isError){setStatus('串流逾時，請重試','err','');stopTaigiStream();return;}
@@ -1154,7 +1143,7 @@ async function startTaigiStream(){
         box.style.height='auto';
         box.style.height=Math.min(box.scrollHeight,80)+'px';
         document.getElementById('sendBtn').disabled=false;
-        pendingClear=false; // 防止被清空
+        pendingClear=false;
         sendMsg();
       }else{
         setStatus('已連線 · asr.bitfull.tw','ok','');
@@ -1162,18 +1151,18 @@ async function startTaigiStream(){
     };
   }catch(e){
     taigiConnecting=false;
-    alert('無法使用麥克風：'+e.message);
     btn.classList.remove('mic-on');
     document.getElementById('micWave').classList.remove('on');
+    setStatus('連線錯誤：'+e.message,'err','');
   }
 }
 
+
 async function startTaigiStreamAudio(){
   try{
-    // 用預設 sampleRate（Safari 相容，不強制 16kHz）
-    taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)();
-    if(taigiStreamACtx.state==='suspended') await taigiStreamACtx.resume();
-    const nativeSR=taigiStreamACtx.sampleRate; // 44100 或 48000
+    // 完全照翻譯機實作
+    taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+    taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
     const source=taigiStreamACtx.createMediaStreamSource(taigiStreamMedia);
     taigiStreamProc=taigiStreamACtx.createScriptProcessor(4096,1,1);
     let silenceTimer=null;
@@ -1184,14 +1173,8 @@ async function startTaigiStreamAudio(){
       const f=e.inputBuffer.getChannelData(0);
       let sum=0;for(let i=0;i<f.length;i++)sum+=f[i]*f[i];
       const rms=Math.sqrt(sum/f.length);
-      // 降採樣到 16kHz 再送出
-      const ratio=nativeSR/16000;
-      const outLen=Math.floor(f.length/ratio);
-      const i16=new Int16Array(outLen);
-      for(let i=0;i<outLen;i++){
-        const s=Math.max(-1,Math.min(1,f[Math.floor(i*ratio)]));
-        i16[i]=s<0?s*0x8000:s*0x7FFF;
-      }
+      const i16=new Int16Array(f.length);
+      for(let i=0;i<f.length;i++){const s=Math.max(-1,Math.min(1,f[i]));i16[i]=s<0?s*0x8000:s*0x7FFF;}
       taigiStreamWs.send(i16.buffer);
       if(rms<SILENCE_RMS){
         if(!silenceTimer)silenceTimer=setTimeout(()=>{if(taigiStreaming)stopTaigiStream();},SILENCE_MS);
@@ -1202,7 +1185,7 @@ async function startTaigiStreamAudio(){
     source.connect(taigiStreamProc);
     taigiStreamProc.connect(taigiStreamACtx.destination);
   }catch(e){
-    alert('startTaigiStreamAudio 錯誤：'+e.name+' / '+e.message);
+    alert('麥克風/AudioContext 錯誤：'+e.name+': '+e.message);
     setStatus('麥克風錯誤：'+e.message,'err','');
     stopTaigiStream();
   }
