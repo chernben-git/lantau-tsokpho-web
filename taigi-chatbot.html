@@ -1165,8 +1165,10 @@ async function startTaigiStream(){
 
 async function startTaigiStreamAudio(){
   try{
-    // 麥克風已在 startTaigiStream 取得，直接使用
-    taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+    // 用預設 sampleRate（Safari 相容，不強制 16kHz）
+    taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(taigiStreamACtx.state==='suspended') await taigiStreamACtx.resume();
+    const nativeSR=taigiStreamACtx.sampleRate; // 44100 或 48000
     const source=taigiStreamACtx.createMediaStreamSource(taigiStreamMedia);
     taigiStreamProc=taigiStreamACtx.createScriptProcessor(4096,1,1);
     let silenceTimer=null;
@@ -1177,8 +1179,14 @@ async function startTaigiStreamAudio(){
       const f=e.inputBuffer.getChannelData(0);
       let sum=0;for(let i=0;i<f.length;i++)sum+=f[i]*f[i];
       const rms=Math.sqrt(sum/f.length);
-      const i16=new Int16Array(f.length);
-      for(let i=0;i<f.length;i++){const s=Math.max(-1,Math.min(1,f[i]));i16[i]=s<0?s*0x8000:s*0x7FFF;}
+      // 降採樣到 16kHz 再送出
+      const ratio=nativeSR/16000;
+      const outLen=Math.floor(f.length/ratio);
+      const i16=new Int16Array(outLen);
+      for(let i=0;i<outLen;i++){
+        const s=Math.max(-1,Math.min(1,f[Math.floor(i*ratio)]));
+        i16[i]=s<0?s*0x8000:s*0x7FFF;
+      }
       taigiStreamWs.send(i16.buffer);
       if(rms<SILENCE_RMS){
         if(!silenceTimer)silenceTimer=setTimeout(()=>{if(taigiStreaming)stopTaigiStream();},SILENCE_MS);
