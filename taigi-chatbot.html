@@ -629,10 +629,8 @@ const LANGS_IN = [
   {code:'hi',    name:'हिन्दी',    flag:'f-in', google:'hi',   tts:'hi-IN'},
 ];
 // 輸出語言：加台語
-const LANGS_OUT = [
-  {code:'taigi', name:'台語',    flag:'f-tw', isTaigi:true},
-  ...LANGS_IN
-];
+// LANGS_OUT = LANGS_IN（已含台語在第一位）
+const LANGS_OUT = LANGS_IN;
 
 /* ════ STATE ════ */
 const API = 'https://asr.bitfull.tw';
