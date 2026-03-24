@@ -1086,17 +1086,12 @@ async function startTaigiStream(){
     taigiStreamWs=new WebSocket(wsUrl);
     taigiStreamWs.binaryType='arraybuffer';
     taigiStreamWs.onopen=()=>{
-      box.placeholder='初始化中…';
-      setStatus('串流 ASR 連線中…','loading','ASR');
-      setTimeout(()=>{
-        if(!taigiStreaming&&taigiStreamWs&&taigiStreamWs.readyState===WebSocket.OPEN){
-          taigiStreaming=true;
-          btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
-          box.placeholder='🔴 說台語…';
-          setStatus('說台語中…','loading','串流');
-          startTaigiStreamAudio();
-        }
-      },800);
+      box.placeholder='已連上，準備中…';
+      setStatus('WS已連上，啟動錄音…','loading','ASR');
+      taigiStreaming=true;
+      btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
+      box.placeholder='🔴 說台語…';
+      startTaigiStreamAudio();
     };
     taigiStreamWs.onmessage=(e)=>{
       try{
@@ -1126,7 +1121,12 @@ async function startTaigiStream(){
         }
       }catch(_){}
     };
-    taigiStreamWs.onerror=()=>{setStatus('串流連線失敗','err','');stopTaigiStream();};
+    taigiStreamWs.onerror=(err)=>{
+      const msg='WS錯誤：'+API.replace('https://','wss://')+'/asr-stream';
+      setStatus(msg,'err','');
+      box.placeholder=msg;
+      stopTaigiStream();
+    };
     taigiStreamWs.onclose=()=>{
       taigiStreaming=false;
       btn.classList.remove('mic-on');
