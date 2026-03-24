@@ -1087,7 +1087,7 @@ async function startTaigiStream(){
     taigiLastTranscript='';
 
     // ★ 先在用戶點擊的當下取得麥克風（Safari 要求在互動事件中）
-    taigiStreamMedia = await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+    taigiStreamMedia = await navigator.mediaDevices.getUserMedia({audio:{channelCount:1}});
 
     box.placeholder='連線中…';
     const wsUrl=API.replace('https://','wss://')+'/asr-stream';
@@ -1114,7 +1114,12 @@ async function startTaigiStream(){
           btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
           box.placeholder='🔴 說台語…';
           setStatus('說台語中…','loading','串流');
-          startTaigiStreamAudio();
+          // 等麥克風 stream 準備好再開始（getUserMedia 可能還在 await）
+          const waitMedia=()=>{
+            if(taigiStreamMedia){ startTaigiStreamAudio(); }
+            else { setTimeout(waitMedia, 100); }
+          };
+          waitMedia();
           return;
         }
         if(isError){setStatus('串流逾時，請重試','err','');stopTaigiStream();return;}
