@@ -629,7 +629,6 @@ const LANGS_IN = [
   {code:'hi',    name:'हिन्दी',    flag:'f-in', google:'hi',   tts:'hi-IN'},
 ];
 // 輸出語言：加台語
-// LANGS_OUT = LANGS_IN（已含台語在第一位）
 const LANGS_OUT = LANGS_IN;
 
 /* ════ STATE ════ */
@@ -808,14 +807,12 @@ function playTTS(txt, ttsLang, btnId, labelOn, labelOff){
   if(!('speechSynthesis' in window))return;
   const btn=document.getElementById(btnId);
   if(btn){btn.classList.add('on');btn.innerHTML=STOP_SVG+labelOn;}
-  // Safari 第一次 speechSynthesis 需要先 cancel 再 speak
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(txt);
   u.lang=ttsLang; u.rate=1.0;
   u.onend=()=>{if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
   u.onerror=()=>{if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
-  // Safari 需要延遲才能觸發
-  setTimeout(()=>speechSynthesis.speak(u), 100);
+  setTimeout(()=>speechSynthesis.speak(u),100);
 }
 function stopAllAudio(){
   if(currentAudio){currentAudio.pause();currentAudio=null;}
@@ -1059,108 +1056,95 @@ function toggleTaigiText(id){
   el.style.display=el.style.display==='none'?'block':'none';
 }
 
-/* ════ MIC ════ */
 /* ════ MIC ════
-   台語輸入 → 串流 ASR（wss:/asr-stream）→ 即時顯示 → 靜音自動停 → sendMsg
-   其他語言 → SpeechRecognition（Google）
+   台語 → 串流 ASR wss:/asr-stream → 靜音2秒自動斷句 → sendMsg
+   其他語言 → SpeechRecognition (Google)
 ════ */
-let taigiStreamWs=null, taigiStreamAudioCtx=null, taigiStreamProcessor=null, taigiStreamMedia=null;
-let taigiStreaming=false, taigiLastTranscript='';
-let taigiMaxTimer=null;
+let taigiStreamWs=null,taigiStreamACtx=null,taigiStreamProc=null,taigiStreamMedia=null;
+let taigiStreaming=false,taigiLastTranscript='',taigiMaxTimer=null;
 
 function toggleMic(){
   if(isLINE){document.getElementById('safariGuide').style.display='flex';return;}
-  if(inLang.isTaigi || inLang.code==='taigi'){
-    taigiStreaming ? stopTaigiStream() : startTaigiStream();
+  if(inLang.isTaigi||inLang.code==='taigi'){
+    taigiStreaming?stopTaigiStream():startTaigiStream();
     return;
   }
-  isRecording ? stopMic() : startMic();
+  isRecording?stopMic():startMic();
 }
 
-/* ── 台語串流 ASR ── */
 async function startTaigiStream(){
-  const btn = document.getElementById('micBtn');
-  const box = document.getElementById('inputBox');
+  const btn=document.getElementById('micBtn');
+  const box=document.getElementById('inputBox');
   try{
     silentAudio.play().catch(()=>{});
     btn.classList.add('mic-on');
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>連線中…';
+    btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>連線中…';
     document.getElementById('micWave').classList.add('on');
-    box.value = ''; box.placeholder = '連線中…';
-    taigiLastTranscript = '';
-
-    const wsUrl = API.replace('https://','wss://') + '/asr-stream';
-    taigiStreamWs = new WebSocket(wsUrl);
-    taigiStreamWs.binaryType = 'arraybuffer';
-
-    taigiStreamWs.onopen = ()=>{
-      box.placeholder = '初始化中…';
+    box.value=''; box.placeholder='連線中…';
+    taigiLastTranscript='';
+    const wsUrl=API.replace('https://','wss://')+'/asr-stream';
+    taigiStreamWs=new WebSocket(wsUrl);
+    taigiStreamWs.binaryType='arraybuffer';
+    taigiStreamWs.onopen=()=>{
+      box.placeholder='初始化中…';
       setStatus('串流 ASR 連線中…','loading','ASR');
-      // 連上後直接開始錄音，同時等 ready 確認
-      // （部分 relay 版本不送 ready，直接開始即可）
       setTimeout(()=>{
-        if(!taigiStreaming && taigiStreamWs && taigiStreamWs.readyState===WebSocket.OPEN){
-          taigiStreaming = true;
-          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
-          box.placeholder = '🔴 說台語…';
+        if(!taigiStreaming&&taigiStreamWs&&taigiStreamWs.readyState===WebSocket.OPEN){
+          taigiStreaming=true;
+          btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
+          box.placeholder='🔴 說台語…';
           setStatus('說台語中…','loading','串流');
           startTaigiStreamAudio();
         }
-      }, 800);
+      },800);
     };
-
-    taigiStreamWs.onmessage = (e)=>{
+    taigiStreamWs.onmessage=(e)=>{
       try{
-        const msg = JSON.parse(e.data);
-        const isReady = msg.type==='ready' || msg.code===180 || msg.code==='180';
-        const isResult = msg.code===200 || msg.code==='200';
-        const isError = msg.type==='error' || msg.code===408 || msg.code==='408';
-
-        if(isReady && !taigiStreaming){
-          taigiStreaming = true;
-          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
-          box.placeholder = '🔴 說台語…';
+        const msg=JSON.parse(e.data);
+        const isReady=msg.type==='ready'||msg.code===180||msg.code==='180';
+        const isResult=msg.code===200||msg.code==='200';
+        const isError=msg.type==='error'||msg.code===408||msg.code==='408';
+        if(isReady&&!taigiStreaming){
+          taigiStreaming=true;
+          btn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><rect x="9" y="9" width="6" height="6"/></svg>停止';
+          box.placeholder='🔴 說台語…';
           setStatus('說台語中…','loading','串流');
           startTaigiStreamAudio();
           return;
         }
-        if(isError){
-          setStatus('串流逾時或錯誤，請重試','err','');
-          stopTaigiStream(); return;
-        }
-        if(isResult && msg.result && Array.isArray(msg.result) && msg.result.length>0){
-          const text = msg.result[msg.result.length-1].transcript||'';
+        if(isError){setStatus('串流錯誤，請重試','err','');stopTaigiStream();return;}
+        if(isResult&&msg.result&&msg.result.length>0){
+          const text=msg.result[msg.result.length-1].transcript||'';
           if(text){
-            taigiLastTranscript = text;
-            box.value = text;
-            onInpChange(box);
+            taigiLastTranscript=text;
+            box.value=text;
+            // 直接設高度，不走 onInpChange（避免 pendingClear 清掉）
+            box.style.height='auto';
+            box.style.height=Math.min(box.scrollHeight,80)+'px';
+            document.getElementById('sendBtn').disabled=false;
           }
         }
       }catch(_){}
     };
-
-    taigiStreamWs.onerror = ()=>{
-      setStatus('串流連線失敗','err','');
-      stopTaigiStream();
-    };
-
-    taigiStreamWs.onclose = ()=>{
-      taigiStreaming = false;
+    taigiStreamWs.onerror=()=>{setStatus('串流連線失敗','err','');stopTaigiStream();};
+    taigiStreamWs.onclose=()=>{
+      taigiStreaming=false;
       btn.classList.remove('mic-on');
-      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音';
+      btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>語音';
       document.getElementById('micWave').classList.remove('on');
-      box.placeholder = '輸入台語文字，翻譯成各語言…';
-      const finalText = taigiLastTranscript || box.value.trim();
+      box.placeholder='輸入台語文字，翻譯成各語言…';
+      const finalText=taigiLastTranscript||box.value.trim();
       if(finalText){
         setStatus('辨識完成','ok','');
-        box.value = finalText;
-        onInpChange(box);
+        box.value=finalText;
+        box.style.height='auto';
+        box.style.height=Math.min(box.scrollHeight,80)+'px';
+        document.getElementById('sendBtn').disabled=false;
         sendMsg();
-      } else {
+      }else{
         setStatus('已連線 · asr.bitfull.tw','ok','');
       }
     };
-
   }catch(e){
     alert('無法使用麥克風：'+e.message);
     btn.classList.remove('mic-on');
@@ -1170,35 +1154,29 @@ async function startTaigiStream(){
 
 async function startTaigiStreamAudio(){
   try{
-    taigiStreamMedia = await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
-    taigiStreamAudioCtx = new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
-    const source = taigiStreamAudioCtx.createMediaStreamSource(taigiStreamMedia);
-    taigiStreamProcessor = taigiStreamAudioCtx.createScriptProcessor(4096,1,1);
-    let silenceTimer = null;
-    const SILENCE_MS = 2000;   // 靜音 2 秒斷句
-    const SILENCE_RMS = 0.02;  // 靜音閾值（背景雜訊約 0.005~0.015）
-    taigiMaxTimer = setTimeout(()=>{ if(taigiStreaming) stopTaigiStream(); }, 15000); // 最長 15 秒保底
-
-    taigiStreamProcessor.onaudioprocess = (e)=>{
-      if(!taigiStreaming||!taigiStreamWs||taigiStreamWs.readyState!==WebSocket.OPEN) return;
-      const f = e.inputBuffer.getChannelData(0);
-      let sum=0; for(let i=0;i<f.length;i++) sum+=f[i]*f[i];
-      const rms = Math.sqrt(sum/f.length);
-      const i16 = new Int16Array(f.length);
+    taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+    taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+    const source=taigiStreamACtx.createMediaStreamSource(taigiStreamMedia);
+    taigiStreamProc=taigiStreamACtx.createScriptProcessor(4096,1,1);
+    let silenceTimer=null;
+    const SILENCE_MS=2000, SILENCE_RMS=0.02;
+    taigiMaxTimer=setTimeout(()=>{if(taigiStreaming)stopTaigiStream();},15000);
+    taigiStreamProc.onaudioprocess=(e)=>{
+      if(!taigiStreaming||!taigiStreamWs||taigiStreamWs.readyState!==WebSocket.OPEN)return;
+      const f=e.inputBuffer.getChannelData(0);
+      let sum=0;for(let i=0;i<f.length;i++)sum+=f[i]*f[i];
+      const rms=Math.sqrt(sum/f.length);
+      const i16=new Int16Array(f.length);
       for(let i=0;i<f.length;i++){const s=Math.max(-1,Math.min(1,f[i]));i16[i]=s<0?s*0x8000:s*0x7FFF;}
       taigiStreamWs.send(i16.buffer);
-      if(rms < SILENCE_RMS){
-        if(!silenceTimer){
-          silenceTimer = setTimeout(()=>{
-            if(taigiStreaming) stopTaigiStream();
-          }, SILENCE_MS);
-        }
-      } else {
+      if(rms<SILENCE_RMS){
+        if(!silenceTimer)silenceTimer=setTimeout(()=>{if(taigiStreaming)stopTaigiStream();},SILENCE_MS);
+      }else{
         if(silenceTimer){clearTimeout(silenceTimer);silenceTimer=null;}
       }
     };
-    source.connect(taigiStreamProcessor);
-    taigiStreamProcessor.connect(taigiStreamAudioCtx.destination);
+    source.connect(taigiStreamProc);
+    taigiStreamProc.connect(taigiStreamACtx.destination);
   }catch(e){
     setStatus('麥克風錯誤：'+e.message,'err','');
     stopTaigiStream();
@@ -1206,31 +1184,28 @@ async function startTaigiStreamAudio(){
 }
 
 function stopTaigiStream(){
-  taigiStreaming = false;
+  taigiStreaming=false;
   if(taigiMaxTimer){clearTimeout(taigiMaxTimer);taigiMaxTimer=null;}
-  if(taigiStreamProcessor){taigiStreamProcessor.disconnect();taigiStreamProcessor=null;}
-  if(taigiStreamAudioCtx){taigiStreamAudioCtx.close();taigiStreamAudioCtx=null;}
+  if(taigiStreamProc){taigiStreamProc.disconnect();taigiStreamProc=null;}
+  if(taigiStreamACtx){taigiStreamACtx.close();taigiStreamACtx=null;}
   if(taigiStreamMedia){taigiStreamMedia.getTracks().forEach(t=>t.stop());taigiStreamMedia=null;}
-  if(taigiStreamWs && taigiStreamWs.readyState===WebSocket.OPEN){
+  if(taigiStreamWs&&taigiStreamWs.readyState===WebSocket.OPEN){
     taigiStreamWs.send(new ArrayBuffer(0));
     setTimeout(()=>{if(taigiStreamWs)taigiStreamWs.close();},1500);
   }
 }
 
-/* ── 其他語言 SpeechRecognition ── */
 function startMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){alert('此裝置不支援語音輸入，請直接打字');return;}
-  unlockAudio();
-  isRecording=true;
+  unlockAudio();isRecording=true;
   document.getElementById('micBtn').classList.add('mic-on');
   document.getElementById('micWave').classList.add('on');
-  rec=new SR();
-  rec.lang=inLang.tts||'zh-TW'; rec.interimResults=true;
+  rec=new SR();rec.lang=inLang.tts||'zh-TW';rec.interimResults=true;
   rec.onresult=e=>{
     const t=Array.from(e.results).map(r=>r[0].transcript).join('');
     const box=document.getElementById('inputBox');
-    box.value=t; onInpChange(box);
+    box.value=t;onInpChange(box);
     if(e.results[e.results.length-1].isFinal){stopMic();if(t.trim())sendMsg();}
   };
   rec.onerror=()=>stopMic();
