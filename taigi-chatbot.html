@@ -1197,6 +1197,7 @@ async function startTaigiStreamAudio(){
     source.connect(taigiStreamProc);
     taigiStreamProc.connect(taigiStreamACtx.destination);
   }catch(e){
+    alert('startTaigiStreamAudio 錯誤：'+e.name+' / '+e.message);
     setStatus('麥克風錯誤：'+e.message,'err','');
     stopTaigiStream();
   }
