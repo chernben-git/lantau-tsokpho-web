@@ -909,6 +909,12 @@ async function toggleMidTaigiMic(){
   const btn=document.getElementById('midMicBtn'),w=document.getElementById('mw-mid');
   if(midStreaming){ stopMidStream(); return; }
 
+  // 確保上次資源完全釋放
+  if(midStreamWs || midStreamAudioCtx || midStreamMedia){
+    stopMidStream();
+    await new Promise(r=>setTimeout(r,300));
+  }
+
   try{
     // 解鎖音頻
     silentAudio.play().catch(()=>{});
@@ -999,10 +1005,15 @@ async function toggleMidTaigiMic(){
 
 async function startMidStreamAudio(){
   try{
+    console.log('[mid] startMidStreamAudio 開始');
     midStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+    console.log('[mid] getUserMedia 成功');
     midStreamAudioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+    console.log('[mid] AudioContext 建立，state=' + midStreamAudioCtx.state);
+    if(midStreamAudioCtx.state==='suspended') await midStreamAudioCtx.resume();
     const source=midStreamAudioCtx.createMediaStreamSource(midStreamMedia);
     midStreamProcessor=midStreamAudioCtx.createScriptProcessor(4096,1,1);
+    let packetCount=0;
 
     let silenceTimer=null;
     const SILENCE_MS=800; // 靜音超過 0.8 秒自動停
@@ -1018,6 +1029,8 @@ async function startMidStreamAudio(){
       const i16=new Int16Array(f.length);
       for(let i=0;i<f.length;i++){const s=Math.max(-1,Math.min(1,f[i]));i16[i]=s<0?s*0x8000:s*0x7FFF;}
       midStreamWs.send(i16.buffer);
+      packetCount++;
+      if(packetCount===1||packetCount===5) console.log('[mid] 送出第'+packetCount+'個音頻封包，rms='+rms.toFixed(4));
 
       // 靜音偵測（RMS < 0.05 視為靜音，手機底噪約 0.01-0.03）
       if(rms < 0.05){
