@@ -1053,41 +1053,36 @@ function unlockAndMidTx(){
 async function doMidTx(){
   const ta=document.getElementById('midTA');
   const displayText=ta.value.trim();if(!displayText)return;
-  // chText 是華語，優先走 mandarin-to-world；沒有就走 from-taigi
-  const chText=ta.dataset.chText||'';
-  delete ta.dataset.chText;
   const btn=document.getElementById('midTxBtn');
   btn.classList.add('loading');btn.innerHTML=`<div class="spin"></div>翻譯中…`;
   document.getElementById('mid-stxt').textContent='翻譯中…';
   const t0=Date.now();
   try{
     const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),15000);
-    let finalText='';
-    if(chText){
-      // 有華語直接翻目標語言
-      if(midTargetLang==='zh-TW'){
-        finalText=chText;
-      } else {
-        const r=await fetch(API+'/translate/mandarin-to-world',{
-          method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({text:chText,targetLang:midTargetLang}),signal:ctrl.signal
-        });
-        clearTimeout(tid);
-        const d=await r.json();
-        if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
-        finalText=d.translated||chText;
-      }
-    } else {
-      // 沒有華語，用台語漢字走 from-taigi
-      const r=await fetch(API+'/translate/from-taigi',{
+
+    // Step 1：台語漢字 → 華語（/from-taigi 取 chText）
+    const r1=await fetch(API+'/translate/from-taigi',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:displayText,targetLang:'zh-TW'}),signal:ctrl.signal
+    });
+    clearTimeout(tid);
+    const d1=await r1.json();
+    if(!r1.ok||!d1.success)throw new Error(d1.error||'MT 失敗');
+    const chText=d1.chText||d1.translated||displayText;
+
+    // Step 2：華語 → 目標語言
+    let finalText=chText;
+    if(midTargetLang!=='zh-TW'){
+      const ctrl2=new AbortController();const tid2=setTimeout(()=>ctrl2.abort(),15000);
+      const r2=await fetch(API+'/translate/mandarin-to-world',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:displayText,targetLang:midTargetLang}),signal:ctrl.signal
+        body:JSON.stringify({text:chText,targetLang:midTargetLang}),signal:ctrl2.signal
       });
-      clearTimeout(tid);
-      const d=await r.json();
-      if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
-      finalText=d.translated||d.chText||displayText;
+      clearTimeout(tid2);
+      const d2=await r2.json();
+      if(d2.success) finalText=d2.translated||chText;
     }
+
     const el=((Date.now()-t0)/1000).toFixed(1);
     document.getElementById('mid-oe').style.display='none';
     const res=document.getElementById('mid-or');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
