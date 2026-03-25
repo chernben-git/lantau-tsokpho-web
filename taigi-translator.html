@@ -963,13 +963,17 @@ async function toggleMidTaigiMic(){
       }catch(err){}
     };
 
+    let wsHandled=false;
     midStreamWs.onerror=()=>{
       document.getElementById('mid-stxt').textContent='❌ 連線失敗';
       stopMidStream();
     };
 
     midStreamWs.onclose=()=>{
+      if(wsHandled) return;
+      wsHandled=true;
       midStreaming=false;
+      midStreamWs=null;
       btn.classList.remove('mic-on');
       btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>台語語音`;
       w.classList.remove('on');
@@ -977,7 +981,6 @@ async function toggleMidTaigiMic(){
       const finalText=midLastTranscript||document.getElementById('midTA').value.trim();
       if(finalText){
         document.getElementById('mid-stxt').textContent='✅ 辨識完成，翻譯中…';
-        // 先解鎖音頻再翻譯
         silentAudio.play().catch(()=>{});
         if(_ac && _ac.state==='suspended') _ac.resume().catch(()=>{});
         doMidTx();
@@ -1045,9 +1048,15 @@ function stopMidStream(){
   if(midStreamProcessor){midStreamProcessor.disconnect();midStreamProcessor=null;}
   if(midStreamAudioCtx){midStreamAudioCtx.close();midStreamAudioCtx=null;}
   if(midStreamMedia){midStreamMedia.getTracks().forEach(t=>t.stop());midStreamMedia=null;}
-  if(midStreamWs&&midStreamWs.readyState===WebSocket.OPEN){
-    midStreamWs.send(new ArrayBuffer(0));
-    setTimeout(()=>{if(midStreamWs)midStreamWs.close();},1500);
+  if(midStreamWs){
+    if(midStreamWs.readyState===WebSocket.OPEN){
+      midStreamWs.send(new ArrayBuffer(0));
+      setTimeout(()=>{
+        if(midStreamWs){midStreamWs.close();midStreamWs=null;}
+      },1000);
+    } else {
+      midStreamWs=null;
+    }
   }
 }
 
