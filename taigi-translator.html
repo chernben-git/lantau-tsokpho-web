@@ -944,13 +944,12 @@ async function toggleMidTaigiMic(){
           document.getElementById('mid-stxt').textContent='❌ '+msg.message;
           stopMidStream(); return;
         }
-        // 辨識結果：transcript 是廖教授ASR原始輸出（可能是華語字）
+        // 辨識結果：保留最長的 transcript，避免短 segment 覆蓋長的
         if(msg.result&&Array.isArray(msg.result)&&msg.result.length>0){
           const seg=msg.result[msg.result.length-1];
           const text=seg.transcript||'';
-          if(text){
+          if(text && text.length>=(midLastTranscript||'').length){
             midLastTranscript=text;
-            // 暫時顯示 ASR 原始輸出（等翻譯完再換成台語漢字）
             document.getElementById('midTA').value=text;
           }
         }
@@ -993,7 +992,7 @@ async function startMidStreamAudio(){
     midStreamProcessor=midStreamAudioCtx.createScriptProcessor(4096,1,1);
 
     let silenceTimer=null;
-    const SILENCE_MS=1500; // 靜音超過 1.5 秒自動停
+    const SILENCE_MS=800; // 靜音超過 0.8 秒自動停
 
     midStreamProcessor.onaudioprocess=(e)=>{
       if(!midStreaming||!midStreamWs||midStreamWs.readyState!==WebSocket.OPEN) return;
