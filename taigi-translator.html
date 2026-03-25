@@ -933,7 +933,6 @@ async function toggleMidTaigiMic(){
       try{
         const msg=JSON.parse(e.data);
         if(msg.type==='ready'){
-          // 上游就緒，開始錄音
           midStreaming=true;
           btn.innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><rect x="9" y="9" width="6" height="6"/></svg>停止`;
           document.getElementById('mid-stxt').textContent='🔴 說台語中…';
@@ -944,8 +943,16 @@ async function toggleMidTaigiMic(){
           document.getElementById('mid-stxt').textContent='❌ '+msg.message;
           stopMidStream(); return;
         }
-        // 辨識結果：保留最長的 transcript，避免短 segment 覆蓋長的
-        if(msg.result&&Array.isArray(msg.result)&&msg.result.length>0){
+        // code:408 = 廖教授偵測到靜音逾時 → 自動停止
+        if(msg.code===408){
+          if(midLastTranscript && midStreaming){
+            document.getElementById('mid-stxt').textContent='偵測到停頓，自動停止…';
+            stopMidStream();
+          }
+          return;
+        }
+        // 辨識結果：保留最長的 transcript
+        if(msg.code===200&&msg.result&&Array.isArray(msg.result)&&msg.result.length>0){
           const seg=msg.result[msg.result.length-1];
           const text=seg.transcript||'';
           if(text && text.length>=(midLastTranscript||'').length){
@@ -970,6 +977,9 @@ async function toggleMidTaigiMic(){
       const finalText=midLastTranscript||document.getElementById('midTA').value.trim();
       if(finalText){
         document.getElementById('mid-stxt').textContent='✅ 辨識完成，翻譯中…';
+        // 先解鎖音頻再翻譯
+        silentAudio.play().catch(()=>{});
+        if(_ac && _ac.state==='suspended') _ac.resume().catch(()=>{});
         doMidTx();
       } else {
         document.getElementById('mid-stxt').textContent='已連線 · asr.bitfull.tw';
