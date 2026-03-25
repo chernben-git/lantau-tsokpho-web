@@ -975,6 +975,7 @@ async function sendMsg(){
       renderOut('outABody','outAEmpty','A', resA, showTailo);
       renderOut('outBBody','outBEmpty','B', resB, showTailo);
 
+      if(autoPlayA||autoPlayB) silentAudio.play().catch(()=>{});
       if(autoPlayA){
         if(resA.type==='taigi' && resA.audio) playWav(resA.audio,'playA-btn','停止','播台語');
         else if(resA.type==='other' && resA.text) playTTS(resA.text, resA.tts, 'playA-btn','停止','播放');
@@ -1086,7 +1087,6 @@ async function startTaigiStream(){
     document.getElementById('micWave').classList.add('on');
     box.value=''; box.placeholder='連線中…';
     taigiLastTranscript='';
-
     const wsUrl=API.replace('https://','wss://')+'/asr-stream';
     taigiStreamWs=new WebSocket(wsUrl);
     taigiStreamWs.binaryType='arraybuffer';
@@ -1167,12 +1167,9 @@ async function startTaigiStream(){
 async function startTaigiStreamAudio(){
   const box=document.getElementById('inputBox');
   try{
-    // taigiStreamMedia 已在按鈕點擊時取得，這裡直接用
-    if(!taigiStreamMedia){
-      taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
-    }
+    // 完全照翻譯機實作
+    taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
     taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
-    if(taigiStreamACtx.state==='suspended') await taigiStreamACtx.resume();
     const source=taigiStreamACtx.createMediaStreamSource(taigiStreamMedia);
     taigiStreamProc=taigiStreamACtx.createScriptProcessor(4096,1,1);
     let silenceTimer=null;
@@ -1203,7 +1200,6 @@ async function startTaigiStreamAudio(){
 }
 
 function stopTaigiStream(){
-  console.log('[taigi] stopTaigiStream 被呼叫', new Error().stack.split('\n')[2]);
   taigiConnecting=false;
   taigiStreaming=false;
   if(taigiMaxTimer){clearTimeout(taigiMaxTimer);taigiMaxTimer=null;}
