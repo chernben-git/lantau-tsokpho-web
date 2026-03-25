@@ -1093,12 +1093,12 @@ async function doMidTx(){
         const spk=document.getElementById('midVM').classList.contains('active')?'nan-TW-vs2-M02':'nan-TW-vs2-F01';
         playNanTwTts(finalText,spk,'mid-stxt');
       } else if(midTargetLang==='zh-TW'){
-        // 華語用廖教授 TTS
+        // 華語用廖教授 TTS，直接播放不改 Tab1 按鈕
         const spk=document.getElementById('midVM').classList.contains('active')?'male':'female';
         try{
           const rTts=await fetch(API+'/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:finalText,speaker:spk})});
           const dTts=await rTts.json();
-          if(dTts.audioBase64) playWavBase64(dTts.audioBase64);
+          if(dTts.audioBase64) playAudioBase64Direct(dTts.audioBase64);
         }catch(e){}
       } else if('speechSynthesis'in window){
         // 其他語言用 speechSynthesis
@@ -1547,6 +1547,22 @@ function unlockAndTx(){
 }
 
 // 播放 base64 WAV - 用 AudioContext 解碼播放（Safari 最可靠）
+// Tab 2 / 純播音，不改按鈕狀態
+async function playAudioBase64Direct(base64){
+  try{
+    const wav=atob(base64),buf=new Uint8Array(wav.length);
+    for(let i=0;i<wav.length;i++)buf[i]=wav.charCodeAt(i);
+    const ac=_ac||new(window.AudioContext||window.webkitAudioContext)();
+    if(_ac===null)_ac=ac;
+    if(ac.state==='suspended') await ac.resume();
+    const decoded=await ac.decodeAudioData(buf.buffer.slice(0));
+    const src=ac.createBufferSource();
+    src.buffer=decoded;
+    src.connect(ac.destination);
+    src.start(0);
+  }catch(e){console.log('playAudioBase64Direct failed:',e);}
+}
+
 async function playWavBase64(base64){
   const pb=document.getElementById('playBtn');
   pb.classList.add('playing');
