@@ -1098,30 +1098,17 @@ async function doMidTx(){
       silentAudio.play().catch(()=>{});
       if(_ac && _ac.state==='suspended') _ac.resume().catch(()=>{});
       if(midTargetLang==='en'){
-        // 英文用廖教授 nan-TW TTS
+        // 英文用廖教授 nan-TW TTS（台語腔英文）
         const spk=document.getElementById('midVM').classList.contains('active')?'nan-TW-vs2-M02':'nan-TW-vs2-F01';
         playNanTwTts(finalText,spk,'mid-stxt');
       } else {
-        // 華語/其他語言都用廖教授 TTS（華語）或 speechSynthesis
-        const chTextForPlay = d.chText || finalText;
-        const spk=document.getElementById('midVM').classList.contains('active')?'male':'female';
-        try{
-          const rTts=await fetch(API+'/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:chTextForPlay,speaker:spk})});
-          const dTts=await rTts.json();
-          if(dTts.audioBase64){ playAudioBase64Direct(dTts.audioBase64); }
-          else if('speechSynthesis'in window){
-            speechSynthesis.cancel();
-            const u=new SpeechSynthesisUtterance(finalText);
-            u.lang=midTargetTts;u.rate=spds[midSpd];
-            speechSynthesis.speak(u);
-          }
-        }catch(e){
-          if('speechSynthesis'in window){
-            speechSynthesis.cancel();
-            const u=new SpeechSynthesisUtterance(finalText);
-            u.lang=midTargetTts;u.rate=spds[midSpd];
-            speechSynthesis.speak(u);
-          }
+        // 華語/其他語言用系統 speechSynthesis
+        if('speechSynthesis'in window){
+          speechSynthesis.cancel();
+          const u=new SpeechSynthesisUtterance(finalText);
+          u.lang=midTargetTts||'zh-TW';
+          u.rate=spds[midSpd];
+          speechSynthesis.speak(u);
         }
       }
     }
