@@ -795,9 +795,7 @@ function playWav(b64, btnId, labelOn, labelOff){
   stopAllAudio();
   const btn=document.getElementById(btnId);
   if(btn){btn.classList.add('on');btn.innerHTML=STOP_SVG+labelOn;}
-  let _src=null;
-  // 先設 currentAudio，讓停止按鈕能立即作用
-  currentAudio={pause:()=>{try{if(_src)_src.stop();}catch(_){}}};
+  // 用 AudioContext 播放，不受 iOS user gesture 限制
   (async()=>{
     try{
       if(!silentAC)silentAC=new(window.AudioContext||window.webkitAudioContext)();
@@ -805,12 +803,13 @@ function playWav(b64, btnId, labelOn, labelOff){
       const bin=atob(b64),arr=new Uint8Array(bin.length);
       for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
       const decoded=await silentAC.decodeAudioData(arr.buffer.slice(0));
-      _src=silentAC.createBufferSource();
-      _src.buffer=decoded;
-      _src.connect(silentAC.destination);
-      _src.onended=()=>{currentAudio=null;if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
-      _src.start(0);
-    }catch(e){currentAudio=null;if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}}
+      const src=silentAC.createBufferSource();
+      src.buffer=decoded;
+      src.connect(silentAC.destination);
+      currentAudio={pause:()=>{try{src.stop();}catch(_){}},_src:src};
+      src.onended=()=>{currentAudio=null;if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
+      src.start(0);
+    }catch(e){if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}}
   })();
 }
 function playTTS(txt, ttsLang, btnId, labelOn, labelOff){
