@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台語翻譯橋接語言品質測試</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans TC',system-ui,sans-serif;background:#f0ebe3;padding:16px;max-width:640px;margin:0 auto;}
+h2{color:#C8352A;margin-bottom:4px;font-size:19px;}
+.sub{color:#888;font-size:12px;margin-bottom:14px;}
+.card{background:white;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+.card h3{margin:0 0 8px;font-size:13px;color:#555;font-weight:600;}
+textarea{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px;font-size:16px;resize:none;outline:none;}
+textarea:focus{border-color:#C8352A;}
+.lang-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.lbtn{padding:6px 12px;border-radius:16px;border:1.5px solid #ddd;background:white;font-size:12px;cursor:pointer;transition:all 0.15s;}
+.lbtn.active{background:#C8352A;border-color:#C8352A;color:white;font-weight:700;}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+button.big{padding:12px 20px;border-radius:22px;border:none;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.btn-run{background:#1a1a3a;color:white;}
+.btn-clr{background:#eee;color:#666;}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.col{border-radius:10px;padding:12px;min-height:80px;}
+.col-a{background:#fff0f0;border:2px solid #C8352A;}
+.col-b{background:#f0f0ff;border:2px solid #1a1a3a;}
+.col-label{font-size:10px;font-weight:700;letter-spacing:0.06em;margin-bottom:6px;text-transform:uppercase;}
+.col-a .col-label{color:#C8352A;}
+.col-b .col-label{color:#1a1a3a;}
+.col-result{font-size:17px;font-weight:700;line-height:1.5;color:#1a1a3a;min-height:40px;}
+.col-bridge{font-size:11px;color:#888;margin-top:6px;padding:4px 8px;background:rgba(0,0,0,0.04);border-radius:6px;}
+.col-time{font-size:11px;margin-top:6px;font-weight:600;}
+.col-a .col-time{color:#C8352A;}
+.col-b .col-time{color:#1a1a3a;}
+.winner-badge{text-align:center;padding:10px;border-radius:8px;font-size:13px;font-weight:700;margin-top:10px;}
+.win-a{background:#fff0f0;color:#C8352A;}
+.win-b{background:#f0f0ff;color:#1a1a3a;}
+.win-tie{background:#f0f5f0;color:#2e7d32;}
+.vote-row{display:flex;gap:8px;margin-top:8px;}
+.vote-btn{flex:1;padding:8px;border-radius:8px;border:1.5px solid #ddd;background:white;font-size:12px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+.vote-btn:hover{border-color:#C8352A;color:#C8352A;}
+.score-row{display:flex;justify-content:space-between;font-size:12px;color:#888;padding:4px 0;}
+.score-val{font-weight:700;font-size:14px;}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status{font-size:12px;color:#888;margin-top:6px;min-height:16px;}
+.tts-row{display:flex;gap:6px;margin-top:8px;}
+.tts-btn{padding:6px 12px;border-radius:12px;border:1.5px solid #ddd;background:white;font-size:11px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;}
+.tts-btn:hover{border-color:#C8352A;color:#C8352A;}
+</style>
+</head>
+<body>
+
+<h2>🔬 台語翻譯橋接語言品質測試</h2>
+<p class="sub">華語橋接 vs 英文橋接，哪個翻譯更準確？</p>
+
+<div class="card">
+  <h3>輸入台語漢字</h3>
+  <textarea id="inputTA" rows="2" placeholder="例如：咱今仔日去台南好無？咱做伙來吃飯。">咱今仔日去台南好無？</textarea>
+</div>
+
+<div class="card">
+  <h3>目標語言</h3>
+  <div class="lang-grid" id="langGrid">
+    <button class="lbtn active" data-lang="ja" data-name="日語" onclick="selLang(this)">🇯🇵 日語</button>
+    <button class="lbtn" data-lang="en" data-name="English" onclick="selLang(this)">🇺🇸 English</button>
+    <button class="lbtn" data-lang="th" data-name="ไทย" onclick="selLang(this)">🇹🇭 ไทย</button>
+    <button class="lbtn" data-lang="vi" data-name="Việt" onclick="selLang(this)">🇻🇳 Việt</button>
+    <button class="lbtn" data-lang="ko" data-name="한국어" onclick="selLang(this)">🇰🇷 한국어</button>
+    <button class="lbtn" data-lang="id" data-name="Indonesia" onclick="selLang(this)">🇮🇩 Indonesia</button>
+    <button class="lbtn" data-lang="ms" data-name="Melayu" onclick="selLang(this)">🇲🇾 Melayu</button>
+    <button class="lbtn" data-lang="fr" data-name="Français" onclick="selLang(this)">🇫🇷 Français</button>
+    <button class="lbtn" data-lang="de" data-name="Deutsch" onclick="selLang(this)">🇩🇪 Deutsch</button>
+    <button class="lbtn" data-lang="es" data-name="Español" onclick="selLang(this)">🇪🇸 Español</button>
+  </div>
+  <div class="btn-row">
+    <button class="big btn-run" id="runBtn" onclick="runTest()">
+      <span id="runSpinner" style="display:none" class="spin"></span>
+      🚀 同時比較兩條路線
+    </button>
+    <button class="big btn-clr" onclick="clearAll()">清除</button>
+  </div>
+  <div class="status" id="status">輸入台語漢字後按比較</div>
+</div>
+
+<div class="card" id="resultCard" style="display:none">
+  <h3>📊 比較結果</h3>
+
+  <div style="font-size:11px;color:#888;margin-bottom:8px;">
+    橋接語言：<b id="bridgeLabel">—</b>
+  </div>
+
+  <div class="compare-grid">
+    <div class="col col-a">
+      <div class="col-label">路線A：華語橋接</div>
+      <div class="col-result" id="resultA">—</div>
+      <div class="col-bridge" id="bridgeA">華語：—</div>
+      <div class="col-time" id="timeA">—</div>
+      <div class="tts-row">
+        <button class="tts-btn" onclick="speak(document.getElementById('resultA').textContent, targetTts)">🔊 播放</button>
+      </div>
+    </div>
+    <div class="col col-b">
+      <div class="col-label">路線B：英文橋接</div>
+      <div class="col-result" id="resultB">—</div>
+      <div class="col-bridge" id="bridgeB">英文：—</div>
+      <div class="col-time" id="timeB">—</div>
+      <div class="tts-row">
+        <button class="tts-btn" onclick="speak(document.getElementById('resultB').textContent, targetTts)">🔊 播放</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="verdict" style="display:none" class="winner-badge"></div>
+
+  <div style="margin-top:12px;">
+    <div style="font-size:12px;color:#555;margin-bottom:6px;font-weight:600;">你覺得哪個翻得比較準？</div>
+    <div class="vote-row">
+      <button class="vote-btn" onclick="vote('A')">👈 路線A（華語）更準</button>
+      <button class="vote-btn" onclick="vote('tie')">🤝 差不多</button>
+      <button class="vote-btn" onclick="vote('B')">路線B（英文）更準 👉</button>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;padding:10px;background:#fafafa;border-radius:8px;">
+    <div class="score-row">
+      <span>路線A（華語）勝出</span>
+      <span class="score-val" id="scoreA" style="color:#C8352A;">0</span>
+    </div>
+    <div class="score-row">
+      <span>路線B（英文）勝出</span>
+      <span class="score-val" id="scoreB" style="color:#1a1a3a;">0</span>
+    </div>
+    <div class="score-row">
+      <span>平手</span>
+      <span class="score-val" id="scoreTie" style="color:#888;">0</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://asr.bitfull.tw';
+let targetLang = 'ja';
+let targetName = '日語';
+let targetTts = 'ja-JP';
+let scores = {A:0, B:0, tie:0};
+
+const ttsMap = {
+  ja:'ja-JP', en:'en-US', th:'th-TH', vi:'vi-VN',
+  ko:'ko-KR', id:'id-ID', ms:'ms-MY', fr:'fr-FR',
+  de:'de-DE', es:'es-ES'
+};
+
+function selLang(btn){
+  document.querySelectorAll('.lbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  targetLang = btn.dataset.lang;
+  targetName = btn.dataset.name;
+  targetTts = ttsMap[targetLang]||'en-US';
+}
+
+function clearAll(){
+  document.getElementById('resultCard').style.display='none';
+  document.getElementById('status').textContent='輸入台語漢字後按比較';
+}
+
+async function runTest(){
+  const text = document.getElementById('inputTA').value.trim();
+  if(!text){ alert('請輸入台語漢字'); return; }
+
+  const btn = document.getElementById('runBtn');
+  const spinner = document.getElementById('runSpinner');
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  document.getElementById('status').textContent = '兩條路線同時跑中…';
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('resultA').textContent = '翻譯中…';
+  document.getElementById('resultB').textContent = '翻譯中…';
+  document.getElementById('verdict').style.display = 'none';
+  document.getElementById('bridgeLabel').textContent = `台語→${targetName}`;
+
+  // 路線A：台語 → 華語 → 目標語言
+  const runA = async () => {
+    const t0 = Date.now();
+    const r = await fetch(API + '/translate/from-taigi', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text, targetLang})
+    });
+    const d = await r.json();
+    return {
+      result: d.translated || d.chText || '',
+      bridge: d.chText || '',
+      ms: Date.now() - t0
+    };
+  };
+
+  // 路線B：台語 → 英文 → 目標語言（兩步）
+  const runB = async () => {
+    const t0 = Date.now();
+    // Step 1: 台語→英文
+    const r1 = await fetch(API + '/translate/from-taigi', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text, targetLang: 'en'})
+    });
+    const d1 = await r1.json();
+    const enText = d1.translated || d1.chText || '';
+
+    // 如果目標語言就是英文，直接用
+    if(targetLang === 'en'){
+      return { result: enText, bridge: enText, ms: Date.now() - t0 };
+    }
+
+    // Step 2: 英文→目標語言
+    const r2 = await fetch(API + '/translate/mandarin-to-world', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text: enText, targetLang})
+    });
+    const d2 = await r2.json();
+    return {
+      result: d2.translated || enText,
+      bridge: enText,
+      ms: Date.now() - t0
+    };
+  };
+
+  try{
+    const [a, b] = await Promise.all([runA(), runB()]);
+
+    document.getElementById('resultA').textContent = a.result;
+    document.getElementById('bridgeA').textContent = '華語橋接：' + a.bridge;
+    document.getElementById('timeA').textContent = `⏱ ${(a.ms/1000).toFixed(2)}秒`;
+
+    document.getElementById('resultB').textContent = b.result;
+    document.getElementById('bridgeB').textContent = '英文橋接：' + b.bridge;
+    document.getElementById('timeB').textContent = `⏱ ${(b.ms/1000).toFixed(2)}秒`;
+
+    // 速度判定
+    const verdict = document.getElementById('verdict');
+    verdict.style.display = 'block';
+    const diff = b.ms - a.ms;
+    if(Math.abs(diff) < 300){
+      verdict.className = 'winner-badge win-tie';
+      verdict.textContent = '⚖️ 兩條路線速度相近，請比較品質！';
+    } else if(diff > 0){
+      verdict.className = 'winner-badge win-a';
+      verdict.textContent = `⚡ 路線A（華語橋接）快 ${(diff/1000).toFixed(1)} 秒`;
+    } else {
+      verdict.className = 'winner-badge win-b';
+      verdict.textContent = `⚡ 路線B（英文橋接）快 ${(Math.abs(diff)/1000).toFixed(1)} 秒`;
+    }
+
+    document.getElementById('status').textContent = `完成！A=${(a.ms/1000).toFixed(1)}秒 B=${(b.ms/1000).toFixed(1)}秒`;
+  }catch(e){
+    document.getElementById('status').textContent = '錯誤：' + e.message;
+  }
+
+  spinner.style.display = 'none';
+  btn.disabled = false;
+}
+
+function vote(side){
+  scores[side]++;
+  document.getElementById('scoreA').textContent = scores.A;
+  document.getElementById('scoreB').textContent = scores.B;
+  document.getElementById('scoreTie').textContent = scores.tie;
+
+  const msg = side==='A' ? '👈 記錄：華語橋接更準' : side==='B' ? '👉 記錄：英文橋接更準' : '🤝 記錄：差不多';
+  document.getElementById('status').textContent = msg;
+}
+
+function speak(text, lang){
+  if(!text || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  speechSynthesis.speak(u);
+}
+</script>
+</body>
+</html>
