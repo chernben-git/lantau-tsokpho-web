@@ -944,12 +944,13 @@ async function toggleMidTaigiMic(){
           document.getElementById('mid-stxt').textContent='❌ '+msg.message;
           stopMidStream(); return;
         }
-        // 辨識結果
+        // 辨識結果：transcript 是廖教授ASR原始輸出（可能是華語字）
         if(msg.result&&Array.isArray(msg.result)&&msg.result.length>0){
           const seg=msg.result[msg.result.length-1];
           const text=seg.transcript||'';
           if(text){
             midLastTranscript=text;
+            // 暫時顯示 ASR 原始輸出（等翻譯完再換成台語漢字）
             document.getElementById('midTA').value=text;
           }
         }
@@ -1068,10 +1069,12 @@ async function doMidTx(){
     const d=await r.json();
     if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
 
-    // 目標語言是華語時用 chText，其他用 translated
-    const finalText=midTargetLang==='zh-TW'?(d.chText||d.translated||displayText):(d.translated||d.chText||displayText);
+    // 上面輸入欄：改顯示台語漢字（chText 才是真正的台語漢字）
+    const taigiText=d.chText||displayText;
+    document.getElementById('midTA').value=taigiText;
 
-    // 輸入欄保持台語漢字（displayText），不改動
+    // 下面結果欄：目標語言翻譯結果
+    const finalText=midTargetLang==='zh-TW'?(d.chText||displayText):(d.translated||d.chText||displayText);
     const el=((Date.now()-t0)/1000).toFixed(1);
     document.getElementById('mid-oe').style.display='none';
     const res=document.getElementById('mid-or');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
