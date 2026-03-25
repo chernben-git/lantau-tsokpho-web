@@ -1206,6 +1206,7 @@ async function startTaigiStreamAudio(){
 }
 
 function stopTaigiStream(){
+  console.log('[taigi] stopTaigiStream 被呼叫', new Error().stack.split('\n')[2]);
   taigiConnecting=false;
   taigiStreaming=false;
   if(taigiMaxTimer){clearTimeout(taigiMaxTimer);taigiMaxTimer=null;}
