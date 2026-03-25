@@ -1086,6 +1086,11 @@ async function startTaigiStream(){
     document.getElementById('micWave').classList.add('on');
     box.value=''; box.placeholder='連線中…';
     taigiLastTranscript='';
+
+    // 先在 user gesture context 取得麥克風
+    if(taigiStreamMedia){taigiStreamMedia.getTracks().forEach(t=>t.stop());taigiStreamMedia=null;}
+    taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+
     const wsUrl=API.replace('https://','wss://')+'/asr-stream';
     taigiStreamWs=new WebSocket(wsUrl);
     taigiStreamWs.binaryType='arraybuffer';
@@ -1166,8 +1171,10 @@ async function startTaigiStream(){
 async function startTaigiStreamAudio(){
   const box=document.getElementById('inputBox');
   try{
-    // 完全照翻譯機實作
-    taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+    // taigiStreamMedia 已在按鈕點擊時取得，這裡直接用
+    if(!taigiStreamMedia){
+      taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+    }
     taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
     const source=taigiStreamACtx.createMediaStreamSource(taigiStreamMedia);
     taigiStreamProc=taigiStreamACtx.createScriptProcessor(4096,1,1);
