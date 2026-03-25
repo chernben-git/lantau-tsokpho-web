@@ -794,23 +794,12 @@ function playWav(b64, btnId, labelOn, labelOff){
   unlockAudio();
   stopAllAudio();
   const btn=document.getElementById(btnId);
+  const blob=b64Blob(b64,'audio/wav');
+  const url=URL.createObjectURL(blob);
+  currentAudio=new Audio(url);
   if(btn){btn.classList.add('on');btn.innerHTML=STOP_SVG+labelOn;}
-  // 用 AudioContext 播放，不受 iOS user gesture 限制
-  (async()=>{
-    try{
-      if(!silentAC)silentAC=new(window.AudioContext||window.webkitAudioContext)();
-      if(silentAC.state==='suspended')await silentAC.resume();
-      const bin=atob(b64),arr=new Uint8Array(bin.length);
-      for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
-      const decoded=await silentAC.decodeAudioData(arr.buffer.slice(0));
-      const src=silentAC.createBufferSource();
-      src.buffer=decoded;
-      src.connect(silentAC.destination);
-      currentAudio={pause:()=>{try{src.stop();}catch(_){}},_src:src};
-      src.onended=()=>{currentAudio=null;if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
-      src.start(0);
-    }catch(e){if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}}
-  })();
+  currentAudio.onended=()=>{URL.revokeObjectURL(url);if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}};
+  currentAudio.play().catch(()=>{if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+labelOff;}});
 }
 function playTTS(txt, ttsLang, btnId, labelOn, labelOff){
   unlockAudio();
@@ -827,6 +816,7 @@ function playTTS(txt, ttsLang, btnId, labelOn, labelOff){
 }
 function stopAllAudio(){
   if(currentAudio){currentAudio.pause();currentAudio=null;}
+  if(currentACSource){try{currentACSource.stop();}catch(_){}currentACSource=null;}
   if(speechSynthesis.speaking) speechSynthesis.cancel();
 }
 function togglePlayWav(b64, btnId, labelOn, labelOff){
@@ -840,6 +830,31 @@ function togglePlayTTS(txt, ttsLang, btnId, labelOn, labelOff){
   playTTS(txt, ttsLang, btnId, labelOn, labelOff);
 }
 function b64Blob(b64,mime){const bin=atob(b64),arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
+
+let currentACSource = null; // 存 AudioContext source 用於停止
+
+async function playAudioB64(b64, btnId, labelOn, labelOff){
+  try{
+    stopAllAudio(); // 先停上一個
+    if(!silentAC) silentAC=new(window.AudioContext||window.webkitAudioContext)();
+    if(silentAC.state==='suspended') await silentAC.resume();
+    const bin=atob(b64), arr=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    const decoded=await silentAC.decodeAudioData(arr.buffer.slice(0));
+    const src=silentAC.createBufferSource();
+    src.buffer=decoded;
+    src.connect(silentAC.destination);
+    currentACSource=src;
+    const btn=btnId?document.getElementById(btnId):null;
+    if(btn){btn.classList.add('on');btn.innerHTML=STOP_SVG+(labelOn||'停止');}
+    src.onended=()=>{
+      currentACSource=null;
+      if(btn){btn.classList.remove('on');btn.innerHTML=PLAY_SVG+(labelOff||'播台語');}
+    };
+    src.start(0);
+  }catch(e){console.log('playAudioB64 failed:',e);}
+}
+}
 
 /* ════ SEND ════
    所有語言統一走 Gemini AI 對話：
@@ -986,13 +1001,16 @@ async function sendMsg(){
       renderOut('outABody','outAEmpty','A', resA, showTailo);
       renderOut('outBBody','outBEmpty','B', resB, showTailo);
 
+      if(autoPlayA||autoPlayB) silentAudio.play().catch(()=>{});
       if(autoPlayA){
-        if(resA.type==='taigi' && resA.audio) playWav(resA.audio,'playA-btn','停止','播台語');
-        else if(resA.type==='other' && resA.text) playTTS(resA.text, resA.tts, 'playA-btn','停止','播放');
+        if(resA.type==='taigi' && resA.audio){
+          playAudioB64(resA.audio,'playA-btn','停止','播台語');
+        } else if(resA.type==='other' && resA.text) playTTS(resA.text, resA.tts, 'playA-btn','停止','播放');
       }
       if(autoPlayB){
-        if(resB.type==='taigi' && resB.audio) playWav(resB.audio,'playB-btn','停止','播台語');
-        else if(resB.type==='other' && resB.text) playTTS(resB.text, resB.tts, 'playB-btn','停止','播放');
+        if(resB.type==='taigi' && resB.audio){
+          playAudioB64(resB.audio,'playB-btn','停止','播台語');
+        } else if(resB.type==='other' && resB.text) playTTS(resB.text, resB.tts, 'playB-btn','停止','播放');
       }
 
       const histText = resA.type==='taigi' ? resA.taigi : resA.text;
@@ -1018,7 +1036,7 @@ function renderOut(bodyId, emptyId, side, res, showTailo){
     html = `
       <div class="out-acts">
         ${res.audio ? `<button class="act-btn play-taigi" id="${btnId}"
-          onclick="togglePlayWav(document.getElementById('aud-${side}').value,'${btnId}','停止','播台語')">
+          onclick="playAudioB64(document.getElementById('aud-${side}').value,'${btnId}','停止','播台語')">
           ${PLAY_SVG}播台語</button>` : ''}
         <button class="act-btn copy-btn" id="${cpId}" onclick="doCopy('txt-${side}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10">
@@ -1087,6 +1105,13 @@ function toggleMic(){
 
 async function startTaigiStream(){
   if(taigiConnecting||taigiStreaming)return;
+
+  // 確保上次資源完全釋放
+  if(taigiStreamWs||taigiStreamACtx||taigiStreamMedia){
+    stopTaigiStream();
+    await new Promise(r=>setTimeout(r,300));
+  }
+
   taigiConnecting=true;
   const btn=document.getElementById('micBtn');
   const box=document.getElementById('inputBox');
@@ -1097,6 +1122,11 @@ async function startTaigiStream(){
     document.getElementById('micWave').classList.add('on');
     box.value=''; box.placeholder='連線中…';
     taigiLastTranscript='';
+
+    // 在 user gesture context（按鈕點擊）裡先取得麥克風
+    if(taigiStreamMedia){taigiStreamMedia.getTracks().forEach(t=>t.stop());taigiStreamMedia=null;}
+    taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:true});
+
     const wsUrl=API.replace('https://','wss://')+'/asr-stream';
     taigiStreamWs=new WebSocket(wsUrl);
     taigiStreamWs.binaryType='arraybuffer';
@@ -1177,13 +1207,16 @@ async function startTaigiStream(){
 async function startTaigiStreamAudio(){
   const box=document.getElementById('inputBox');
   try{
-    // 完全照翻譯機實作
-    taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1}});
+    // taigiStreamMedia 已在按鈕點擊時取得
+    if(!taigiStreamMedia){
+      taigiStreamMedia=await navigator.mediaDevices.getUserMedia({audio:true});
+    }
     taigiStreamACtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+    if(taigiStreamACtx.state==='suspended') await taigiStreamACtx.resume();
     const source=taigiStreamACtx.createMediaStreamSource(taigiStreamMedia);
     taigiStreamProc=taigiStreamACtx.createScriptProcessor(4096,1,1);
     let silenceTimer=null;
-    const SILENCE_MS=2000, SILENCE_RMS=0.02;
+    const SILENCE_MS=2000, SILENCE_RMS=0.05;
     taigiMaxTimer=setTimeout(()=>{if(taigiStreaming)stopTaigiStream();},15000);
     taigiStreamProc.onaudioprocess=(e)=>{
       if(!taigiStreaming||!taigiStreamWs||taigiStreamWs.readyState!==WebSocket.OPEN)return;
@@ -1194,7 +1227,9 @@ async function startTaigiStreamAudio(){
       for(let i=0;i<f.length;i++){const s=Math.max(-1,Math.min(1,f[i]));i16[i]=s<0?s*0x8000:s*0x7FFF;}
       taigiStreamWs.send(i16.buffer);
       if(rms<SILENCE_RMS){
-        if(!silenceTimer)silenceTimer=setTimeout(()=>{if(taigiStreaming)stopTaigiStream();},SILENCE_MS);
+        if(!silenceTimer)silenceTimer=setTimeout(()=>{
+          if(taigiStreaming && taigiLastTranscript) stopTaigiStream(); // 有結果才停
+        },SILENCE_MS);
       }else{
         if(silenceTimer){clearTimeout(silenceTimer);silenceTimer=null;}
       }
