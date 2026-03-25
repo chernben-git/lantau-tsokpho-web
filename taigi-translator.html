@@ -1067,8 +1067,11 @@ async function doMidTx(){
     clearTimeout(tid);
     const d=await r.json();
     if(!r.ok||!d.success)throw new Error(d.error||'翻譯失敗');
-    const finalText=d.translated||d.chText||displayText;
 
+    // 目標語言是華語時用 chText，其他用 translated
+    const finalText=midTargetLang==='zh-TW'?(d.chText||d.translated||displayText):(d.translated||d.chText||displayText);
+
+    // 輸入欄保持台語漢字（displayText），不改動
     const el=((Date.now()-t0)/1000).toFixed(1);
     document.getElementById('mid-oe').style.display='none';
     const res=document.getElementById('mid-or');res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
@@ -1077,13 +1080,29 @@ async function doMidTx(){
     document.getElementById('midResLName').textContent=midTargetName;
     document.getElementById('mid-ttag').textContent=el+'秒';
     document.getElementById('mid-stxt').textContent=`完成 · ${el}秒 · asr.bitfull.tw`;
+
+    // 自動播放
     const autoPlay=document.getElementById('midAutoPlayTog').classList.contains('on');
-    if(autoPlay){
+    if(autoPlay && finalText){
+      silentAudio.play().catch(()=>{});
       if(midTargetLang==='en'){
+        // 英文用廖教授 nan-TW TTS
         const spk=document.getElementById('midVM').classList.contains('active')?'nan-TW-vs2-M02':'nan-TW-vs2-F01';
         playNanTwTts(finalText,spk,'mid-stxt');
+      } else if(midTargetLang==='zh-TW'){
+        // 華語用廖教授 TTS
+        const spk=document.getElementById('midVM').classList.contains('active')?'male':'female';
+        try{
+          const rTts=await fetch(API+'/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:finalText,speaker:spk})});
+          const dTts=await rTts.json();
+          if(dTts.audioBase64) playWavBase64(dTts.audioBase64);
+        }catch(e){}
       } else if('speechSynthesis'in window){
-        speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(finalText);u.lang=midTargetTts;u.rate=spds[midSpd];speechSynthesis.speak(u);
+        // 其他語言用 speechSynthesis
+        speechSynthesis.cancel();
+        const u=new SpeechSynthesisUtterance(finalText);
+        u.lang=midTargetTts;u.rate=spds[midSpd];
+        speechSynthesis.speak(u);
       }
     }
   }catch(e){document.getElementById('mid-stxt').textContent=e.name==='AbortError'?'⏱ 伺服器逾時，請再試':'錯誤：'+e.message;}
