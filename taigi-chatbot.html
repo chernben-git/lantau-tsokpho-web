@@ -1077,6 +1077,13 @@ function toggleMic(){
 
 async function startTaigiStream(){
   if(taigiConnecting||taigiStreaming)return;
+
+  // 確保上次資源完全釋放
+  if(taigiStreamWs||taigiStreamACtx||taigiStreamMedia){
+    stopTaigiStream();
+    await new Promise(r=>setTimeout(r,300));
+  }
+
   taigiConnecting=true;
   const btn=document.getElementById('micBtn');
   const box=document.getElementById('inputBox');
