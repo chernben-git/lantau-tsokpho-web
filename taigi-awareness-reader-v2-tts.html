@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台語意識培育手冊｜閱讀紀錄與測驗系統 v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1a1208;
+  --paper: #faf6ef;
+  --warm: #f0e8d8;
+  --accent: #c84b2f;
+  --accent2: #2f6b4b;
+  --gold: #c49a3a;
+  --muted: #7a6e60;
+  --border: #d4c9b8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans TC', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+
+header {
+  background: var(--ink); color: var(--paper);
+  padding: 2.2rem 2rem 1.8rem; position: relative; overflow: hidden;
+}
+header::after {
+  content: '台'; position: absolute; bottom: -30px; right: 2rem;
+  font-family: 'Noto Serif TC', serif; font-size: 160px; font-weight: 900;
+  color: var(--paper); opacity: 0.04; line-height: 1;
+}
+.header-label { font-size: 0.68rem; letter-spacing: 0.25em; color: var(--gold); margin-bottom: 0.5rem; }
+header h1 { font-family: 'Noto Serif TC', serif; font-size: clamp(1.2rem,3vw,1.8rem); font-weight: 900; line-height: 1.3; margin-bottom: 0.3rem; }
+header p { font-size: 0.8rem; color: #b0a898; font-weight: 300; }
+.header-meta { display: flex; gap: 1.5rem; margin-top: 1rem; font-size: 0.7rem; color: #888; flex-wrap: wrap; }
+
+.progress-bar-wrap {
+  background: var(--warm); border-bottom: 1px solid var(--border);
+  padding: 0.7rem 2rem; display: flex; align-items: center; gap: 1rem;
+  position: sticky; top: 0; z-index: 100;
+}
+.progress-label { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+.progress-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--gold)); border-radius: 3px; transition: width 0.5s ease; }
+.progress-pct { font-size: 0.7rem; font-weight: 500; color: var(--accent2); white-space: nowrap; }
+
+.main-layout { display: grid; grid-template-columns: 250px 1fr; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 130px); }
+
+.sidebar {
+  border-right: 1px solid var(--border); padding: 1.4rem 0.9rem;
+  position: sticky; top: 48px; height: calc(100vh - 48px); overflow-y: auto; background: var(--warm);
+}
+.sidebar-title { font-size: 0.62rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; padding: 0 0.5rem; margin-bottom: 0.8rem; }
+.chapter-nav-item {
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.55rem 0.5rem; border-radius: 6px; cursor: pointer;
+  transition: background 0.2s; margin-bottom: 0.15rem;
+}
+.chapter-nav-item:hover { background: var(--border); }
+.chapter-nav-item.active { background: var(--ink); color: var(--paper); }
+.chapter-nav-item.done .nav-num { background: var(--accent2); color: white; }
+.nav-num {
+  width: 22px; height: 22px; border-radius: 50%; background: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.62rem; font-weight: 700; flex-shrink: 0; transition: background 0.3s;
+}
+.nav-label { font-size: 0.76rem; line-height: 1.3; }
+.nav-check { margin-left: auto; font-size: 0.75rem; }
+.sidebar-divider { height: 1px; background: var(--border); margin: 0.9rem 0; }
+.quiz-nav-item {
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.55rem 0.5rem; border-radius: 6px; cursor: pointer;
+  transition: background 0.2s; font-size: 0.76rem; margin-bottom: 0.15rem;
+}
+.quiz-nav-item:hover { background: var(--border); }
+.quiz-nav-item.active { background: var(--accent); color: white; }
+.quiz-nav-item.active .nav-num { background: rgba(255,255,255,0.25); color: white; }
+
+.content-area { padding: 2rem; max-width: 700px; }
+
+.chapter-card { display: none; animation: fadeIn 0.3s ease; }
+.chapter-card.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+.chapter-number { font-size: 0.62rem; letter-spacing: 0.3em; color: var(--muted); text-transform: uppercase; margin-bottom: 0.4rem; }
+.chapter-title { font-family: 'Noto Serif TC', serif; font-size: 1.5rem; font-weight: 900; line-height: 1.3; margin-bottom: 0.25rem; }
+.chapter-author { font-size: 0.76rem; color: var(--muted); margin-bottom: 1.4rem; }
+.chapter-divider { height: 2px; background: linear-gradient(90deg, var(--accent), transparent); margin-bottom: 1.4rem; }
+
+.summary-box {
+  background: var(--warm); border-left: 3px solid var(--gold);
+  padding: 1.1rem 1.3rem; border-radius: 0 8px 8px 0; margin-bottom: 1.4rem;
+}
+.summary-box h3 { font-size: 0.65rem; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.7rem; }
+.summary-point { display: flex; gap: 0.6rem; margin-bottom: 0.55rem; font-size: 0.84rem; line-height: 1.6; }
+.summary-point::before { content: '▸'; color: var(--accent); flex-shrink: 0; margin-top: 0.05rem; }
+
+.key-stat {
+  background: white; border: 1px solid var(--border); border-radius: 8px;
+  padding: 0.9rem 1.1rem; margin-bottom: 1.3rem; display: flex; gap: 1rem; align-items: flex-start;
+}
+.stat-num { font-family: 'Noto Serif TC', serif; font-size: 2rem; font-weight: 900; color: var(--accent); line-height: 1; flex-shrink: 0; }
+.stat-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.6; padding-top: 0.15rem; }
+
+/* ── CHAPTER QUIZ (is-non) ── */
+.chapter-quiz-box {
+  background: white; border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 1.2rem 1.4rem; margin-bottom: 1.3rem;
+}
+.cq-header {
+  display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem;
+}
+.cq-badge {
+  display: inline-block; padding: 0.22rem 0.7rem; border-radius: 20px;
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em;
+  background: #fde8e8; color: #9b2a2a;
+}
+.cq-title { font-size: 0.78rem; color: var(--muted); }
+.cq-item { margin-bottom: 1.1rem; }
+.cq-item:last-child { margin-bottom: 0; }
+.cq-q { font-size: 0.88rem; font-weight: 500; line-height: 1.6; margin-bottom: 0.6rem; color: var(--ink); }
+.tf-options { display: flex; gap: 0.6rem; }
+.tf-btn {
+  flex: 1; padding: 0.55rem 0; border-radius: 7px;
+  border: 1.5px solid var(--border); background: var(--paper);
+  font-family: 'Noto Sans TC', sans-serif; font-size: 0.85rem; font-weight: 500;
+  cursor: pointer; transition: all 0.18s; color: var(--ink);
+}
+.tf-btn:hover:not(:disabled) { border-color: var(--accent2); background: #e8f4f0; }
+.tf-btn.correct { background: #d4edda; border-color: var(--accent2); color: #1a5e2a; }
+.tf-btn.wrong { background: #fde8e8; border-color: var(--accent); color: #7a1a1a; }
+.tf-btn.highlight-correct { background: #d4edda; border-color: var(--accent2); color: #1a5e2a; }
+.cq-feedback {
+  margin-top: 0.5rem; font-size: 0.8rem; line-height: 1.55; padding: 0.6rem 0.8rem;
+  border-radius: 6px; display: none;
+}
+.cq-feedback.show { display: block; }
+.cq-feedback.correct { background: #d4edda; color: #1a5e2a; border-left: 2px solid var(--accent2); }
+.cq-feedback.wrong { background: #fde8e8; color: #7a1a1a; border-left: 2px solid var(--accent); }
+.cq-score-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--muted); margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--border); }
+.cq-score-val { font-weight: 700; color: var(--accent2); }
+
+/* ── REFLECT BOX ── */
+.reflect-box { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.3rem; margin-bottom: 1.3rem; }
+.reflect-box h3 { font-size: 0.67rem; letter-spacing: 0.15em; color: var(--accent2); text-transform: uppercase; margin-bottom: 0.5rem; }
+.reflect-box p { font-size: 0.83rem; color: var(--muted); margin-bottom: 0.7rem; line-height: 1.6; }
+.reflect-box textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 6px;
+  padding: 0.65rem 0.85rem; font-family: 'Noto Sans TC', sans-serif; font-size: 0.83rem;
+  color: var(--ink); background: var(--paper); resize: vertical; min-height: 75px; outline: none; transition: border-color 0.2s;
+}
+.reflect-box textarea:focus { border-color: var(--accent2); }
+
+/* ── BUTTONS ── */
+.btn-row { display: flex; gap: 0.7rem; align-items: center; flex-wrap: wrap; }
+.btn {
+  padding: 0.6rem 1.3rem; border-radius: 6px; border: none; cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif; font-size: 0.8rem; font-weight: 500;
+  transition: all 0.2s; display: flex; align-items: center; gap: 0.4rem;
+}
+.btn-primary { background: var(--ink); color: var(--paper); }
+.btn-primary:hover { background: var(--accent); }
+.btn-done { background: var(--accent2); color: white; }
+.btn-done:hover { opacity: 0.85; }
+.btn-done:disabled { background: var(--border); color: var(--muted); cursor: default; }
+.btn-outline { background: transparent; color: var(--ink); border: 1.5px solid var(--border); }
+.btn-outline:hover { border-color: var(--ink); }
+.done-badge { display: none; align-items: center; gap: 0.4rem; font-size: 0.76rem; color: var(--accent2); font-weight: 500; }
+.done-badge.show { display: flex; }
+.must-do-hint { font-size: 0.74rem; color: var(--accent); display: none; }
+.must-do-hint.show { display: block; }
+
+/* ── QUIZ SECTION ── */
+.quiz-card { display: none; }
+.quiz-card.active { display: block; animation: fadeIn 0.3s ease; }
+.quiz-type-badge {
+  display: inline-block; padding: 0.22rem 0.7rem; border-radius: 20px;
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; margin-bottom: 0.7rem;
+}
+.type-single { background: #e8f0fd; color: #2a5cbf; }
+.type-truefalse { background: #fde8e8; color: #bf2a2a; }
+.type-scenario { background: #e8fdf0; color: #2abf6a; }
+.type-open { background: #fdf5e8; color: #bf8a2a; }
+.quiz-q { font-family: 'Noto Serif TC', serif; font-size: 1rem; font-weight: 600; line-height: 1.7; color: var(--ink); margin-bottom: 1.1rem; }
+.quiz-context {
+  font-size: 0.8rem; color: var(--muted); background: var(--warm);
+  border-radius: 6px; padding: 0.75rem 0.95rem; margin-bottom: 0.9rem;
+  line-height: 1.6; border-left: 2px solid var(--border);
+}
+.options-list { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 1.1rem; }
+.option-item {
+  display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.7rem 0.95rem;
+  border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer;
+  transition: all 0.18s; font-size: 0.85rem; line-height: 1.5; color: var(--ink);
+}
+.option-item:hover { border-color: var(--accent2); background: #e8f4f0; }
+.option-item.selected { border-color: var(--accent2); background: #e8f4f0; }
+.option-item.correct { border-color: var(--accent2); background: #d4edda; }
+.option-item.wrong { border-color: var(--accent); background: #fde8e8; }
+.option-label {
+  width: 22px; height: 22px; border-radius: 50%; background: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 700; flex-shrink: 0; margin-top: 0.05rem; transition: background 0.2s;
+}
+.option-item.selected .option-label { background: var(--accent2); color: white; }
+.option-item.correct .option-label { background: var(--accent2); color: white; }
+.option-item.wrong .option-label { background: var(--accent); color: white; }
+.quiz-feedback {
+  display: none; padding: 0.8rem 1rem; border-radius: 8px; font-size: 0.8rem;
+  line-height: 1.55; margin-bottom: 0.9rem;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.correct { background: #d4edda; color: #1a5e2a; border-left: 3px solid var(--accent2); }
+.quiz-feedback.wrong { background: #fde8e8; color: #7a1a1a; border-left: 3px solid var(--accent); }
+.open-answer textarea {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 0.85rem 1rem; font-family: 'Noto Sans TC', sans-serif; font-size: 0.85rem;
+  color: var(--ink); background: var(--paper); resize: vertical; min-height: 95px;
+  outline: none; transition: border-color 0.2s; margin-bottom: 0.9rem;
+}
+.open-answer textarea:focus { border-color: var(--accent2); }
+
+/* ── RESULT ── */
+.result-page { display: none; }
+.result-page.active { display: block; animation: fadeIn 0.5s ease; }
+.result-header { text-align: center; padding: 2rem 1rem 1.4rem; border-bottom: 1px solid var(--border); margin-bottom: 1.8rem; }
+.result-level-badge { display: inline-block; padding: 0.35rem 1.1rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; margin-bottom: 0.9rem; }
+.level-sprout { background: #f5e8e5; color: #9b3a2a; }
+.level-learn { background: #e8f4f0; color: #1a5e3a; }
+.level-culture { background: #fdf3e0; color: #7a5a1a; }
+.result-title { font-family: 'Noto Serif TC', serif; font-size: 1.6rem; font-weight: 900; margin-bottom: 0.4rem; }
+.result-subtitle { font-size: 0.85rem; color: var(--muted); }
+.score-ring {
+  width: 110px; height: 110px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; margin: 1.3rem auto; position: relative;
+}
+.score-ring::before { content: ''; position: absolute; width: 80px; height: 80px; border-radius: 50%; background: var(--paper); }
+.score-ring-inner { position: relative; z-index: 1; text-align: center; }
+.score-num { font-family: 'Noto Serif TC', serif; font-size: 1.4rem; font-weight: 900; color: var(--accent2); display: block; }
+.score-label { font-size: 0.62rem; color: var(--muted); }
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-bottom: 1.8rem; }
+.result-cell { background: var(--warm); border-radius: 10px; padding: 1rem 1.1rem; }
+.result-cell-label { font-size: 0.62rem; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; margin-bottom: 0.3rem; }
+.result-cell-val { font-family: 'Noto Serif TC', serif; font-size: 1.2rem; font-weight: 700; color: var(--ink); }
+.result-section-title { font-family: 'Noto Serif TC', serif; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.9rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border); }
+.reflect-review { background: var(--warm); border-radius: 8px; padding: 1rem 1.1rem; margin-bottom: 0.7rem; }
+.reflect-review-q { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.35rem; }
+.reflect-review-a { font-size: 0.85rem; color: var(--ink); line-height: 1.6; font-style: italic; }
+.recommend-box { border: 1.5px solid var(--border); border-radius: 10px; padding: 1.1rem; margin-bottom: 0.9rem; }
+.recommend-title { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.35rem; }
+.recommend-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+.print-btn {
+  display: block; width: 100%; padding: 0.85rem; background: var(--ink); color: var(--paper);
+  border: none; border-radius: 8px; font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.88rem; font-weight: 500; cursor: pointer; margin-top: 1.4rem; transition: background 0.2s;
+}
+.print-btn:hover { background: var(--accent); }
+
+/* quiz progress dots */
+.q-block { display: none; }
+.q-block.active { display: block; animation: fadeIn 0.25s ease; }
+
+@media (max-width: 680px) {
+  .main-layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  .content-area { padding: 1.1rem; }
+  .result-grid { grid-template-columns: 1fr; }
+}
+@media print {
+  header, .progress-bar-wrap, .sidebar, .btn-row { display: none !important; }
+  .main-layout { grid-template-columns: 1fr; }
+  .result-page { display: block !important; }
+  .chapter-card, .quiz-card { display: none !important; }
+}
+
+/* ── TTS 反思框升級 ── */
+.reflect-tts-panel {
+  margin-top: 0.7rem; padding: 0.85rem 1rem;
+  background: var(--warm); border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.reflect-lang-row {
+  display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.65rem; flex-wrap: wrap;
+}
+.reflect-lang-label { font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
+.lang-btn {
+  padding: 0.22rem 0.75rem; border-radius: 20px; border: 1.5px solid var(--border);
+  background: white; font-size: 0.72rem; font-family: 'Noto Sans TC', sans-serif;
+  cursor: pointer; transition: all 0.18s; color: var(--muted);
+}
+.lang-btn.active { background: var(--accent2); border-color: var(--accent2); color: white; font-weight: 600; }
+.tts-btn {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 1.1rem; border-radius: 7px; border: none;
+  background: var(--accent2); color: white;
+  font-family: 'Noto Sans TC', sans-serif; font-size: 0.78rem; font-weight: 500;
+  cursor: pointer; transition: background 0.2s;
+}
+.tts-btn:hover { background: var(--ink); }
+.tts-btn:disabled { background: var(--border); color: var(--muted); cursor: default; }
+.tts-result {
+  display: none; margin-top: 0.65rem; padding: 0.75rem 0.9rem;
+  background: white; border-radius: 7px; border: 1px solid var(--border);
+}
+.tts-result.show { display: block; }
+.tts-result-taigi { font-size: 0.92rem; font-weight: 600; color: var(--ink); margin-bottom: 0.25rem; }
+.tts-result-tailo { font-size: 0.78rem; color: var(--accent2); letter-spacing: 0.03em; margin-bottom: 0.5rem; }
+.tts-play-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.play-btn {
+  display: flex; align-items: center; gap: 0.35rem;
+  padding: 0.38rem 0.9rem; border-radius: 6px; border: 1.5px solid var(--accent2);
+  background: white; color: var(--accent2); font-size: 0.75rem;
+  font-family: 'Noto Sans TC', sans-serif; cursor: pointer; transition: all 0.18s;
+}
+.play-btn:hover { background: var(--accent2); color: white; }
+.play-btn.playing { background: var(--accent2); color: white; }
+.play-count { font-size: 0.68rem; color: var(--muted); }
+.tts-loading { font-size: 0.75rem; color: var(--muted); display: none; }
+.tts-loading.show { display: inline; }
+.tts-error { font-size: 0.75rem; color: var(--accent); display: none; margin-top: 0.4rem; }
+.tts-error.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-label">文化部 培育台語家庭計畫</div>
+  <h1>台語意識培育手冊<br>閱讀紀錄與意識評估系統</h1>
+  <p>畫一个母語的厝——Tâi-gí 家庭計畫意識手冊</p>
+  <div class="header-meta">
+    <span>📖 6 章節閱讀</span>
+    <span>🎲 每章 2 題隨機是非即測</span>
+    <span>📝 綜合測驗 10 題</span>
+    <span>🎯 三級意識分層評估</span>
+  </div>
+</header>
+
+<div class="progress-bar-wrap">
+  <span class="progress-label">整體進度</span>
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <span class="progress-pct" id="progressPct">0%</span>
+</div>
+
+<div class="main-layout">
+<aside class="sidebar">
+  <div class="sidebar-title">章節閱讀</div>
+  <div class="chapter-nav-item active" onclick="goChapter(0)" id="nav-ch-0"><div class="nav-num">1</div><div class="nav-label">前言：台語瀕危現況</div><div class="nav-check" id="chk-0"></div></div>
+  <div class="chapter-nav-item" onclick="goChapter(1)" id="nav-ch-1"><div class="nav-num">2</div><div class="nav-label">為什麼在家說台語？</div><div class="nav-check" id="chk-1"></div></div>
+  <div class="chapter-nav-item" onclick="goChapter(2)" id="nav-ch-2"><div class="nav-num">3</div><div class="nav-label">歷史、語言與文化認同</div><div class="nav-check" id="chk-2"></div></div>
+  <div class="chapter-nav-item" onclick="goChapter(3)" id="nav-ch-3"><div class="nav-num">4</div><div class="nav-label">講就著矣——我可以怎麼做</div><div class="nav-check" id="chk-3"></div></div>
+  <div class="chapter-nav-item" onclick="goChapter(4)" id="nav-ch-4"><div class="nav-num">5</div><div class="nav-label">多語能力的優勢</div><div class="nav-check" id="chk-4"></div></div>
+  <div class="chapter-nav-item" onclick="goChapter(5)" id="nav-ch-5"><div class="nav-num">6</div><div class="nav-label">文化多樣性與語言人權</div><div class="nav-check" id="chk-5"></div></div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-title">綜合測驗</div>
+  <div class="quiz-nav-item" onclick="goQuiz(0)" id="nav-quiz-0"><div class="nav-num">Q</div><div class="nav-label">觀念理解（單選）</div></div>
+  <div class="quiz-nav-item" onclick="goQuiz(1)" id="nav-quiz-1"><div class="nav-num">Q</div><div class="nav-label">情境應用</div></div>
+  <div class="quiz-nav-item" onclick="goQuiz(2)" id="nav-quiz-2"><div class="nav-num">Q</div><div class="nav-label">開放式反思</div></div>
+  <div class="quiz-nav-item" onclick="goQuiz(3)" id="nav-quiz-3"><div class="nav-num">📊</div><div class="nav-label">意識評估結果</div></div>
+</aside>
+
+<main class="content-area">
+
+<!-- ══════════════════════════════════════════ -->
+<!-- CH 0 -->
+<!-- ══════════════════════════════════════════ -->
+<div class="chapter-card active" id="ch-0">
+  <div class="chapter-number">第一章</div>
+  <h2 class="chapter-title">前言：台語瀕危現況與國家語言政策</h2>
+  <div class="chapter-author">文化部 國家語言數位資源網</div>
+  <div class="chapter-divider"></div>
+  <div class="key-stat"><div class="stat-num">67%</div><div class="stat-desc">根據 109 年調查，國人與子女交談主要使用<strong>華語</strong>的比例高達 67.67%，台語僅佔 29.23%。</div></div>
+  <div class="key-stat"><div class="stat-num">60%</div><div class="stat-desc">主要使用台語的人口中，有六成集中於 55 歲以上。6-34 歲各年齡層使用比例皆不足 10%。</div></div>
+  <div class="summary-box">
+    <h3>本章核心重點</h3>
+    <div class="summary-point">台語曾是台灣最多人使用的通用語，現已面臨嚴重的世代流失危機，未來積極使用人口恐僅剩 2-3 成。</div>
+    <div class="summary-point">文化部依《國家語言發展法》推動「國家語言整體發展方案（111-115年）」，五年投入 324 億元。</div>
+    <div class="summary-point">「培育台語家庭計畫」分「台語學習家庭」與「台語文化家庭」兩類，家庭是語言復振最關鍵的場域。</div>
+  </div>
+  <!-- 章節即測 -->
+  <div class="chapter-quiz-box" id="cqbox-0">
+    <div class="cq-header"><span class="cq-badge">章節即測</span><span class="cq-title">完成 2 題是非題才能標記完成</span></div>
+    <div id="cq-0"></div>
+    <div class="cq-score-row" id="cq-score-0" style="display:none">本章即測得分：<span class="cq-score-val" id="cq-score-val-0"></span> / 2</div>
+  </div>
+  <div class="reflect-box">
+    <h3>閱讀後反思</h3>
+    <p>讀完本章的數據，你對台語目前的處境有什麼感受或想法？</p>
+    <textarea id="ref-0" placeholder="請寫下你的想法……" oninput="onReflectInput(0)"></textarea>
+    <!-- TTS 翻譯發音面板 -->
+    <div class="reflect-tts-panel">
+      <div class="reflect-lang-row">
+        <span class="reflect-lang-label">輸入語言：</span>
+        <button class="lang-btn active" id="lang-zh-0" onclick="setLang(0,'zh')">華語</button>
+        <button class="lang-btn" id="lang-taigi-0" onclick="setLang(0,'taigi')">台語漢字</button>
+        <span class="tts-loading" id="tts-loading-0">⏳ 翻譯中…</span>
+        <button class="tts-btn" id="tts-btn-0" onclick="doTts(0)" disabled>🎵 翻譯聽台語</button>
+      </div>
+      <div class="tts-result" id="tts-result-0">
+        <div class="tts-result-taigi" id="tts-taigi-0"></div>
+        <div class="tts-result-tailo" id="tts-tailo-0"></div>
+        <div class="tts-play-row">
+          <button class="play-btn" id="play-btn-0" onclick="playAudio(0)">▶ 播放台語</button>
+          <span class="play-count" id="play-count-0"></span>
+        </div>
+        <div class="tts-error" id="tts-error-0"></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-done" id="doneBtn-0" onclick="markDone(0)" disabled>✓ 標記已讀完</button>
+    <div class="done-badge" id="doneBadge-0">✅ 已完成本章</div>
+    <div class="must-do-hint" id="hint-0">請先完成章節即測</div>
+    <button class="btn btn-primary" onclick="goChapter(1)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- CH 1 -->
+<!-- ══════════════════════════════════════════ -->
+<div class="chapter-card" id="ch-1">
+  <div class="chapter-number">第二章</div>
+  <h2 class="chapter-title">是按怎欲佇厝裡講台語？</h2>
+  <div class="chapter-author">莊佳穎 / 國立臺灣師範大學臺灣語文學系副教授兼系主任</div>
+  <div class="chapter-divider"></div>
+  <div class="summary-box">
+    <h3>本章核心重點</h3>
+    <div class="summary-point">文化與語言如同愛情，無法完全翻譯——掌握一種語言，就能從不同角度看世界，認識世界的繽紛色彩。</div>
+    <div class="summary-point">以台語為核心打造多語家庭，可刺激孩子創造力、建立文化認同、培養多元思考競爭力，甚至延緩老年失智。</div>
+    <div class="summary-point">實踐四原則：①台語為第一語言 ②一人一語 ③一地一語（家庭是弱勢語言呼吸空間）④串聯共學社群。</div>
+  </div>
+  <div class="chapter-quiz-box" id="cqbox-1">
+    <div class="cq-header"><span class="cq-badge">章節即測</span><span class="cq-title">完成 2 題是非題才能標記完成</span></div>
+    <div id="cq-1"></div>
+    <div class="cq-score-row" id="cq-score-1" style="display:none">本章即測得分：<span class="cq-score-val" id="cq-score-val-1"></span> / 2</div>
+  </div>
+  <div class="reflect-box">
+    <h3>閱讀後反思</h3>
+    <p>「一人一語」的原則在你的家庭是否有實踐的可能？你覺得最大的障礙是什麼？</p>
+    <textarea id="ref-1" placeholder="請寫下你的想法……" oninput="onReflectInput(1)"></textarea>
+    <!-- TTS 翻譯發音面板 -->
+    <div class="reflect-tts-panel">
+      <div class="reflect-lang-row">
+        <span class="reflect-lang-label">輸入語言：</span>
+        <button class="lang-btn active" id="lang-zh-1" onclick="setLang(1,'zh')">華語</button>
+        <button class="lang-btn" id="lang-taigi-1" onclick="setLang(1,'taigi')">台語漢字</button>
+        <span class="tts-loading" id="tts-loading-1">⏳ 翻譯中…</span>
+        <button class="tts-btn" id="tts-btn-1" onclick="doTts(1)" disabled>🎵 翻譯聽台語</button>
+      </div>
+      <div class="tts-result" id="tts-result-1">
+        <div class="tts-result-taigi" id="tts-taigi-1"></div>
+        <div class="tts-result-tailo" id="tts-tailo-1"></div>
+        <div class="tts-play-row">
+          <button class="play-btn" id="play-btn-1" onclick="playAudio(1)">▶ 播放台語</button>
+          <span class="play-count" id="play-count-1"></span>
+        </div>
+        <div class="tts-error" id="tts-error-1"></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goChapter(0)">← 上一章</button>
+    <button class="btn btn-done" id="doneBtn-1" onclick="markDone(1)" disabled>✓ 標記已讀完</button>
+    <div class="done-badge" id="doneBadge-1">✅ 已完成本章</div>
+    <div class="must-do-hint" id="hint-1">請先完成章節即測</div>
+    <button class="btn btn-primary" onclick="goChapter(2)">下一章 →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- CH 2 -->
+<!-- ══════════════════════════════════════════ -->
+<div class="chapter-card" id="ch-2">
+  <div class="chapter-number">第三章</div>
+  <h2 class="chapter-title">歷史、語言佮文化的連結佮認同</h2>
+  <div class="chapter-author">周婉窈 / 國立臺灣大學歷史學系教授</div>
+  <div class="chapter-divider"></div>
+  <div class="summary-box">
+    <h3>本章核心重點</h3>
+    <div class="summary-point">語言本身就是人群思考的方式、傳統與累積的智慧所在之處——語言、歷史、文化三者無法割開。</div>
+    <div class="summary-point">一個人群的語言若消失，就永遠救不回來——就算有字典和訓練，也無法將語言所承載的歷史與文化講回來。</div>
+    <div class="summary-point">沒有人說台語的台灣，就不再是台灣人的台灣——保存台語是保存台灣歷史主體性的根本行動。</div>
+  </div>
+  <div class="chapter-quiz-box" id="cqbox-2">
+    <div class="cq-header"><span class="cq-badge">章節即測</span><span class="cq-title">完成 2 題是非題才能標記完成</span></div>
+    <div id="cq-2"></div>
+    <div class="cq-score-row" id="cq-score-2" style="display:none">本章即測得分：<span class="cq-score-val" id="cq-score-val-2"></span> / 2</div>
+  </div>
+  <div class="reflect-box">
+    <h3>閱讀後反思</h3>
+    <p>「語言若消失，就永遠救不回來」——這句話對你有什麼觸動？</p>
+    <textarea id="ref-2" placeholder="請寫下你的想法……" oninput="onReflectInput(2)"></textarea>
+    <!-- TTS 翻譯發音面板 -->
+    <div class="reflect-tts-panel">
+      <div class="reflect-lang-row">
+        <span class="reflect-lang-label">輸入語言：</span>
+        <button class="lang-btn active" id="lang-zh-2" onclick="setLang(2,'zh')">華語</button>
+        <button class="lang-btn" id="lang-taigi-2" onclick="setLang(2,'taigi')">台語漢字</button>
+        <span class="tts-loading" id="tts-loading-2">⏳ 翻譯中…</span>
+        <button class="tts-btn" id="tts-btn-2" onclick="doTts(2)" disabled>🎵 翻譯聽台語</button>
+      </div>
+      <div class="tts-result" id="tts-result-2">
+        <div class="tts-result-taigi" id="tts-taigi-2"></div>
+        <div class="tts-result-tailo" id="tts-tailo-2"></div>
+        <div class="tts-play-row">
+          <button class="play-btn" id="play-btn-2" onclick="playAudio(2)">▶ 播放台語</button>
+          <span class="play-count" id="play-count-2"></span>
+        </div>
+        <div class="tts-error" id="tts-error-2"></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goChapter(1)">← 上一章</button>
+    <button class="btn btn-done" id="doneBtn-2" onclick="markDone(2)" disabled>✓ 標記已讀完</button>
+    <div class="done-badge" id="doneBadge-2">✅ 已完成本章</div>
+    <div class="must-do-hint" id="hint-2">請先完成章節即測</div>
+    <button class="btn btn-primary" onclick="goChapter(3)">下一章 →</button>
+  </div>
+</div>
+
+<!-- CH 3 -->
+<div class="chapter-card" id="ch-3">
+  <div class="chapter-number">第四章</div>
+  <h2 class="chapter-title">講就著矣——我可以怎麼做</h2>
+  <div class="chapter-author">周清玉 / 關懷文教基金會董事長　董力玄 / 台灣台語路協會理事長</div>
+  <div class="chapter-divider"></div>
+  <div class="summary-box">
+    <h3>本章核心重點</h3>
+    <div class="summary-point">個人意識的覺醒是第一步——從自己做起，日常講母語，不怕開口、不怕說錯，說錯了才有進步的機會。</div>
+    <div class="summary-point">家庭是人生最原始的語言環境，以愉快的心情、認真的態度在家使用台語，是最經濟也最有效的方式。</div>
+    <div class="summary-point">克服三大困難：①台語不好→從不怕開口做起 ②家人不配合→只要一位主要照顧者全台語即可 ③孩子反彈→不強迫，漸進切入。</div>
+  </div>
+  <div class="chapter-quiz-box" id="cqbox-3">
+    <div class="cq-header"><span class="cq-badge">章節即測</span><span class="cq-title">完成 2 題是非題才能標記完成</span></div>
+    <div id="cq-3"></div>
+    <div class="cq-score-row" id="cq-score-3" style="display:none">本章即測得分：<span class="cq-score-val" id="cq-score-val-3"></span> / 2</div>
+  </div>
+  <div class="reflect-box">
+    <h3>閱讀後反思</h3>
+    <p>你目前遇到的最大困難是哪一種？你打算如何開始第一步？</p>
+    <textarea id="ref-3" placeholder="請寫下你的想法……" oninput="onReflectInput(3)"></textarea>
+    <!-- TTS 翻譯發音面板 -->
+    <div class="reflect-tts-panel">
+      <div class="reflect-lang-row">
+        <span class="reflect-lang-label">輸入語言：</span>
+        <button class="lang-btn active" id="lang-zh-3" onclick="setLang(3,'zh')">華語</button>
+        <button class="lang-btn" id="lang-taigi-3" onclick="setLang(3,'taigi')">台語漢字</button>
+        <span class="tts-loading" id="tts-loading-3">⏳ 翻譯中…</span>
+        <button class="tts-btn" id="tts-btn-3" onclick="doTts(3)" disabled>🎵 翻譯聽台語</button>
+      </div>
+      <div class="tts-result" id="tts-result-3">
+        <div class="tts-result-taigi" id="tts-taigi-3"></div>
+        <div class="tts-result-tailo" id="tts-tailo-3"></div>
+        <div class="tts-play-row">
+          <button class="play-btn" id="play-btn-3" onclick="playAudio(3)">▶ 播放台語</button>
+          <span class="play-count" id="play-count-3"></span>
+        </div>
+        <div class="tts-error" id="tts-error-3"></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goChapter(2)">← 上一章</button>
+    <button class="btn btn-done" id="doneBtn-3" onclick="markDone(3)" disabled>✓ 標記已讀完</button>
+    <div class="done-badge" id="doneBadge-3">✅ 已完成本章</div>
+    <div class="must-do-hint" id="hint-3">請先完成章節即測</div>
+    <button class="btn btn-primary" onclick="goChapter(4)">下一章 →</button>
+  </div>
+</div>
+
+<!-- CH 4 -->
+<div class="chapter-card" id="ch-4">
+  <div class="chapter-number">第五章</div>
+  <h2 class="chapter-title">掌握多語能力——說台語的好處</h2>
+  <div class="chapter-author">何信翰 / 國立臺中教育大學臺灣語文學系副教授</div>
+  <div class="chapter-divider"></div>
+  <div class="summary-box">
+    <h3>本章核心重點</h3>
+    <div class="summary-point">多語讓孩子更有溝通力：在 AI 時代，需要「情感交流」的工作是 AI 無法取代的，共同母語能瞬間拉近距離。</div>
+    <div class="summary-point">多語讓孩子更獨特：未來競爭力關鍵在「你有什麼是別人沒有的」，流利使用本土語言將是少數人才的能力。</div>
+    <div class="summary-point">根據大腦語言學研究，多語能刺激大腦不同部位，提升想像力與多元思考力；親子共學本身也能促進親子關係。</div>
+  </div>
+  <div class="chapter-quiz-box" id="cqbox-4">
+    <div class="cq-header"><span class="cq-badge">章節即測</span><span class="cq-title">完成 2 題是非題才能標記完成</span></div>
+    <div id="cq-4"></div>
+    <div class="cq-score-row" id="cq-score-4" style="display:none">本章即測得分：<span class="cq-score-val" id="cq-score-val-4"></span> / 2</div>
+  </div>
+  <div class="reflect-box">
+    <h3>閱讀後反思</h3>
+    <p>「多語能力」對你自己或你的孩子最大的價值是什麼？</p>
+    <textarea id="ref-4" placeholder="請寫下你的想法……" oninput="onReflectInput(4)"></textarea>
+    <!-- TTS 翻譯發音面板 -->
+    <div class="reflect-tts-panel">
+      <div class="reflect-lang-row">
+        <span class="reflect-lang-label">輸入語言：</span>
+        <button class="lang-btn active" id="lang-zh-4" onclick="setLang(4,'zh')">華語</button>
+        <button class="lang-btn" id="lang-taigi-4" onclick="setLang(4,'taigi')">台語漢字</button>
+        <span class="tts-loading" id="tts-loading-4">⏳ 翻譯中…</span>
+        <button class="tts-btn" id="tts-btn-4" onclick="doTts(4)" disabled>🎵 翻譯聽台語</button>
+      </div>
+      <div class="tts-result" id="tts-result-4">
+        <div class="tts-result-taigi" id="tts-taigi-4"></div>
+        <div class="tts-result-tailo" id="tts-tailo-4"></div>
+        <div class="tts-play-row">
+          <button class="play-btn" id="play-btn-4" onclick="playAudio(4)">▶ 播放台語</button>
+          <span class="play-count" id="play-count-4"></span>
+        </div>
+        <div class="tts-error" id="tts-error-4"></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goChapter(3)">← 上一章</button>
+    <button class="btn btn-done" id="doneBtn-4" onclick="markDone(4)" disabled>✓ 標記已讀完</button>
+    <div class="done-badge" id="doneBadge-4">✅ 已完成本章</div>
+    <div class="must-do-hint" id="hint-4">請先完成章節即測</div>
+    <button class="btn btn-primary" onclick="goChapter(5)">下一章 →</button>
+  </div>
+</div>
+
+<!-- CH 5 -->
+<div class="chapter-card" id="ch-5">
+  <div class="chapter-number">第六章</div>
+  <h2 class="chapter-title">文化多樣性與語言人權</h2>
+  <div class="chapter-author">程俊源 / 國立臺中教育大學臺灣語文學系副教授</div>
+  <div class="chapter-divider"></div>
+  <div class="summary-box">
+    <h3>本章核心重點</h3>
+    <div class="summary-point">聯合國 2001 年《世界文化多樣性宣言》：文化多樣性是人類的共同遺產，每一種文化都有其獨特的價值與貢獻。</div>
+    <div class="summary-point">語言是文化多樣性最外顯、最重要的元素——「語言權」是人權的一種，每個人都應能用自己的母語表達思想。</div>
+    <div class="summary-point">一個優質的國家語言政策，應尊重多語社會存在的事實，以保障語言多樣性為首要目標。</div>
+  </div>
+  <div class="chapter-quiz-box" id="cqbox-5">
+    <div class="cq-header"><span class="cq-badge">章節即測</span><span class="cq-title">完成 2 題是非題才能標記完成</span></div>
+    <div id="cq-5"></div>
+    <div class="cq-score-row" id="cq-score-5" style="display:none">本章即測得分：<span class="cq-score-val" id="cq-score-val-5"></span> / 2</div>
+  </div>
+  <div class="reflect-box">
+    <h3>閱讀後反思</h3>
+    <p>「語言權是人權」——讀完本章，你對台語的保存有什麼新的理解？</p>
+    <textarea id="ref-5" placeholder="請寫下你的想法……" oninput="onReflectInput(5)"></textarea>
+    <!-- TTS 翻譯發音面板 -->
+    <div class="reflect-tts-panel">
+      <div class="reflect-lang-row">
+        <span class="reflect-lang-label">輸入語言：</span>
+        <button class="lang-btn active" id="lang-zh-5" onclick="setLang(5,'zh')">華語</button>
+        <button class="lang-btn" id="lang-taigi-5" onclick="setLang(5,'taigi')">台語漢字</button>
+        <span class="tts-loading" id="tts-loading-5">⏳ 翻譯中…</span>
+        <button class="tts-btn" id="tts-btn-5" onclick="doTts(5)" disabled>🎵 翻譯聽台語</button>
+      </div>
+      <div class="tts-result" id="tts-result-5">
+        <div class="tts-result-taigi" id="tts-taigi-5"></div>
+        <div class="tts-result-tailo" id="tts-tailo-5"></div>
+        <div class="tts-play-row">
+          <button class="play-btn" id="play-btn-5" onclick="playAudio(5)">▶ 播放台語</button>
+          <span class="play-count" id="play-count-5"></span>
+        </div>
+        <div class="tts-error" id="tts-error-5"></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goChapter(4)">← 上一章</button>
+    <button class="btn btn-done" id="doneBtn-5" onclick="markDone(5)" disabled>✓ 標記已讀完</button>
+    <div class="done-badge" id="doneBadge-5">✅ 已完成本章</div>
+    <div class="must-do-hint" id="hint-5">請先完成章節即測</div>
+    <button class="btn btn-primary" onclick="goQuiz(0)">進入綜合測驗 →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- QUIZ 0: 單選觀念題 -->
+<!-- ══════════════════════════════════════════ -->
+<div class="quiz-card" id="quiz-0">
+  <span class="quiz-type-badge type-single">綜合測驗第一部分：觀念理解（單選題）</span>
+  <p style="font-size:0.78rem;color:var(--muted);margin-bottom:1.2rem">共 4 題，每題一次機會，答完顯示解析。</p>
+
+  <div class="q-block active" id="sq-0">
+    <div class="quiz-q">1. 根據 109 年調查，台灣主要使用台語的人口中，有六成集中在哪個年齡層？</div>
+    <ul class="options-list">
+      <li class="option-item" onclick="pickOpt(this,'sq0',0)"><span class="option-label">A</span>25-35 歲</li>
+      <li class="option-item" onclick="pickOpt(this,'sq0',1)"><span class="option-label">B</span>35-45 歲</li>
+      <li class="option-item" onclick="pickOpt(this,'sq0',2)"><span class="option-label">C</span>55-65 歲以上</li>
+      <li class="option-item" onclick="pickOpt(this,'sq0',3)"><span class="option-label">D</span>65-75 歲以上</li>
+    </ul>
+    <div class="quiz-feedback" id="sfb-sq0"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="nextSQ(0)">繼續 →</button></div>
+  </div>
+
+  <div class="q-block" id="sq-1">
+    <div class="quiz-q">2. 「國家語言整體發展方案（111-115年）」的五年預算是多少？</div>
+    <ul class="options-list">
+      <li class="option-item" onclick="pickOpt(this,'sq1',0)"><span class="option-label">A</span>100 億元</li>
+      <li class="option-item" onclick="pickOpt(this,'sq1',1)"><span class="option-label">B</span>200 億元</li>
+      <li class="option-item" onclick="pickOpt(this,'sq1',2)"><span class="option-label">C</span>324 億元</li>
+      <li class="option-item" onclick="pickOpt(this,'sq1',3)"><span class="option-label">D</span>500 億元</li>
+    </ul>
+    <div class="quiz-feedback" id="sfb-sq1"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="nextSQ(1)">繼續 →</button></div>
+  </div>
+
+  <div class="q-block" id="sq-2">
+    <div class="quiz-q">3. 「台語文化家庭」認定，除集點外還需要完成？</div>
+    <ul class="options-list">
+      <li class="option-item" onclick="pickOpt(this,'sq2',0)"><span class="option-label">A</span>通過教育部台語能力認證考試</li>
+      <li class="option-item" onclick="pickOpt(this,'sq2',1)"><span class="option-label">B</span>拍攝並上傳 90-120 秒家庭台語互動短影片</li>
+      <li class="option-item" onclick="pickOpt(this,'sq2',2)"><span class="option-label">C</span>每週出席社區台語活動</li>
+      <li class="option-item" onclick="pickOpt(this,'sq2',3)"><span class="option-label">D</span>由學校老師出具台語使用證明</li>
+    </ul>
+    <div class="quiz-feedback" id="sfb-sq2"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="nextSQ(2)">繼續 →</button></div>
+  </div>
+
+  <div class="q-block" id="sq-3">
+    <div class="quiz-q">4. 莊佳穎副教授建議的四個方法中，下列哪項<strong>不屬於</strong>她的建議？</div>
+    <ul class="options-list">
+      <li class="option-item" onclick="pickOpt(this,'sq3',0)"><span class="option-label">A</span>以台語做第一語言，搭配其他語言打造多語家庭</li>
+      <li class="option-item" onclick="pickOpt(this,'sq3',1)"><span class="option-label">B</span>一人一語——父母各自使用不同語言</li>
+      <li class="option-item" onclick="pickOpt(this,'sq3',2)"><span class="option-label">C</span>強制孩子在公共場所只說台語以加速學習</li>
+      <li class="option-item" onclick="pickOpt(this,'sq3',3)"><span class="option-label">D</span>串聯台語共學社群與影音資源</li>
+    </ul>
+    <div class="quiz-feedback" id="sfb-sq3"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="goQuiz(1)">進入下一部分 →</button></div>
+  </div>
+</div>
+
+<!-- QUIZ 1: 情境應用 -->
+<div class="quiz-card" id="quiz-1">
+  <span class="quiz-type-badge type-scenario">綜合測驗第二部分：情境應用（共 3 題）</span>
+  <p style="font-size:0.78rem;color:var(--muted);margin-bottom:1.2rem">選出最符合手冊精神的回應方式。</p>
+
+  <div class="q-block active" id="scq-0">
+    <div class="quiz-context">情境：你的孩子已 10 歲，習慣說華語。當你開始對他說台語，他說「我聽不懂，你不要跟我說那個。」</div>
+    <div class="quiz-q">你應該怎麼做？</div>
+    <ul class="options-list">
+      <li class="option-item" onclick="pickOpt(this,'scq0',0)"><span class="option-label">A</span>立刻停止，尊重孩子的選擇，不再說台語。</li>
+      <li class="option-item" onclick="pickOpt(this,'scq0',1)"><span class="option-label">B</span>強迫孩子每天練習說台語，設立嚴格規定。</li>
+      <li class="option-item" onclick="pickOpt(this,'scq0',2)"><span class="option-label">C</span>不強迫開口，先透過台語影片、歌曲增加輸入，漸進提高台語接觸比例。</li>
+      <li class="option-item" onclick="pickOpt(this,'scq0',3)"><span class="option-label">D</span>告訴孩子說台語是義務，否則影響成績。</li>
+    </ul>
+    <div class="quiz-feedback" id="sfb-scq0"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="nextSCQ(0)">繼續 →</button></div>
+  </div>
+
+  <div class="q-block" id="scq-1">
+    <div class="quiz-context">情境：家中只有你一人想說台語，另一半認為「說台語沒有用，英文比較重要」，不願配合。</div>
+    <div class="quiz-q">根據手冊的建議，你應該怎麼做？</div>
+    <ul class="options-list">
+      <li class="option-item" onclick="pickOpt(this,'scq1',0)"><span class="option-label">A</span>放棄，一個人無法讓孩子學會台語。</li>
+      <li class="option-item" onclick="pickOpt(this,'scq1',1)"><span class="option-label">B</span>只要有一位主要照顧者堅持對孩子說台語，孩子就能學會，同時尋找共學社群支持。</li>
+      <li class="option-item" onclick="pickOpt(this,'scq1',2)"><span class="option-label">C</span>先把孩子送去台語補習班，由專業老師處理。</li>
+      <li class="option-item" onclick="pickOpt(this,'scq1',3)"><span class="option-label">D</span>等全家都準備好再開始。</li>
+    </ul>
+    <div class="quiz-feedback" id="sfb-scq1"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="nextSCQ(1)">繼續 →</button></div>
+  </div>
+
+  <div class="q-block" id="scq-2">
+    <div class="quiz-context">情境：有人說「大家都能說華語，何必特別說台語？」</div>
+    <div class="quiz-q">根據手冊觀點，最完整的回應是？</div>
+    <ul class="options-list">
+      <li class="option-item" onclick="pickOpt(this,'scq2',0)"><span class="option-label">A</span>「對啊，華語溝通更方便，台語留給老一輩。」</li>
+      <li class="option-item" onclick="pickOpt(this,'scq2',1)"><span class="option-label">B</span>「語言承載歷史與文化，台語消失就是台灣歷史主體性的消失；語言多樣性也是每個人應有的文化人權。」</li>
+      <li class="option-item" onclick="pickOpt(this,'scq2',2)"><span class="option-label">C</span>「因為政府規定，所以要說台語。」</li>
+      <li class="option-item" onclick="pickOpt(this,'scq2',3)"><span class="option-label">D</span>「說台語可以賺獎勵金，所以值得說。」</li>
+    </ul>
+    <div class="quiz-feedback" id="sfb-scq2"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="goQuiz(2)">進入下一部分 →</button></div>
+  </div>
+</div>
+
+<!-- QUIZ 2: 開放反思 -->
+<div class="quiz-card" id="quiz-2">
+  <span class="quiz-type-badge type-open">綜合測驗第三部分：開放式反思（2 題）</span>
+  <p style="font-size:0.78rem;color:var(--muted);margin-bottom:1.2rem">此部分不計入客觀分數，但列入整體意識評估，請誠實作答。</p>
+  <div style="margin-bottom:1.4rem">
+    <div class="quiz-q">1. 讀完這本手冊，你認為台語對你個人或家庭最重要的意義是什麼？</div>
+    <div class="open-answer"><textarea id="open1" placeholder="請用至少 30 個字說明……"></textarea></div>
+  </div>
+  <div style="margin-bottom:1.4rem">
+    <div class="quiz-q">2. 讀完手冊後，你打算在接下來一個月內，在家中採取哪一個具體行動來推動台語？</div>
+    <div class="open-answer"><textarea id="open2" placeholder="請具體描述你的行動計畫……"></textarea></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goQuiz(1)">← 上一部分</button>
+    <button class="btn btn-primary" onclick="submitAll()">提交並查看評估結果 →</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="result-page" id="quiz-3">
+  <div class="result-header">
+    <div class="result-level-badge" id="resultBadge">—</div>
+    <div class="result-title" id="resultTitle">—</div>
+    <div class="result-subtitle" id="resultSubtitle">—</div>
+    <div class="score-ring" id="scoreRing">
+      <div class="score-ring-inner">
+        <span class="score-num" id="scoreNum">0</span>
+        <span class="score-label">總分</span>
+      </div>
+    </div>
+  </div>
+  <div class="result-grid">
+    <div class="result-cell"><div class="result-cell-label">章節閱讀完成</div><div class="result-cell-val" id="rChapters">0 / 6</div></div>
+    <div class="result-cell"><div class="result-cell-label">章節即測得分</div><div class="result-cell-val" id="rChQuiz">— / 12</div></div>
+    <div class="result-cell"><div class="result-cell-label">觀念理解（單選）</div><div class="result-cell-val" id="rSingle">— / 4</div></div>
+    <div class="result-cell"><div class="result-cell-label">情境應用</div><div class="result-cell-val" id="rScenario">— / 3</div></div>
+  </div>
+  <div class="result-section-title">閱讀反思紀錄</div>
+  <div id="reflectReview"></div>
+  <div class="result-section-title" style="margin-top:1.4rem">開放式作答</div>
+  <div id="openReview"></div>
+  <div class="result-section-title" style="margin-top:1.4rem">官方建議分級</div>
+  <div id="recommendBox"></div>
+  <button class="print-btn" onclick="window.print()">🖨 列印 / 儲存評估報告</button>
+</div>
+
+</main>
+</div>
+
+<script>
+// ════════════════════════════════════
+// 題庫：每章 5 題，隨機抽 2 題
+// ════════════════════════════════════
+const chapterQuizBank = [
+  // 第 1 章
+  [
+    { q:'根據 109 年調查，台灣國人與子女交談主要使用華語的比例約為 67%。', a:true, exp:'正確。華語佔 67.67%，台語僅佔 29.23%，顯示語言使用的世代斷層十分嚴峻。' },
+    { q:'「國家語言整體發展方案」計畫在五年內投入超過 300 億元推動各國家語言復振。', a:true, exp:'正確。行政院於 111 年核定五年 324 億元的預算，是史上規模最大的語言復振政策。' },
+    { q:'根據調查，台語的主要使用人口集中在 25-45 歲的青壯年族群。', a:false, exp:'錯誤。台語主要使用人口有六成集中於 55-65 歲以上，25 歲以下使用比例不足 10%。' },
+    { q:'「培育台語家庭計畫」將台語家庭分為「台語學習家庭」與「台語文化家庭」兩類。', a:true, exp:'正確。兩類家庭對應不同的認定條件與獎勵方式，以符合不同家庭的實際狀況。' },
+    { q:'「台語文化家庭」的認定只需要登錄報名，不需要完成任何活動或測驗。', a:false, exp:'錯誤。「台語文化家庭」除了集點達標外，還需拍攝並上傳 90-120 秒的台語互動短影片。' },
+  ],
+  // 第 2 章
+  [
+    { q:'莊佳穎副教授認為，台語和客語等聲調語言有助於刺激幼兒的創造力和感官敏銳性。', a:true, exp:'正確。發音相對複雜的聲調語言，能有效刺激幼兒大腦發展，提升創造力與專注力。' },
+    { q:'「一人一語」原則是指每位父母各自固定使用一種語言與孩子溝通。', a:true, exp:'正確。例如父親說台語、母親說族語，讓孩子在自然環境中同時習得兩種語言。' },
+    { q:'根據手冊，「一地一語」原則是指在所有公共場所都要求孩子只說台語。', a:false, exp:'錯誤。「一地一語」是指讓家庭（及親族的生活空間）成為台語可以自由呼吸的環境，不是強制公共場所。' },
+    { q:'莊佳穎副教授建議，在家中應以台語為第一語言，學校再使用第二語言（如華語）。', a:true, exp:'正確。台語在家庭環境先行，讓家庭成為強勢語言（華語）以外的多語學習空間。' },
+    { q:'手冊認為，掌握多語能力只對孩子有益，對已成年的父母並無實質幫助。', a:false, exp:'錯誤。手冊鼓勵親子共學，父母和孩子一起學台語不但有趣，也能促進親子關係發展。' },
+  ],
+  // 第 3 章
+  [
+    { q:'周婉窈教授指出，語言本身就是人群思考的方式，不只是文化傳遞的工具。', a:true, exp:'正確。語言是人群傳統與累積智慧所存在的地方，與文化、歷史三者無法割開。' },
+    { q:'根據周婉窈教授，只要有厚重的字典和訓練有素的人，消失的語言仍可完整復原。', a:false, exp:'錯誤。教授明確指出：就算有字典，就算訓練很多人說，「他們無法將這個語言所承載的歷史與文化講回來」。' },
+    { q:'台語在日本時代曾是台灣社會的通用語，也是抵抗殖民統治的語言之一。', a:true, exp:'正確。周婉窈教授指出台語在日本時代具有重要的社會與政治地位。' },
+    { q:'周婉窈教授認為，若台灣人都改說華語，台灣的文化認同仍不會受到影響。', a:false, exp:'錯誤。教授指出若全島都說華語，台灣人的子孫將認同中國的歷史與文化，台灣就不再是台灣人的台灣。' },
+    { q:'根據周婉窈教授，語言、歷史與文化三者是連結在一起的，無法割開。', a:true, exp:'正確。這是本章最核心的論點——失去語言等於失去人群本身的歷史與文化，找不到自己的認同。' },
+  ],
+  // 第 4 章
+  [
+    { q:'根據手冊，台語講不好是父母個人的失誤，說明他們不夠努力。', a:false, exp:'錯誤。手冊明確指出「台語講不好，並不是我們的錯」，而是過去錯誤的語言政策造成的結果。' },
+    { q:'周清玉董事長認為，「家庭」是語言養成最原始也最有效的場域。', a:true, exp:'正確。家庭是人際關係最親密、相處時間最長久的環境，是推動台語最經濟也最有效的地方。' },
+    { q:'台語路協會的建議是：若孩子反彈，應立刻停止，等孩子自己想學再說。', a:false, exp:'錯誤。建議是「不強迫，但也不放棄」，從孩子不排斥的方式（如媒體資源）漸進切入。' },
+    { q:'根據手冊，只要家中有一位主要照顧者對孩子全程說台語，孩子就有可能學會台語。', a:true, exp:'正確。手冊用跨種族家庭為例說明，只要有一位照顧者堅持，孩子就能習得這種語言。' },
+    { q:'手冊建議，孩子若說不會台語，父母應立刻強迫孩子開口練習，以加速學習。', a:false, exp:'錯誤。手冊指出若孩子不說，是因為「聽得不夠多」，應先透過各種方式創造輸入環境，而非強迫開口。' },
+  ],
+  // 第 5 章
+  [
+    { q:'根據大腦語言學研究，不同語言連結到大腦的部分不盡相同，多語可刺激大腦不同部位。', a:true, exp:'正確。何信翰副教授指出這是多語學習最重要的腦科學基礎，有助於培養想像力與多元思考力。' },
+    { q:'手冊認為，在 AI 時代，所有工作都會被 AI 取代，所以學台語沒有實質的職場意義。', a:false, exp:'錯誤。手冊指出需要「情感交流」的工作是 AI 無法取代的，而共同母語的溝通力正是這方面的優勢。' },
+    { q:'何信翰副教授認為，「會英語」在未來可能不再是孩子的特殊競爭優勢，反而是流利使用本土語言。', a:true, exp:'正確。在都市小孩幾乎個個有英語能力的情況下，台語能力才是真正稀少且獨特的競爭力。' },
+    { q:'手冊認為父母台語講得不好，就不應該嘗試教孩子台語，以免孩子學到錯誤發音。', a:false, exp:'錯誤。手冊鼓勵「和孩子一起學」，親子共學本身就是最好的身教，不完美的起點遠好於不開始。' },
+    { q:'根據手冊，台語對海洋生物的分類相當詳細，這反映了語言與其族群生活環境的深刻連結。', a:true, exp:'正確。每種語言「看世界的方式」都不一樣，台語豐富的海洋生物詞彙正是台灣先民生活經驗的體現。' },
+  ],
+  // 第 6 章
+  [
+    { q:'聯合國《世界文化多樣性宣言》發表於 2001 年，認為文化多樣性是人類的共同遺產。', a:true, exp:'正確。這是本章最重要的國際法律依據，將文化多樣性的保護提升至國際社會共識的層次。' },
+    { q:'「語言權」根據手冊的觀點，只是一種道德倡議，並不具備任何法律效力。', a:false, exp:'錯誤。2005 年聯合國通過的「文化多樣性公約」已讓文化多樣性的保護具有國際法律地位。' },
+    { q:'程俊源副教授認為，語言是構成文化多樣性最外顯也最重要的因素。', a:true, exp:'正確。語言在文化多樣性的諸多因素中，是最為外顯也最核心的一個，直接影響文化的傳承與表現。' },
+    { q:'根據《世界文化多樣性宣言》，每個人應能用自己選擇的語言（特別是母語）表達思想與創作。', a:true, exp:'正確。這正是「語言權是人權」的核心主張，也是本手冊呼籲保存台語的國際法律基礎。' },
+    { q:'手冊認為，一個優質的國家語言政策應以推廣單一主流語言為首要目標，以提升溝通效率。', a:false, exp:'錯誤。手冊明確指出，優質的語言政策應「尊重多語社會存在的事實，以保障語言多樣性為首要目標」。' },
+  ],
+];
+
+// 綜合測驗答案與解析
+const sqAnswers = [2, 2, 1, 2];
+const sqFeedback = [
+  { c:'✓ 正確！55-65 歲以上族群佔台語主要使用者的六成，年輕世代各組皆不足 10%。', w:'✗ 答案是 C（55-65 歲以上）。年輕世代台語使用率快速下滑，正是台語危機最嚴峻之處。' },
+  { c:'✓ 正確！行政院核定五年 324 億元的預算，是史上規模最大的語言復振政策投入。', w:'✗ 正確答案是 C（324 億元）。' },
+  { c:'✓ 正確！台語文化家庭認定需拍攝 90-120 秒的家庭台語互動影片並上傳審核。', w:'✗ 正確答案是 B（上傳台語互動短影片）。這是台語文化家庭最主要的認定條件之一。' },
+  { c:'✓ 正確！手冊強調「不強迫」是重要原則，強制孩子在公共場所只說台語並不符合建議。', w:'✗ 答案是 C。莊佳穎副教授的建議是漸進、自然的方式，而非強制行為。' },
+];
+const scqAnswers = [2, 1, 1];
+const scqFeedback = [
+  { c:'✓ 最符合手冊精神！「不強迫，但也不放棄」——先累積輸入，孩子聽夠了自然會開口。', w:'✗ 手冊建議是 C。強迫或放棄都不符合台語路協會的指導原則。' },
+  { c:'✓ 正確！「只要有一位主要照顧者對孩子全台語，孩子就能學會」，同時尋找共學社群支持。', w:'✗ 正確答案是 B。你的堅持本身就有意義，不必等全家都準備好才開始。' },
+  { c:'✓ 最完整的回應！結合了周婉窈的歷史觀與程俊源的文化多樣性人權觀。', w:'✗ 最完整的回應是 B。台語的意義不只是溝通工具，更關乎歷史主體性與文化人權。' },
+];
+
+// ════════════════════════════════════
+// State
+// ════════════════════════════════════
+const state = {
+  chaptersDone: [false,false,false,false,false,false],
+  reflections: ['','','','','',''],
+  cqDone: [false,false,false,false,false,false],     // chapter quiz completed
+  cqScore: [0,0,0,0,0,0],                            // chapter quiz score
+  cqAnswered: [[],[]],                               // track per-chapter
+  cqSelectedQs: [],                                  // randomly selected qs per chapter
+  sqAnswered: {},
+  scqAnswered: {},
+  open1: '', open2: ''
+};
+
+// ════════════════════════════════════
+// Navigation
+// ════════════════════════════════════
+function goChapter(idx) {
+  hideAll();
+  document.getElementById('ch-' + idx).classList.add('active');
+  document.querySelectorAll('.chapter-nav-item').forEach((el,i) => el.classList.toggle('active', i===idx));
+  document.querySelectorAll('.quiz-nav-item').forEach(el => el.classList.remove('active'));
+  updateProgress();
+  window.scrollTo(0,0);
+}
+function goQuiz(idx) {
+  hideAll();
+  const el = document.getElementById('quiz-' + idx) || document.getElementById('quiz-' + idx);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.chapter-nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.quiz-nav-item').forEach((el,i) => el.classList.toggle('active', i===idx));
+  updateProgress();
+  window.scrollTo(0,0);
+}
+function hideAll() {
+  document.querySelectorAll('.chapter-card,.quiz-card,.result-page').forEach(el => el.classList.remove('active'));
+}
+
+// ════════════════════════════════════
+// Chapter quiz — random 2 from 5
+// ════════════════════════════════════
+function initChapterQuiz(chIdx) {
+  if (state.cqSelectedQs[chIdx]) return; // already init
+  const bank = chapterQuizBank[chIdx];
+  const shuffled = [...Array(bank.length).keys()].sort(() => Math.random() - 0.5);
+  const picked = shuffled.slice(0, 2);
+  state.cqSelectedQs[chIdx] = picked;
+  state.cqAnswered[chIdx] = [null, null];
+
+  const container = document.getElementById('cq-' + chIdx);
+  container.innerHTML = '';
+  picked.forEach((qIdx, slot) => {
+    const item = bank[qIdx];
+    const div = document.createElement('div');
+    div.className = 'cq-item';
+    div.id = `cq-${chIdx}-${slot}`;
+    div.innerHTML = `
+      <div class="cq-q">${slot+1}. ${item.q}</div>
+      <div class="tf-options">
+        <button class="tf-btn" onclick="answerCQ(${chIdx},${slot},true,this)">○ 正確</button>
+        <button class="tf-btn" onclick="answerCQ(${chIdx},${slot},false,this)">✕ 錯誤</button>
+      </div>
+      <div class="cq-feedback" id="cqfb-${chIdx}-${slot}"></div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function answerCQ(chIdx, slot, val, btn) {
+  if (state.cqAnswered[chIdx][slot] !== null) return;
+  const qIdx = state.cqSelectedQs[chIdx][slot];
+  const item = chapterQuizBank[chIdx][qIdx];
+  const isCorrect = val === item.a;
+  state.cqAnswered[chIdx][slot] = isCorrect ? 1 : 0;
+
+  // Style buttons
+  const itemDiv = document.getElementById(`cq-${chIdx}-${slot}`);
+  const btns = itemDiv.querySelectorAll('.tf-btn');
+  btns.forEach(b => b.disabled = true);
+  // highlight correct
+  btns[item.a ? 0 : 1].classList.add('highlight-correct');
+  if (!isCorrect) btn.classList.add('wrong');
+  else btn.classList.add('correct');
+
+  const fb = document.getElementById(`cqfb-${chIdx}-${slot}`);
+  fb.textContent = (isCorrect ? '✓ ' : '✗ ') + item.exp;
+  fb.className = 'cq-feedback show ' + (isCorrect ? 'correct' : 'wrong');
+
+  // Check if both answered
+  if (state.cqAnswered[chIdx][0] !== null && state.cqAnswered[chIdx][1] !== null) {
+    const score = state.cqAnswered[chIdx][0] + state.cqAnswered[chIdx][1];
+    state.cqScore[chIdx] = score;
+    state.cqDone[chIdx] = true;
+    document.getElementById('cq-score-val-' + chIdx).textContent = score;
+    document.getElementById('cq-score-' + chIdx).style.display = 'flex';
+    // Enable done button
+    document.getElementById('doneBtn-' + chIdx).disabled = false;
+    document.getElementById('hint-' + chIdx).classList.remove('show');
+  }
+  updateProgress();
+}
+
+// Make chapter quizzes init on demand when chapter is opened
+const origGoChapter = goChapter;
+function goChapter(idx) {
+  hideAll();
+  document.getElementById('ch-' + idx).classList.add('active');
+  document.querySelectorAll('.chapter-nav-item').forEach((el,i) => el.classList.toggle('active', i===idx));
+  document.querySelectorAll('.quiz-nav-item').forEach(el => el.classList.remove('active'));
+  initChapterQuiz(idx);
+  updateProgress();
+  window.scrollTo(0,0);
+}
+
+// Init first chapter immediately
+initChapterQuiz(0);
+
+// ════════════════════════════════════
+// Mark Done
+// ════════════════════════════════════
+function markDone(idx) {
+  if (!state.cqDone[idx]) {
+    document.getElementById('hint-' + idx).classList.add('show');
+    return;
+  }
+  const ta = document.getElementById('ref-' + idx);
+  if (ta) state.reflections[idx] = ta.value;
+  state.chaptersDone[idx] = true;
+  const btn = document.getElementById('doneBtn-' + idx);
+  const badge = document.getElementById('doneBadge-' + idx);
+  btn.disabled = true; btn.textContent = '已完成';
+  badge.classList.add('show');
+  const navItem = document.getElementById('nav-ch-' + idx);
+  if (navItem) navItem.classList.add('done');
+  document.getElementById('chk-' + idx).textContent = '✅';
+  updateProgress();
+}
+
+// ════════════════════════════════════
+//综合测验 — single select
+// ════════════════════════════════════
+const sqCurrent = { sq: 0, scq: 0 };
+
+function pickOpt(el, qid, val) {
+  if (state.sqAnswered[qid] !== undefined || state.scqAnswered[qid] !== undefined) return;
+  const isSQ = qid.startsWith('sq');
+  const idx = parseInt(qid.replace('sq','').replace('scq',''));
+  const answers = isSQ ? sqAnswers : scqAnswers;
+  const feedback = isSQ ? sqFeedback : scqFeedback;
+  const correct = answers[idx];
+  const isCorrect = val === correct;
+
+  if (isSQ) state.sqAnswered[qid] = val;
+  else state.scqAnswered[qid] = val;
+
+  const parent = el.closest('ul');
+  parent.querySelectorAll('.option-item').forEach((item, i) => {
+    if (i === correct) item.classList.add('correct');
+    else if (i === val && !isCorrect) item.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('sfb-' + qid);
+  fb.textContent = feedback[idx][isCorrect ? 'c' : 'w'];
+  fb.className = 'quiz-feedback show ' + (isCorrect ? 'correct' : 'wrong');
+  updateProgress();
+}
+
+function nextSQ(idx) {
+  const cur = document.getElementById('sq-' + idx);
+  const next = document.getElementById('sq-' + (idx+1));
+  if (!state.sqAnswered['sq' + idx]) { alert('請先作答本題再繼續。'); return; }
+  if (cur) cur.classList.remove('active');
+  if (next) next.classList.add('active');
+}
+function nextSCQ(idx) {
+  const cur = document.getElementById('scq-' + idx);
+  const next = document.getElementById('scq-' + (idx+1));
+  if (!state.scqAnswered['scq' + idx]) { alert('請先作答本題再繼續。'); return; }
+  if (cur) cur.classList.remove('active');
+  if (next) next.classList.add('active');
+}
+
+// ════════════════════════════════════
+// Progress
+// ════════════════════════════════════
+function updateProgress() {
+  const chapDone = state.chaptersDone.filter(Boolean).length;
+  const cqAnswered = state.cqAnswered.reduce((acc, arr) => acc + (arr ? arr.filter(v => v !== null).length : 0), 0);
+  const sqDone = Object.keys(state.sqAnswered).length;
+  const scqDone = Object.keys(state.scqAnswered).length;
+  const openDone = (state.open1 ? 1 : 0) + (state.open2 ? 1 : 0);
+  const total = 6 + 12 + 4 + 3 + 2;
+  const done = chapDone + cqAnswered + sqDone + scqDone + openDone;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+// ════════════════════════════════════
+// Submit & Result
+// ════════════════════════════════════
+function submitAll() {
+  state.open1 = document.getElementById('open1').value;
+  state.open2 = document.getElementById('open2').value;
+
+  const chapDone = state.chaptersDone.filter(Boolean).length;
+  const cqTotal = state.cqScore.reduce((a,b) => a+b, 0); // out of 12
+  const sqCorrect = ['sq0','sq1','sq2','sq3'].filter(k => state.sqAnswered[k] === sqAnswers[parseInt(k.replace('sq',''))]).length;
+  const scqCorrect = ['scq0','scq1','scq2'].filter(k => state.scqAnswered[k] === scqAnswers[parseInt(k.replace('scq',''))]).length;
+  const hasOpen = state.open1.length >= 20 && state.open2.length >= 15;
+
+  const totalScore = Math.round(
+    (chapDone / 6) * 25 +
+    (cqTotal / 12) * 25 +
+    (sqCorrect / 4) * 25 +
+    (scqCorrect / 3) * 15 +
+    (hasOpen ? 10 : (state.open1.length > 0 || state.open2.length > 0 ? 5 : 0))
+  );
+
+  let level, levelClass, title, subtitle, recommend;
+  if (totalScore >= 78) {
+    level='台語文化家庭預備級'; levelClass='level-culture';
+    title='恭喜！你已具備台語文化家庭的意識基礎';
+    subtitle='你對台語保存的認識深刻、觀念清晰，建議直接申請登錄「台語文化家庭」。';
+    recommend='<div class="recommend-box"><div class="recommend-title">🏆 官方建議：申請「台語文化家庭」</div><div class="recommend-desc">你已具備以台語為主要溝通語言的意識基礎，建議登上「國家語言數位資源網」台語家庭專區，申請台語文化家庭，享有每戶每人 1,200 元台語獎勵金，並可推薦其他家庭加入獲得抽獎機會。</div></div>';
+  } else if (totalScore >= 50) {
+    level='台語學習家庭預備級'; levelClass='level-learn';
+    title='很好！你已建立台語意識的基礎';
+    subtitle='你對台語保存有正確的認識，建議登錄「台語學習家庭」，透過課程持續強化。';
+    recommend='<div class="recommend-box"><div class="recommend-title">📘 官方建議：申請「台語學習家庭」</div><div class="recommend-desc">建議登錄台語學習家庭，累積意識培力課程點數（最少 4 點），可享 500 元獎勵金、補助能力認證報名費，並持續累積點數升級為台語文化家庭。</div></div>';
+  } else {
+    level='台語意識萌芽期'; levelClass='level-sprout';
+    title='起點就是最好的開始';
+    subtitle='你已邁出台語意識的第一步！建議先完整閱讀手冊，再參加意識培力課程，讓台語意識逐步深化。';
+    recommend='<div class="recommend-box"><div class="recommend-title">🌱 建議：先從意識培力課程開始</div><div class="recommend-desc">建議先完整閱讀本手冊各章節，參加縣市政府或民間團體舉辦的台語意識培力課程，累積 4 點基礎意識點數後，再登錄台語學習家庭計畫。</div></div>';
+  }
+
+  document.getElementById('resultBadge').textContent = level;
+  document.getElementById('resultBadge').className = 'result-level-badge ' + levelClass;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSubtitle').textContent = subtitle;
+  document.getElementById('scoreNum').textContent = totalScore;
+  const deg = Math.round(totalScore/100*360);
+  document.getElementById('scoreRing').style.background = `conic-gradient(var(--accent2) ${deg}deg, var(--border) 0)`;
+  document.getElementById('rChapters').textContent = chapDone + ' / 6';
+  document.getElementById('rChQuiz').textContent = cqTotal + ' / 12';
+  document.getElementById('rSingle').textContent = sqCorrect + ' / 4';
+  document.getElementById('rScenario').textContent = scqCorrect + ' / 3';
+
+  const reflectQs = ['讀完台語瀕危現況，你的感受？','「一人一語」原則，你的家庭障礙？','「語言若消失，就永遠救不回來」的觸動？','你目前的困難及第一步計畫？','多語能力對你或孩子最大的價值？','「語言權是人權」的新理解？'];
+  let rHtml = '';
+  reflectQs.forEach((q,i) => { if (state.reflections[i]) rHtml += `<div class="reflect-review"><div class="reflect-review-q">第 ${i+1} 章：${q}</div><div class="reflect-review-a">${state.reflections[i]}</div></div>`; });
+  document.getElementById('reflectReview').innerHTML = rHtml || '<p style="color:var(--muted);font-size:0.85rem">（未填寫章節反思）</p>';
+
+  let oHtml = '';
+  if (state.open1) oHtml += `<div class="reflect-review"><div class="reflect-review-q">Q1. 台語對你個人/家庭最重要的意義？</div><div class="reflect-review-a">${state.open1}</div></div>`;
+  if (state.open2) oHtml += `<div class="reflect-review"><div class="reflect-review-q">Q2. 接下來一個月的具體行動計畫？</div><div class="reflect-review-a">${state.open2}</div></div>`;
+  document.getElementById('openReview').innerHTML = oHtml || '<p style="color:var(--muted);font-size:0.85rem">（未填寫開放式反思）</p>';
+  document.getElementById('recommendBox').innerHTML = recommend;
+
+  hideAll();
+  document.getElementById('quiz-3').classList.add('active');
+  document.querySelectorAll('.quiz-nav-item').forEach((el,i) => el.classList.toggle('active', i===3));
+  window.scrollTo(0,0);
+  updateProgress();
+}
+
+// ════════════════════════════════════════════════
+// TTS 反思框邏輯
+// ════════════════════════════════════════════════
+const RELAY = 'https://asr.bitfull.tw';
+
+// 每章的語言選擇狀態（預設華語）
+const ttsLang = ['zh','zh','zh','zh','zh','zh'];
+// 每章的音頻 blob URL 與播放次數
+const ttsAudio = [null,null,null,null,null,null];
+const ttsPlayCount = [0,0,0,0,0,0];
+// 紀錄（之後串 Sheet 用）
+const ttsLog = [];
+
+function setLang(idx, lang) {
+  ttsLang[idx] = lang;
+  document.getElementById('lang-zh-' + idx).classList.toggle('active', lang === 'zh');
+  document.getElementById('lang-taigi-' + idx).classList.toggle('active', lang === 'taigi');
+  // 清除舊結果
+  document.getElementById('tts-result-' + idx).classList.remove('show');
+  ttsAudio[idx] = null;
+  // 重新檢查是否可啟用按鈕
+  onReflectInput(idx);
+}
+
+function onReflectInput(idx) {
+  const ta = document.getElementById('ref-' + idx);
+  const btn = document.getElementById('tts-btn-' + idx);
+  btn.disabled = !ta.value.trim();
+  // 輸入變動時清除舊 TTS 結果
+  document.getElementById('tts-result-' + idx).classList.remove('show');
+  ttsAudio[idx] = null;
+}
+
+async function doTts(idx) {
+  const text = document.getElementById('ref-' + idx).value.trim();
+  if (!text) return;
+
+  const btn = document.getElementById('tts-btn-' + idx);
+  const loading = document.getElementById('tts-loading-' + idx);
+  const resultBox = document.getElementById('tts-result-' + idx);
+  const errBox = document.getElementById('tts-error-' + idx);
+
+  btn.disabled = true;
+  loading.classList.add('show');
+  errBox.classList.remove('show');
+  resultBox.classList.remove('show');
+
+  try {
+    const resp = await fetch(RELAY + '/tts-taigi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        sourceLang: ttsLang[idx] === 'taigi' ? 'taigi' : 'zh',
+        speaker: 'female'
+      })
+    });
+
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || '翻譯失敗');
+
+    // 顯示台語漢字 + 台羅
+    document.getElementById('tts-taigi-' + idx).textContent = data.taigi || text;
+    document.getElementById('tts-tailo-' + idx).textContent = data.tailo || '';
+    ttsPlayCount[idx] = 0;
+    document.getElementById('play-count-' + idx).textContent = '';
+
+    // 把 WAV base64 轉成 blob URL
+    const wavBytes = Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0));
+    const blob = new Blob([wavBytes], { type: 'audio/wav' });
+    if (ttsAudio[idx]) URL.revokeObjectURL(ttsAudio[idx]);
+    ttsAudio[idx] = URL.createObjectURL(blob);
+
+    resultBox.classList.add('show');
+
+    // 紀錄
+    ttsLog.push({
+      chapterIdx: idx,
+      originalText: text,
+      sourceLang: ttsLang[idx],
+      taigiResult: data.taigi,
+      tailoResult: data.tailo,
+      isTaigi: data.isTaigi,
+      timestamp: new Date().toISOString(),
+      played: false,
+      playCount: 0
+    });
+
+    // 自動播放一次
+    playAudio(idx);
+
+  } catch(e) {
+    errBox.textContent = '⚠ ' + e.message;
+    errBox.classList.add('show');
+    console.error('[tts-taigi]', e);
+  } finally {
+    btn.disabled = false;
+    loading.classList.remove('show');
+  }
+}
+
+function playAudio(idx) {
+  const url = ttsAudio[idx];
+  if (!url) return;
+  const playBtn = document.getElementById('play-btn-' + idx);
+  const audio = new Audio(url);
+  playBtn.classList.add('playing');
+  playBtn.textContent = '⏸ 播放中…';
+  audio.play();
+  audio.onended = () => {
+    playBtn.classList.remove('playing');
+    playBtn.textContent = '▶ 再播一次';
+    ttsPlayCount[idx]++;
+    document.getElementById('play-count-' + idx).textContent = '已播放 ' + ttsPlayCount[idx] + ' 次';
+    // 更新紀錄
+    const log = ttsLog.filter(l => l.chapterIdx === idx).slice(-1)[0];
+    if (log) { log.played = true; log.playCount = ttsPlayCount[idx]; }
+  };
+  audio.onerror = () => {
+    playBtn.classList.remove('playing');
+    playBtn.textContent = '▶ 播放台語';
+    document.getElementById('tts-error-' + idx).textContent = '⚠ 音頻播放失敗';
+    document.getElementById('tts-error-' + idx).classList.add('show');
+  };
+}
+
+// 讓結果報告能取得 TTS 紀錄
+function getTtsLogSummary() {
+  return ttsLog.map(l => ({
+    章節: '第' + (l.chapterIdx + 1) + '章',
+    輸入語言: l.sourceLang === 'taigi' ? '台語漢字' : '華語',
+    原文: l.originalText,
+    台語漢字: l.taigiResult,
+    台羅拼音: l.tailoResult,
+    播放次數: l.playCount,
+    時間: l.timestamp
+  }));
+}
+
+</script>
+</body>
+</html>
