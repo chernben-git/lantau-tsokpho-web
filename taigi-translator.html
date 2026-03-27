@@ -1752,14 +1752,14 @@ document.addEventListener('click', unlockAudio);
 async function playAudio(){
   const btn=document.getElementById('playBtn');
   if(currentAudio){currentAudio.pause();currentAudio=null;stopAudio();return;}
-  const tailo=document.getElementById('taigiTxt').textContent;if(!tailo)return;
+  const taigiTxt=document.getElementById('taigiTxt').textContent;if(!taigiTxt)return;
   btn.classList.add('playing');
   btn.innerHTML=`<div class="spin" style="border-color:rgba(255,255,255,0.3);border-top-color:white"></div>載入中…`;
   try{
-    // 送華語給 TTS，限 150 字（太長 TTS 會 timeout）
-    const ttsText=(lastChText||document.getElementById('inpTA').value.trim()).slice(0,150);
-    if(!ttsText){stopAudio();return;}
-    const r=await fetch(API+'/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:ttsText,speaker:vc})});
+    // ★ 修正：送台語漢字走 /tts-taigi（textType=characters），才是真正台語發音
+    const ttsText=taigiTxt.slice(0,150);
+    const r=await fetch(API+'/tts-taigi',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:ttsText,sourceLang:'taigi',speaker:vc})});
     const d=await r.json();
     if(!r.ok||!d.audioBase64)throw new Error('TTS失敗');
     playWavBase64(d.audioBase64);
