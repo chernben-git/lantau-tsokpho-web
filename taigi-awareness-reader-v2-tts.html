@@ -1094,12 +1094,13 @@ function submitAll() {
   state.open2 = document.getElementById('open2').value;
 
   const chapDone = state.chaptersDone.filter(Boolean).length;
-  const cqTotal = state.cqScore.reduce((a,b) => a+b, 0); // out of 12
+  const cqTotal = state.cqScore.reduce((a,b) => a+b, 0);
   const sqCorrect = ['sq0','sq1','sq2','sq3'].filter(k => state.sqAnswered[k] === sqAnswers[parseInt(k.replace('sq',''))]).length;
   const scqCorrect = ['scq0','scq1','scq2'].filter(k => state.scqAnswered[k] === scqAnswers[parseInt(k.replace('scq',''))]).length;
   const hasOpen = state.open1.length >= 20 && state.open2.length >= 15;
 
-  const totalScore = Math.round(
+  // ── 基礎分數（最高 100）──
+  const baseScore = Math.round(
     (chapDone / 6) * 25 +
     (cqTotal / 12) * 25 +
     (sqCorrect / 4) * 25 +
@@ -1107,13 +1108,34 @@ function submitAll() {
     (hasOpen ? 10 : (state.open1.length > 0 || state.open2.length > 0 ? 5 : 0))
   );
 
+  // ── 加分1：聽台語發音（每章播放音頻 +2分，最多 +12）──
+  let ttsBonus = 0;
+  const ttsPlayed = ttsLog.filter(l => l.played).map(l => l.chapterIdx);
+  const uniqueChaptersPlayed = [...new Set(ttsPlayed)].length;
+  ttsBonus = uniqueChaptersPlayed * 2;
+
+  // ── 加分2：反思字數超過50字（每章 +2分，最多 +12）──
+  let reflectBonus = 0;
+  state.reflections.forEach(r => { if (r && r.length >= 50) reflectBonus += 2; });
+  // 開放反思也算（open1+open2 各超過50字）
+  if (state.open1.length >= 50) reflectBonus += 2;
+  if (state.open2.length >= 50) reflectBonus += 2;
+
+  // ── 總分（上限 100）──
+  const totalScore = Math.min(100, baseScore + ttsBonus + reflectBonus);
+
+  // ── 加分明細（顯示用）──
+  const bonusDetail = [];
+  if (ttsBonus > 0) bonusDetail.push(`🎵 聆聽台語發音 +${ttsBonus}（${uniqueChaptersPlayed} 章）`);
+  if (reflectBonus > 0) bonusDetail.push(`✍ 深度反思加分 +${reflectBonus}`);
+
   let level, levelClass, title, subtitle, recommend;
-  if (totalScore >= 78) {
+  if (totalScore >= 80) {
     level='台語文化家庭預備級'; levelClass='level-culture';
     title='恭喜！你已具備台語文化家庭的意識基礎';
     subtitle='你對台語保存的認識深刻、觀念清晰，建議直接申請登錄「台語文化家庭」。';
     recommend='<div class="recommend-box"><div class="recommend-title">🏆 官方建議：申請「台語文化家庭」</div><div class="recommend-desc">你已具備以台語為主要溝通語言的意識基礎，建議登上「國家語言數位資源網」台語家庭專區，申請台語文化家庭，享有每戶每人 1,200 元台語獎勵金，並可推薦其他家庭加入獲得抽獎機會。</div></div>';
-  } else if (totalScore >= 50) {
+  } else if (totalScore >= 55) {
     level='台語學習家庭預備級'; levelClass='level-learn';
     title='很好！你已建立台語意識的基礎';
     subtitle='你對台語保存有正確的認識，建議登錄「台語學習家庭」，透過課程持續強化。';
@@ -1136,6 +1158,17 @@ function submitAll() {
   document.getElementById('rChQuiz').textContent = cqTotal + ' / 12';
   document.getElementById('rSingle').textContent = sqCorrect + ' / 4';
   document.getElementById('rScenario').textContent = scqCorrect + ' / 3';
+
+  // 加分明細顯示
+  const bonusEl = document.getElementById('rBonus');
+  if (bonusEl) {
+    if (bonusDetail.length > 0) {
+      bonusEl.textContent = bonusDetail.join('　');
+      bonusEl.style.display = 'block';
+    } else {
+      bonusEl.style.display = 'none';
+    }
+  }
 
   const reflectQs = ['讀完台語瀕危現況，你的感受？','「一人一語」原則，你的家庭障礙？','「語言若消失，就永遠救不回來」的觸動？','你目前的困難及第一步計畫？','多語能力對你或孩子最大的價值？','「語言權是人權」的新理解？'];
   let rHtml = '';
