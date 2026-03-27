@@ -82,6 +82,16 @@
     input.addEventListener('keydown', e => { if (e.key === 'Enter') tryAuth(); });
   }
 
+  // URL 帶 key 自動驗證（Bot 連結用）
+  const urlKey = new URLSearchParams(window.location.search).get('key');
+  if (urlKey === PASSWORD) {
+    saveAuth();
+    // 清除 URL 中的 key（避免被截圖或分享）
+    const url = new URL(window.location.href);
+    url.searchParams.delete('key');
+    window.history.replaceState({}, '', url.toString());
+  }
+
   // 主邏輯
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => { if (!isAuthed()) showPrompt(); });
