@@ -92,6 +92,19 @@
     window.history.replaceState({}, '', url.toString());
   }
 
+  // LINE 來源自動通過（Rich Menu / LINE 內開啟）
+  const ua = navigator.userAgent || '';
+  const ref = document.referrer || '';
+  const isFromLine = (
+    ua.includes('Line/') ||          // LINE app 內建瀏覽器
+    ua.includes('LIFF') ||           // LIFF
+    ref.includes('line.me') ||       // 從 line.me 跳轉
+    ref.includes('liff.line.me')     // 從 LIFF 跳轉
+  );
+  if (isFromLine) {
+    saveAuth();
+  }
+
   // 主邏輯
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => { if (!isAuthed()) showPrompt(); });
