@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>咱兜的台語 - 快速註冊</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --green-dark: #1a4a2e;
+    --green-mid: #2d7a4f;
+    --green-light: #4caf7d;
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --bg: #f7f3ec;
+    --text: #1a2e1a;
+    --text-muted: #5a6e5a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans TC', 'PingFang TC', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 36px 28px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 4px 32px rgba(26,74,46,0.10);
+    border: 1px solid rgba(26,74,46,0.08);
+    animation: fadeUp 0.5s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .logo-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 16px rgba(26,74,46,0.25);
+  }
+
+  .logo-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--green-dark);
+    letter-spacing: 0.05em;
+  }
+
+  .logo-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(26,74,46,0.15), transparent);
+    margin: 20px 0;
+  }
+
+  .org-badge {
+    background: linear-gradient(135deg, #f0f8f3, #e8f5ed);
+    border: 1px solid rgba(45,122,79,0.2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .org-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--green-mid);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .org-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .org-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--green-dark);
+  }
+
+  .field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  .field-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid #dde8dd;
+    border-radius: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--text);
+    background: white;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 20px;
+  }
+
+  .field-input:focus {
+    border-color: var(--green-mid);
+    box-shadow: 0 0 0 3px rgba(45,122,79,0.1);
+  }
+
+  .field-input::placeholder {
+    color: #b0c0b0;
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 4px 16px rgba(26,74,46,0.3);
+  }
+
+  .btn-submit:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+
+  /* 成功畫面 */
+  .success-screen {
+    display: none;
+    text-align: center;
+    animation: fadeUp 0.5s ease;
+  }
+
+  .success-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--green-mid), var(--green-light));
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(76,175,125,0.35);
+  }
+
+  .success-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green-dark);
+    margin-bottom: 8px;
+  }
+
+  .success-msg {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  .success-info {
+    background: #f0f8f3;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: left;
+    margin-bottom: 20px;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+
+  .info-row:not(:last-child) {
+    border-bottom: 1px solid rgba(26,74,46,0.08);
+  }
+
+  .info-key {
+    color: var(--text-muted);
+  }
+
+  .info-val {
+    font-weight: 600;
+    color: var(--green-dark);
+  }
+
+  .btn-close {
+    width: 100%;
+    padding: 14px;
+    background: var(--green-dark);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  /* 錯誤提示 */
+  .error-msg {
+    background: #fff0f0;
+    border: 1px solid #ffcccc;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #cc3333;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* loading */
+  .loading-screen {
+    text-align: center;
+    padding: 40px 0;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e0ede0;
+    border-top-color: var(--green-mid);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="mainCard">
+
+  <!-- Loading -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <div style="color: var(--text-muted); font-size: 14px;">載入中...</div>
+  </div>
+
+  <!-- 註冊表單 -->
+  <div id="registerForm" style="display:none;">
+    <div class="logo">
+      <div class="logo-icon">🌿</div>
+      <div class="logo-title">咱兜的台語</div>
+      <div class="logo-sub">台語家庭學習平台</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="org-badge">
+      <div class="org-icon">🏛️</div>
+      <div>
+        <div class="org-label">您的社群</div>
+        <div class="org-name" id="orgName">載入中...</div>
+      </div>
+    </div>
+
+    <div class="field-label">您的姓名</div>
+    <input
+      type="text"
+      class="field-input"
+      id="nameInput"
+      placeholder="請輸入姓名，例如：陳明德"
+      maxlength="20"
+      autocomplete="off"
+    />
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <button class="btn-submit" id="submitBtn" onclick="handleSubmit()">
+      完成註冊 →
+    </button>
+
+    <div class="hint">
+      完成後即可開始每日台語學習<br>
+      您的資料受到安全保護
+    </div>
+  </div>
+
+  <!-- 成功畫面 -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✓</div>
+    <div class="success-title">註冊成功！</div>
+    <div class="success-msg">歡迎加入【咱兜的台語】<br>開始您的台語學習旅程</div>
+
+    <div class="success-info">
+      <div class="info-row">
+        <span class="info-key">姓名</span>
+        <span class="info-val" id="successName">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">社群</span>
+        <span class="info-val" id="successOrg">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">系統編號</span>
+        <span class="info-val" id="successId">—</span>
+      </div>
+    </div>
+
+    <button class="btn-close" onclick="closeLiff()">
+      開始學習台語 🌿
+    </button>
+  </div>
+
+</div>
+
+<script>
+// ============================================
+// 設定區（部署時修改這裡）
+// ============================================
+const LIFF_ID      = '2009215159-q6jtL43l';
+const GAS_URL      = 'https://script.google.com/macros/s/AKfycbwDv3vDAqSDd0KiJvqg78GsFGVOySMAgP1UFNfyH_I4a7JxMGS0AD1jVPl3ymFQWrM1lA/exec';
+const DEFAULT_ORG  = '咱兜的台語';  // 沒帶參數時的預設社群
+
+// ============================================
+let lineUserId = null;
+let orgName    = DEFAULT_ORG;
+
+// 從網址取得 org 參數
+function getOrgFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  // LIFF 有時參數在 hash 後面
+  const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+  return params.get('org') || hashParams.get('org') || DEFAULT_ORG;
+}
+
+// 初始化 LIFF
+async function initLiff() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+
+    orgName = getOrgFromUrl();
+    document.getElementById('orgName').textContent = orgName;
+
+    if (liff.isLoggedIn()) {
+      const profile  = await liff.getProfile();
+      lineUserId     = profile.userId;
+    } else {
+      liff.login();
+      return;
+    }
+
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('registerForm').style.display  = 'block';
+
+  } catch(e) {
+    console.error('LIFF init error:', e);
+    // 非 LINE 環境（瀏覽器測試）
+    orgName = getOrgFromUrl();
+    document.getElementById('orgName').textContent = orgName;
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('registerForm').style.display  = 'block';
+  }
+}
+
+// 送出註冊
+async function handleSubmit() {
+  const nameInput = document.getElementById('nameInput');
+  const name      = nameInput.value.trim();
+  const errorMsg  = document.getElementById('errorMsg');
+  const submitBtn = document.getElementById('submitBtn');
+
+  // 驗證
+  errorMsg.style.display = 'none';
+  if (name.length < 2) {
+    errorMsg.textContent   = '❌ 請輸入完整姓名（至少 2 個字）';
+    errorMsg.style.display = 'block';
+    nameInput.focus();
+    return;
+  }
+  if (name.length > 20) {
+    errorMsg.textContent   = '❌ 姓名太長，請確認是否正確';
+    errorMsg.style.display = 'block';
+    return;
+  }
+
+  submitBtn.disabled     = true;
+  submitBtn.textContent  = '註冊中...';
+
+  try {
+    // 呼叫 GAS API 完成註冊
+    const payload = {
+      action  : 'liffRegister',
+      lineId  : lineUserId || 'BROWSER_TEST_' + Date.now(),
+      name    : name,
+      org     : orgName,
+      source  : 'LIFF_QR'
+    };
+
+    const res  = await fetch(GAS_URL, {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.status === 'success' || data.familyId) {
+      // 成功
+      document.getElementById('successName').textContent = name;
+      document.getElementById('successOrg').textContent  = orgName;
+      document.getElementById('successId').textContent   = data.familyId || '已建立';
+
+      document.getElementById('registerForm').style.display  = 'none';
+      document.getElementById('successScreen').style.display = 'block';
+    } else {
+      throw new Error(data.message || '註冊失敗');
+    }
+
+  } catch(e) {
+    console.error(e);
+    errorMsg.textContent   = '❌ 系統錯誤，請稍後再試：' + e.message;
+    errorMsg.style.display = 'block';
+    submitBtn.disabled     = false;
+    submitBtn.textContent  = '完成註冊 →';
+  }
+}
+
+function closeLiff() {
+  try {
+    liff.closeWindow();
+  } catch(e) {
+    window.close();
+  }
+}
+
+// Enter 鍵送出
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('nameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleSubmit();
+  });
+  initLiff();
+});
+</script>
+</body>
+</html>
