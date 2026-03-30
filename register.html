@@ -10,8 +10,6 @@
     --green-dark: #1a4a2e;
     --green-mid: #2d7a4f;
     --green-light: #4caf7d;
-    --gold: #c9a84c;
-    --gold-light: #f0d080;
     --bg: #f7f3ec;
     --text: #1a2e1a;
     --text-muted: #5a6e5a;
@@ -46,36 +44,18 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .logo {
-    text-align: center;
-    margin-bottom: 24px;
-  }
+  .logo { text-align: center; margin-bottom: 24px; }
 
   .logo-icon {
-    width: 64px;
-    height: 64px;
+    width: 64px; height: 64px;
     background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
     border-radius: 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 16px rgba(26,74,46,0.25);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 30px; margin-bottom: 12px;
   }
 
-  .logo-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--green-dark);
-    letter-spacing: 0.05em;
-  }
-
-  .logo-sub {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-top: 4px;
-  }
+  .logo-title { font-size: 20px; font-weight: 700; color: var(--green-dark); letter-spacing: 0.05em; }
+  .logo-sub   { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
   .divider {
     height: 1px;
@@ -88,54 +68,28 @@
     border: 1px solid rgba(45,122,79,0.2);
     border-radius: 12px;
     padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: flex; align-items: center; gap: 12px;
     margin-bottom: 24px;
   }
 
   .org-icon {
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     background: var(--green-mid);
     border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
   }
 
-  .org-label {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-bottom: 2px;
-  }
+  .org-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+  .org-name  { font-size: 15px; font-weight: 600; color: var(--green-dark); }
 
-  .org-name {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--green-dark);
-  }
-
-  .field-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    letter-spacing: 0.05em;
-  }
+  .field-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.05em; }
 
   .field-input {
-    width: 100%;
-    padding: 14px 16px;
-    border: 1.5px solid #dde8dd;
-    border-radius: 12px;
-    font-size: 16px;
-    font-family: inherit;
-    color: var(--text);
-    background: white;
-    outline: none;
+    width: 100%; padding: 14px 16px;
+    border: 1.5px solid #dde8dd; border-radius: 12px;
+    font-size: 16px; font-family: inherit; color: var(--text);
+    background: white; outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
     margin-bottom: 20px;
   }
@@ -144,165 +98,75 @@
     border-color: var(--green-mid);
     box-shadow: 0 0 0 3px rgba(45,122,79,0.1);
   }
-
-  .field-input::placeholder {
-    color: #b0c0b0;
-  }
+  .field-input::placeholder { color: #b0c0b0; }
 
   .btn-submit {
-    width: 100%;
-    padding: 16px;
+    width: 100%; padding: 16px;
     background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 700;
-    font-family: inherit;
-    cursor: pointer;
-    letter-spacing: 0.05em;
+    color: white; border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700; font-family: inherit;
+    cursor: pointer; letter-spacing: 0.05em;
     transition: opacity 0.2s, transform 0.15s;
-    box-shadow: 0 4px 16px rgba(26,74,46,0.3);
   }
+  .btn-submit:active  { transform: scale(0.98); opacity: 0.9; }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  .btn-submit:active {
-    transform: scale(0.98);
-    opacity: 0.9;
-  }
+  .hint { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 16px; line-height: 1.6; }
 
-  .btn-submit:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .hint {
-    text-align: center;
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 16px;
-    line-height: 1.6;
-  }
-
-  /* 成功畫面 */
-  .success-screen {
-    display: none;
-    text-align: center;
-    animation: fadeUp 0.5s ease;
-  }
+  .success-screen { display: none; text-align: center; animation: fadeUp 0.5s ease; }
 
   .success-icon {
-    width: 80px;
-    height: 80px;
+    width: 80px; height: 80px;
     background: linear-gradient(135deg, var(--green-mid), var(--green-light));
     border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 36px;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 24px rgba(76,175,125,0.35);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 36px; margin-bottom: 20px;
   }
 
-  .success-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--green-dark);
-    margin-bottom: 8px;
-  }
+  .success-title { font-size: 22px; font-weight: 700; color: var(--green-dark); margin-bottom: 8px; }
+  .success-msg   { font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 24px; }
 
-  .success-msg {
-    font-size: 14px;
-    color: var(--text-muted);
-    line-height: 1.7;
-    margin-bottom: 24px;
-  }
+  .success-info { background: #f0f8f3; border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 20px; }
 
-  .success-info {
-    background: #f0f8f3;
-    border-radius: 12px;
-    padding: 16px;
-    text-align: left;
-    margin-bottom: 20px;
-  }
-
-  .info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    font-size: 13px;
-  }
-
-  .info-row:not(:last-child) {
-    border-bottom: 1px solid rgba(26,74,46,0.08);
-  }
-
-  .info-key {
-    color: var(--text-muted);
-  }
-
-  .info-val {
-    font-weight: 600;
-    color: var(--green-dark);
-  }
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; }
+  .info-row:not(:last-child) { border-bottom: 1px solid rgba(26,74,46,0.08); }
+  .info-key { color: var(--text-muted); }
+  .info-val { font-weight: 600; color: var(--green-dark); }
 
   .btn-close {
-    width: 100%;
-    padding: 14px;
-    background: var(--green-dark);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
+    width: 100%; padding: 14px;
+    background: var(--green-dark); color: white; border: none;
+    border-radius: 12px; font-size: 15px; font-weight: 600;
+    font-family: inherit; cursor: pointer;
   }
 
-  /* 錯誤提示 */
   .error-msg {
-    background: #fff0f0;
-    border: 1px solid #ffcccc;
-    border-radius: 10px;
-    padding: 12px 14px;
-    font-size: 13px;
-    color: #cc3333;
-    margin-bottom: 16px;
-    display: none;
+    background: #fff0f0; border: 1px solid #ffcccc;
+    border-radius: 10px; padding: 12px 14px;
+    font-size: 13px; color: #cc3333;
+    margin-bottom: 16px; display: none;
   }
 
-  /* loading */
-  .loading-screen {
-    text-align: center;
-    padding: 40px 0;
-  }
-
+  .loading-screen { text-align: center; padding: 40px 0; }
   .spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid #e0ede0;
-    border-top-color: var(--green-mid);
+    width: 40px; height: 40px;
+    border: 3px solid #e0ede0; border-top-color: var(--green-mid);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin: 0 auto 16px;
   }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div class="card" id="mainCard">
 
-  <!-- Loading -->
   <div class="loading-screen" id="loadingScreen">
     <div class="spinner"></div>
     <div style="color: var(--text-muted); font-size: 14px;">載入中...</div>
   </div>
 
-  <!-- 註冊表單 -->
   <div id="registerForm" style="display:none;">
     <div class="logo">
       <div class="logo-icon">🌿</div>
@@ -322,12 +186,9 @@
 
     <div class="field-label">您的姓名</div>
     <input
-      type="text"
-      class="field-input"
-      id="nameInput"
+      type="text" class="field-input" id="nameInput"
       placeholder="請輸入姓名，例如：陳明德"
-      maxlength="20"
-      autocomplete="off"
+      maxlength="20" autocomplete="off"
     />
 
     <div class="error-msg" id="errorMsg"></div>
@@ -342,7 +203,6 @@
     </div>
   </div>
 
-  <!-- 成功畫面 -->
   <div class="success-screen" id="successScreen">
     <div class="success-icon">✓</div>
     <div class="success-title">註冊成功！</div>
@@ -372,25 +232,21 @@
 
 <script>
 // ============================================
-// 設定區（部署時修改這裡）
+// 設定區
 // ============================================
-const LIFF_ID      = '2009215159-q6jtL43l';
-const GAS_URL      = 'https://script.google.com/macros/s/AKfycbwDv3vDAqSDd0KiJvqg78GsFGVOySMAgP1UFNfyH_I4a7JxMGS0AD1jVPl3ymFQWrM1lA/exec';
-const DEFAULT_ORG  = '咱兜的台語';  // 沒帶參數時的預設社群
+const LIFF_ID     = '2009215159-q6jtL43l';
+const GAS_URL     = 'https://script.google.com/macros/s/AKfycbwDv3vDAqSDd0KiJvqg78GsFGVOySMAgP1UFNfyH_I4a7JxMGS0AD1jVPl3ymFQWrM1lA/exec';
+const DEFAULT_ORG = '咱兜的台語';
 
-// ============================================
 let lineUserId = null;
 let orgName    = DEFAULT_ORG;
 
-// 從網址取得 org 參數
 function getOrgFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  // LIFF 有時參數在 hash 後面
+  const params     = new URLSearchParams(window.location.search);
   const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
   return params.get('org') || hashParams.get('org') || DEFAULT_ORG;
 }
 
-// 初始化 LIFF
 async function initLiff() {
   try {
     await liff.init({ liffId: LIFF_ID });
@@ -399,35 +255,31 @@ async function initLiff() {
     document.getElementById('orgName').textContent = orgName;
 
     if (liff.isLoggedIn()) {
-      const profile  = await liff.getProfile();
-      lineUserId     = profile.userId;
+      const profile = await liff.getProfile();
+      lineUserId    = profile.userId;
     } else {
       liff.login();
       return;
     }
-
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('registerForm').style.display  = 'block';
-
   } catch(e) {
     console.error('LIFF init error:', e);
-    // 非 LINE 環境（瀏覽器測試）
     orgName = getOrgFromUrl();
     document.getElementById('orgName').textContent = orgName;
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('registerForm').style.display  = 'block';
   }
+
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('registerForm').style.display  = 'block';
 }
 
-// 送出註冊
+// ★ 改用 GET 方式呼叫 GAS，解決 CORS 問題
 async function handleSubmit() {
   const nameInput = document.getElementById('nameInput');
   const name      = nameInput.value.trim();
   const errorMsg  = document.getElementById('errorMsg');
   const submitBtn = document.getElementById('submitBtn');
 
-  // 驗證
   errorMsg.style.display = 'none';
+
   if (name.length < 2) {
     errorMsg.textContent   = '❌ 請輸入完整姓名（至少 2 個字）';
     errorMsg.style.display = 'block';
@@ -440,29 +292,32 @@ async function handleSubmit() {
     return;
   }
 
-  submitBtn.disabled     = true;
-  submitBtn.textContent  = '註冊中...';
+  submitBtn.disabled    = true;
+  submitBtn.textContent = '註冊中...';
 
   try {
-    // 呼叫 GAS API 完成註冊
-    const payload = {
-      action  : 'liffRegister',
-      lineId  : lineUserId || 'BROWSER_TEST_' + Date.now(),
-      name    : name,
-      org     : orgName,
-      source  : 'LIFF_QR'
-    };
-
-    const res  = await fetch(GAS_URL, {
-      method : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body   : JSON.stringify(payload)
+    // ★ 使用 GET 方式，附帶參數
+    const params = new URLSearchParams({
+      action: 'liffRegister',
+      lineId: lineUserId || 'BROWSER_TEST_' + Date.now(),
+      name:   name,
+      org:    orgName
     });
 
-    const data = await res.json();
+    const res  = await fetch(GAS_URL + '?' + params.toString(), {
+      method   : 'GET',
+      redirect : 'follow'
+    });
+
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch(e) {
+      throw new Error('回應格式錯誤: ' + text.substring(0, 100));
+    }
 
     if (data.status === 'success' || data.familyId) {
-      // 成功
       document.getElementById('successName').textContent = name;
       document.getElementById('successOrg').textContent  = orgName;
       document.getElementById('successId').textContent   = data.familyId || '已建立';
@@ -475,7 +330,7 @@ async function handleSubmit() {
 
   } catch(e) {
     console.error(e);
-    errorMsg.textContent   = '❌ 系統錯誤，請稍後再試：' + e.message;
+    errorMsg.textContent   = '❌ 系統錯誤：' + e.message;
     errorMsg.style.display = 'block';
     submitBtn.disabled     = false;
     submitBtn.textContent  = '完成註冊 →';
@@ -483,14 +338,9 @@ async function handleSubmit() {
 }
 
 function closeLiff() {
-  try {
-    liff.closeWindow();
-  } catch(e) {
-    window.close();
-  }
+  try { liff.closeWindow(); } catch(e) { window.close(); }
 }
 
-// Enter 鍵送出
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('nameInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') handleSubmit();
