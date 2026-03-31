@@ -423,6 +423,9 @@ header p { font-size: 0.8rem; color: #b0a898; font-weight: 300; }
 
 
 <!-- ── 我的成績狀態列 ── -->
+<div id="myStatusLoading" style="background:#1a1208;border-bottom:1px solid #333;padding:0.45rem 1.5rem;font-size:0.72rem;color:#888;text-align:center;">
+  ⏳ 載入個人資料中…
+</div>
 <div id="myStatusBar">
   <div class="mstat">🏠 <strong id="ms-name">—</strong></div>
   <div class="mstat">📝 最近分數：<strong id="ms-score">—</strong></div>
@@ -1472,7 +1475,9 @@ async function showBadgeIfEarned(score, fullPayload) {
 // ── 頁面載入：顯示我的成績狀態列 ──
 async function loadMyStatus() {
   const fid = getAwarenessFid();
+  const loadingEl = document.getElementById('myStatusLoading');
   if (!fid) {
+    if (loadingEl) loadingEl.style.display = 'none';
     document.getElementById('myStatusNoFid').classList.add('show');
     return;
   }
@@ -1480,6 +1485,7 @@ async function loadMyStatus() {
     const resp = await fetch(AWARENESS_GAS_URL + '?action=getAwareness&fid=' + encodeURIComponent(fid));
     const data = await resp.json();
     if (data.error) return;
+    if (loadingEl) loadingEl.style.display = 'none';
     const bar = document.getElementById('myStatusBar');
     bar.classList.add('show');
     document.getElementById('ms-name').textContent  = data.familyName || fid;
@@ -1490,6 +1496,7 @@ async function loadMyStatus() {
     if (data.earnHabit)   document.getElementById('ms-habit').classList.remove('locked');
     if (data.earnCulture) document.getElementById('ms-culture').classList.remove('locked');
   } catch(e) {
+    if (loadingEl) loadingEl.style.display = 'none';
     console.warn('[MyStatus] 載入失敗:', e.message);
   }
 }
