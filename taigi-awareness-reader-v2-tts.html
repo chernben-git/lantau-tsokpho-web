@@ -1335,7 +1335,10 @@ const AWARENESS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwDv3vDAqSDd0
 
 function getAwarenessFid() {
   const params = new URLSearchParams(location.search);
-  return params.get('fid') || (window._authFid || '');
+  // ★ 優先順序：URL fid > window._authFid（auth.js設定）> localStorage備援
+  return params.get('fid')
+      || (window._authFid || '')
+      || (localStorage.getItem('taigi_user_fid') || '');
 }
 
 function getScoreHistory() {

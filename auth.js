@@ -1,23 +1,25 @@
 /**
  * 咱兜的台語 — 頁面密碼保護
- * auth.js v1.1
- * v1.1：★ 修正 fid 保留機制；修正 LINE UA 判斷
+ * auth.js v1.2
+ * v1.1：fid 存 sessionStorage / window._authFid
+ * v1.2：★ fid 改存 localStorage（更持久，LINE browser 不會遺失）
  * 劍橋分析股份有限公司
  */
 (function () {
-  const PASSWORD = 'taigi1968-2026';
-  const KEY = 'taigi_auth';
-  const FID_KEY = 'taigi_auth_fid';
+  const PASSWORD    = 'taigi1968-2026';
+  const KEY         = 'taigi_auth';
+  const FID_KEY     = 'taigi_user_fid';  // ★ 改用 localStorage key
   const EXPIRY_HOURS = 24;
 
-  // ── 從 URL 取得 fid，存到 sessionStorage 和 window._authFid ──
+  // ── 從 URL 取得 fid，立即存到 localStorage ──
   const urlParams = new URLSearchParams(window.location.search);
-  const urlFid = urlParams.get('fid');
+  const urlFid    = urlParams.get('fid');
   if (urlFid) {
-    sessionStorage.setItem(FID_KEY, urlFid);
+    localStorage.setItem(FID_KEY, urlFid);   // ★ 存 localStorage
     window._authFid = urlFid;
   } else {
-    const storedFid = sessionStorage.getItem(FID_KEY);
+    // URL 沒有 fid，從 localStorage 還原
+    const storedFid = localStorage.getItem(FID_KEY);
     if (storedFid) window._authFid = storedFid;
   }
 
@@ -32,7 +34,7 @@
 
   function saveAuth() {
     localStorage.setItem(KEY, JSON.stringify({
-      token: btoa(PASSWORD),
+      token:  btoa(PASSWORD),
       expiry: Date.now() + EXPIRY_HOURS * 60 * 60 * 1000
     }));
   }
@@ -44,7 +46,6 @@
       display:flex;align-items:center;justify-content:center;
       z-index:99999;font-family:'Noto Sans TC',sans-serif;
     `;
-
     overlay.innerHTML = `
       <div style="background:#faf6ef;border-radius:14px;padding:2rem 2rem 1.6rem;max-width:340px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
         <div style="font-size:0.65rem;letter-spacing:0.25em;color:#c49a3a;margin-bottom:0.5rem;">文化部 培育台語家庭計畫</div>
@@ -64,20 +65,18 @@
         <div style="font-size:0.65rem;color:#b0a898;margin-top:1rem;">台語是咱的母語，咱來保護伊</div>
       </div>
     `;
-
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
 
     const input = document.getElementById('auth-input');
     const btn   = document.getElementById('auth-btn');
     const err   = document.getElementById('auth-error');
-
     input.focus();
 
     function tryAuth() {
       if (input.value === PASSWORD) {
         saveAuth();
-        overlay.style.opacity = '0';
+        overlay.style.opacity    = '0';
         overlay.style.transition = 'opacity 0.3s';
         setTimeout(() => { overlay.remove(); document.body.style.overflow = ''; }, 300);
       } else {
@@ -88,22 +87,17 @@
         setTimeout(() => { input.style.borderColor = '#d4c9b8'; }, 1500);
       }
     }
-
     btn.addEventListener('click', tryAuth);
     input.addEventListener('keydown', e => { if (e.key === 'Enter') tryAuth(); });
   }
 
-  // ── URL 帶 fid 自動驗證（Bot 連結）──
-  // 有 fid 代表從 LINE Bot 進入，直接通過
-  if (urlFid) {
-    saveAuth();
-  }
+  // ── 有 fid 自動通過（從 LINE Bot 進入）──
+  if (urlFid) saveAuth();
 
-  // ── URL 帶 key 自動驗證（舊版相容）──
+  // ── URL 帶 key 自動通過（舊版相容）──
   const urlKey = urlParams.get('key');
   if (urlKey === PASSWORD) {
     saveAuth();
-    // 清除 key 但保留 fid
     const url = new URL(window.location.href);
     url.searchParams.delete('key');
     window.history.replaceState({}, '', url.toString());
@@ -112,14 +106,8 @@
   // ── LINE 來源自動通過 ──
   const ua  = navigator.userAgent || '';
   const ref = document.referrer  || '';
-  const isFromLine = (
-    ua.includes('Line/')       ||
-    ua.includes('LIFF')        ||
-    ua.includes('LineDirect')  ||
-    ref.includes('line.me')    ||
-    ref.includes('liff.line.me')
-  );
-  if (isFromLine) {
+  if (ua.includes('Line/') || ua.includes('LIFF') || ua.includes('LineDirect') ||
+      ref.includes('line.me') || ref.includes('liff.line.me')) {
     saveAuth();
   }
 
