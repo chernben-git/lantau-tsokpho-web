@@ -1261,32 +1261,63 @@ function submitAll() {
 }
 
 // ════════════════════════════════════════════════
-// 獎章系統
+// 獎章系統  ★ v2：localStorage + GAS 雙寫
 // ════════════════════════════════════════════════
 const BADGE_HABIT   = 'https://familyhistroy-tree.netlify.app/badge-habit.png';
 const BADGE_CULTURE = 'https://familyhistroy-tree.netlify.app/badge-culture.png';
-const LS_KEY = 'taigi_awareness_scores'; // localStorage key
+const LS_KEY        = 'taigi_awareness_scores';
 
-// ── 取得歷史分數記錄 ──
+// GAS URL
+const AWARENESS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwDv3vDAqSDd0KiJvqg78GsFGVOySMAgP1UFNfyH_I4a7JxMGS0AD1jVPl3ymFQWrM1lA/exec';
+
+// ── 從 URL 取得 fid ──
+function getAwarenessFid() {
+  const params = new URLSearchParams(location.search);
+  return params.get('fid') || (window._authFid || '');
+}
+
+// ── 取得本機歷史 ──
 function getScoreHistory() {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
   catch(e) { return []; }
 }
 
-// ── 儲存本次分數 ──
-function saveScore(score) {
+// ── 儲存本次分數：localStorage + 非同步寫入 GAS ──
+async function saveScore(score) {
   const history = getScoreHistory();
   history.push({ score, date: new Date().toISOString() });
-  // 最多保留 10 筆
   if (history.length > 10) history.shift();
   localStorage.setItem(LS_KEY, JSON.stringify(history));
-  return history;
+
+  const fid = getAwarenessFid();
+  if (fid) {
+    try {
+      const resp = await fetch(AWARENESS_GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'saveAwareness',
+          fid,
+          score,
+          date: new Date().toISOString()
+        })
+      });
+      const result = await resp.json();
+      if (!result.error) {
+        console.log('[Awareness] GAS 寫入成功 countHabit=' + result.countHabit + ' earnHabit=' + result.earnHabit);
+        return { history, gasResult: result };
+      }
+      console.warn('[Awareness] GAS 寫入回傳錯誤:', result.error);
+    } catch(err) {
+      console.warn('[Awareness] GAS 寫入失敗（不影響本頁）:', err.message);
+    }
+  } else {
+    console.warn('[Awareness] 找不到 fid，僅寫入 localStorage');
+  }
+  return { history, gasResult: null };
 }
 
 // ── 判斷獎章資格 ──
-// 規則：
-//   習慣家庭：至少 2 次 ≥55
-//   文化家庭：至少 2 次 ≥80（同時給兩枚）
 function calcBadgeEligibility(history) {
   const countHabit   = history.filter(h => h.score >= 55).length;
   const countCulture = history.filter(h => h.score >= 80).length;
@@ -1295,27 +1326,30 @@ function calcBadgeEligibility(history) {
   return { earnHabit, earnCulture, countHabit, countCulture };
 }
 
-function showBadgeIfEarned(score) {
-  // 儲存本次分數
-  const history = saveScore(score);
-  const { earnHabit, earnCulture, countHabit, countCulture } = calcBadgeEligibility(history);
+async function showBadgeIfEarned(score) {
+  const { history, gasResult } = await saveScore(score);
 
-  // ── 結果頁進度提示 ──
+  let countHabit, countCulture, earnHabit, earnCulture;
+  if (gasResult) {
+    countHabit   = gasResult.countHabit;
+    countCulture = gasResult.countCulture;
+    earnHabit    = gasResult.earnHabit;
+    earnCulture  = gasResult.earnCulture;
+  } else {
+    ({ countHabit, countCulture, earnHabit, earnCulture } = calcBadgeEligibility(history));
+  }
+
   const section = document.getElementById('earned-badges-section');
   const display = document.getElementById('earned-badges-display');
   if (section && display) {
     section.style.display = 'block';
-
     if (!earnHabit && score < 55) {
-      // 未達門檻
       display.innerHTML = `<p style="color:var(--muted);font-size:0.82rem;text-align:center">本次分數未達 55 分，繼續努力！<br>累積 2 次 ≥55 分可領台語習慣家庭獎章。</p>`;
     } else if (!earnHabit) {
-      // 達到 55 但次數不足
       display.innerHTML = `<p style="color:#c49a3a;font-size:0.82rem;text-align:center">
         🌱 本次達標！（共 ${countHabit} / 2 次 ≥55分）<br>
         再完成一次 ≥55 分即可領取台語習慣家庭獎章。</p>`;
     } else if (earnHabit && !earnCulture) {
-      // 習慣家庭達標
       display.innerHTML = `
         <div class="earned-badge-item">
           <img src="${BADGE_HABIT}" alt="台語習慣家庭" />
@@ -1324,7 +1358,6 @@ function showBadgeIfEarned(score) {
         <p style="color:var(--muted);font-size:0.75rem;text-align:center;width:100%;margin-top:0.5rem">
           已達台語習慣家庭！（${countCulture}/2 次 ≥80分）<br>累積 2 次 ≥80 分可升級台語文化家庭。</p>`;
     } else {
-      // 雙獎章
       display.innerHTML = [
         { src: BADGE_HABIT,   name: '台語習慣家庭' },
         { src: BADGE_CULTURE, name: '台語文化家庭' }
@@ -1336,7 +1369,6 @@ function showBadgeIfEarned(score) {
     }
   }
 
-  // ── 頒獎 Overlay（只有真正達標才彈出）──
   if (!earnHabit) return;
 
   const badges = earnCulture
@@ -1349,11 +1381,9 @@ function showBadgeIfEarned(score) {
   const imgs    = document.getElementById('badge-imgs');
   const dlBtns  = document.getElementById('badge-dl-btns');
 
-  // 判斷是否「首次」達標（本次剛好第2次）
   const habitJustEarned   = countHabit === 2 && !earnCulture;
   const cultureJustEarned = countCulture === 2;
-
-  if (!habitJustEarned && !cultureJustEarned) return; // 之前已頒過，不重複彈
+  if (!habitJustEarned && !cultureJustEarned) return;
 
   title.textContent = earnCulture ? '🎉 恭喜獲得雙重電子獎章！' : '🎉 恭喜獲得台語習慣家庭獎章！';
   desc.textContent  = earnCulture
@@ -1379,6 +1409,8 @@ function closeBadgeOverlay(event) {
   if (!event || event.target === document.getElementById('badge-overlay')) {
     document.getElementById('badge-overlay').classList.remove('show');
   }
+}
+
 }
 
 function launchConfetti() {
