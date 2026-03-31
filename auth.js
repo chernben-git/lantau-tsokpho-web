@@ -1,12 +1,25 @@
 /**
  * 咱兜的台語 — 頁面密碼保護
- * auth.js v1.0
+ * auth.js v1.1
+ * v1.1：★ 修正 fid 保留機制；修正 LINE UA 判斷
  * 劍橋分析股份有限公司
  */
 (function () {
   const PASSWORD = 'taigi1968-2026';
   const KEY = 'taigi_auth';
-  const EXPIRY_HOURS = 24; // 24小時內不用重新輸入
+  const FID_KEY = 'taigi_auth_fid';
+  const EXPIRY_HOURS = 24;
+
+  // ── 從 URL 取得 fid，存到 sessionStorage 和 window._authFid ──
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlFid = urlParams.get('fid');
+  if (urlFid) {
+    sessionStorage.setItem(FID_KEY, urlFid);
+    window._authFid = urlFid;
+  } else {
+    const storedFid = sessionStorage.getItem(FID_KEY);
+    if (storedFid) window._authFid = storedFid;
+  }
 
   function isAuthed() {
     try {
@@ -25,7 +38,6 @@
   }
 
   function showPrompt() {
-    // 遮罩
     const overlay = document.createElement('div');
     overlay.style.cssText = `
       position:fixed;inset:0;background:#1a1208;
@@ -54,12 +66,11 @@
     `;
 
     document.body.appendChild(overlay);
-    // 隱藏主體內容
     document.body.style.overflow = 'hidden';
 
     const input = document.getElementById('auth-input');
-    const btn = document.getElementById('auth-btn');
-    const err = document.getElementById('auth-error');
+    const btn   = document.getElementById('auth-btn');
+    const err   = document.getElementById('auth-error');
 
     input.focus();
 
@@ -82,30 +93,37 @@
     input.addEventListener('keydown', e => { if (e.key === 'Enter') tryAuth(); });
   }
 
-  // URL 帶 key 自動驗證（Bot 連結用）
-  const urlKey = new URLSearchParams(window.location.search).get('key');
+  // ── URL 帶 fid 自動驗證（Bot 連結）──
+  // 有 fid 代表從 LINE Bot 進入，直接通過
+  if (urlFid) {
+    saveAuth();
+  }
+
+  // ── URL 帶 key 自動驗證（舊版相容）──
+  const urlKey = urlParams.get('key');
   if (urlKey === PASSWORD) {
     saveAuth();
-    // 清除 URL 中的 key（避免被截圖或分享）
+    // 清除 key 但保留 fid
     const url = new URL(window.location.href);
     url.searchParams.delete('key');
     window.history.replaceState({}, '', url.toString());
   }
 
-  // LINE 來源自動通過（Rich Menu / LINE 內開啟）
-  const ua = navigator.userAgent || '';
-  const ref = document.referrer || '';
+  // ── LINE 來源自動通過 ──
+  const ua  = navigator.userAgent || '';
+  const ref = document.referrer  || '';
   const isFromLine = (
-    ua.includes('Line/') ||          // LINE app 內建瀏覽器
-    ua.includes('LIFF') ||           // LIFF
-    ref.includes('line.me') ||       // 從 line.me 跳轉
-    ref.includes('liff.line.me')     // 從 LIFF 跳轉
+    ua.includes('Line/')       ||
+    ua.includes('LIFF')        ||
+    ua.includes('LineDirect')  ||
+    ref.includes('line.me')    ||
+    ref.includes('liff.line.me')
   );
   if (isFromLine) {
     saveAuth();
   }
 
-  // 主邏輯
+  // ── 主邏輯 ──
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => { if (!isAuthed()) showPrompt(); });
   } else {
