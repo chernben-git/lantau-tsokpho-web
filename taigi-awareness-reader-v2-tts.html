@@ -1357,11 +1357,28 @@ async function saveAwarenessToGAS(payload) {
     return null;
   }
   try {
-    const resp = await fetch(AWARENESS_GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'saveAwareness', fid, ...payload })
+    // GAS Web App POST 需要 no-cors，但無法讀回傳值
+    // 改用 GET + URLSearchParams 傳送（反思文字截短）
+    const params = new URLSearchParams({
+      action:     'saveAwareness',
+      fid:        fid,
+      score:      payload.score || 0,
+      date:       payload.date  || new Date().toISOString(),
+      chapDone:   payload.chapDone   || 0,
+      cqTotal:    payload.cqTotal    || 0,
+      sqCorrect:  payload.sqCorrect  || 0,
+      scqCorrect: payload.scqCorrect || 0,
+      ttsChapters:payload.ttsChapters|| 0,
+      ref0:       (payload.ref0 || '').substring(0, 200),
+      ref1:       (payload.ref1 || '').substring(0, 200),
+      ref2:       (payload.ref2 || '').substring(0, 200),
+      ref3:       (payload.ref3 || '').substring(0, 200),
+      ref4:       (payload.ref4 || '').substring(0, 200),
+      ref5:       (payload.ref5 || '').substring(0, 200),
+      openQ1:     (payload.openQ1 || '').substring(0, 300),
+      openQ2:     (payload.openQ2 || '').substring(0, 300)
     });
+    const resp = await fetch(AWARENESS_GAS_URL + '?' + params.toString());
     const result = await resp.json();
     if (result.error) { console.warn('[Awareness] GAS 錯誤:', result.error); return null; }
     console.log('[Awareness] 寫入成功 countHabit=' + result.countHabit);
