@@ -1472,19 +1472,10 @@ async function showBadgeIfEarned(score, fullPayload) {
 // ── 頁面載入：顯示我的成績狀態列 ──
 async function loadMyStatus() {
   const fid = getAwarenessFid();
-  // ★ DEBUG：強制顯示 fid 狀態（確認後可移除）
-  const debugEl = document.getElementById('myStatusNoFid');
-  const urlFid = new URLSearchParams(location.search).get('fid');
-  const lsFid  = localStorage.getItem('taigi_user_fid');
-  const wFid   = window._authFid || '';
-  console.log('[DEBUG] URL fid:', urlFid, '| localStorage fid:', lsFid, '| window._authFid:', wFid, '| final fid:', fid);
   if (!fid) {
-    debugEl.innerHTML = '💡 fid未取得 url:' + urlFid + ' ls:' + lsFid + ' w:' + wFid;
-    debugEl.classList.add('show');
+    document.getElementById('myStatusNoFid').classList.add('show');
     return;
   }
-  debugEl.innerHTML = '✅ fid已取得: ' + fid.substring(0,12) + '...';
-  debugEl.classList.add('show');
   try {
     const resp = await fetch(AWARENESS_GAS_URL + '?action=getAwareness&fid=' + encodeURIComponent(fid));
     const data = await resp.json();
