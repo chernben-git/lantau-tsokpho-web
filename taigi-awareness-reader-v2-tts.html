@@ -376,35 +376,6 @@ header p { font-size: 0.8rem; color: #b0a898; font-weight: 300; }
 .tts-loading.show { display: inline; }
 .tts-error { font-size: 0.75rem; color: var(--accent); display: none; margin-top: 0.4rem; }
 .tts-error.show { display: block; }
-
-/* ── 我的成績區塊 ── */
-#myStatusBar {
-  background: #1a1208;
-  border-bottom: 2px solid var(--gold);
-  padding: 0.7rem 1.5rem;
-  display: none;
-  align-items: center;
-  gap: 1.2rem;
-  flex-wrap: wrap;
-  font-size: 0.78rem;
-}
-#myStatusBar.show { display: flex; }
-.mstat { display: flex; align-items: center; gap: 0.4rem; color: #b0a898; }
-.mstat strong { color: var(--gold); font-size: 0.92rem; }
-.mstat-badge {
-  padding: 2px 10px; border-radius: 20px;
-  font-size: 0.7rem; font-weight: 700;
-  background: rgba(196,154,58,0.15);
-  border: 1px solid var(--gold); color: var(--gold);
-}
-.mstat-badge.locked { background: rgba(255,255,255,0.05); border-color: #555; color: #888; }
-#myStatusNoFid {
-  background: #1a1208; border-bottom: 1px solid #333;
-  padding: 0.55rem 1.5rem; font-size: 0.72rem; color: #888;
-  text-align: center; display: none;
-}
-#myStatusNoFid.show { display: block; }
-#myStatusNoFid a { color: var(--gold); text-decoration: none; }
 </style>
 </head>
 <body>
@@ -420,22 +391,6 @@ header p { font-size: 0.8rem; color: #b0a898; font-weight: 300; }
     <span>🎯 三級意識分層評估</span>
   </div>
 </header>
-
-
-<!-- ── 我的成績狀態列 ── -->
-<div id="myStatusBar">
-  <div class="mstat">🏠 <strong id="ms-name">—</strong></div>
-  <div class="mstat">📝 最近分數：<strong id="ms-score">—</strong></div>
-  <div class="mstat">📊 測驗次數：<strong id="ms-count">—</strong> 次</div>
-  <div class="mstat">
-    <span class="mstat-badge locked" id="ms-habit">台語習慣家庭</span>
-    <span class="mstat-badge locked" id="ms-culture">台語文化家庭</span>
-  </div>
-</div>
-<div id="myStatusNoFid">
-  💡 想記錄成績與勳章？請從 LINE Bot 輸入「<strong>意識培育</strong>」取得專屬連結。
-  <a href="https://line.me/R/ti/p/@509ymzdy" target="_blank">開啟 LINE Bot →</a>
-</div>
 
 <div class="progress-bar-wrap">
   <span class="progress-label">整體進度</span>
@@ -1295,28 +1250,8 @@ function submitAll() {
   if (state.open2) oHtml += `<div class="reflect-review"><div class="reflect-review-q">Q2. 接下來一個月的具體行動計畫？</div><div class="reflect-review-a">${state.open2}</div></div>`;
   document.getElementById('openReview').innerHTML = oHtml || '<p style="color:var(--muted);font-size:0.85rem">（未填寫開放式反思）</p>';
   document.getElementById('recommendBox').innerHTML = recommend;
-  // ── 組成完整記錄 payload ──
-  const ttsPlayed2 = ttsLog.filter(l => l.played).map(l => l.chapterIdx);
-  const uniqueTtsChapters = [...new Set(ttsPlayed2)].length;
-  const fullPayload = {
-    score:       totalScore,
-    date:        new Date().toISOString(),
-    chapDone,
-    cqTotal,
-    sqCorrect,
-    scqCorrect,
-    ttsChapters: uniqueTtsChapters,
-    ref0: state.reflections[0] || '',
-    ref1: state.reflections[1] || '',
-    ref2: state.reflections[2] || '',
-    ref3: state.reflections[3] || '',
-    ref4: state.reflections[4] || '',
-    ref5: state.reflections[5] || '',
-    openQ1: state.open1 || '',
-    openQ2: state.open2 || ''
-  };
-  // ── 獎章頒發（含完整記錄寫入 GAS）──
-  showBadgeIfEarned(totalScore, fullPayload);
+  // ── 獎章頒發 ──
+  showBadgeIfEarned(totalScore);
 
   hideAll();
   document.getElementById('quiz-3').classList.add('active');
@@ -1326,55 +1261,63 @@ function submitAll() {
 }
 
 // ════════════════════════════════════════════════
-// 獎章系統  ★ v3：完整記錄寫入 GAS
+// 獎章系統  ★ v2：localStorage + GAS 雙寫
 // ════════════════════════════════════════════════
 const BADGE_HABIT   = 'https://familyhistroy-tree.netlify.app/badge-habit.png';
 const BADGE_CULTURE = 'https://familyhistroy-tree.netlify.app/badge-culture.png';
 const LS_KEY        = 'taigi_awareness_scores';
+
+// GAS URL
 const AWARENESS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwDv3vDAqSDd0KiJvqg78GsFGVOySMAgP1UFNfyH_I4a7JxMGS0AD1jVPl3ymFQWrM1lA/exec';
 
+// ── 從 URL 取得 fid ──
 function getAwarenessFid() {
   const params = new URLSearchParams(location.search);
   return params.get('fid') || (window._authFid || '');
 }
 
+// ── 取得本機歷史 ──
 function getScoreHistory() {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
   catch(e) { return []; }
 }
 
-// ── 完整記錄寫入 GAS ──
-async function saveAwarenessToGAS(payload) {
-  const fid = getAwarenessFid();
-  if (!fid) {
-    console.warn('[Awareness] 找不到 fid，僅寫入 localStorage');
-    return null;
-  }
-  try {
-    const resp = await fetch(AWARENESS_GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'saveAwareness', fid, ...payload })
-    });
-    const result = await resp.json();
-    if (result.error) { console.warn('[Awareness] GAS 錯誤:', result.error); return null; }
-    console.log('[Awareness] 寫入成功 countHabit=' + result.countHabit);
-    return result;
-  } catch(err) {
-    console.warn('[Awareness] GAS 失敗:', err.message);
-    return null;
-  }
-}
-
-// ── localStorage 備份 ──
-function saveScoreLocal(score) {
+// ── 儲存本次分數：localStorage + 非同步寫入 GAS ──
+async function saveScore(score) {
   const history = getScoreHistory();
   history.push({ score, date: new Date().toISOString() });
   if (history.length > 10) history.shift();
   localStorage.setItem(LS_KEY, JSON.stringify(history));
-  return history;
+
+  const fid = getAwarenessFid();
+  if (fid) {
+    try {
+      const resp = await fetch(AWARENESS_GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'saveAwareness',
+          fid,
+          score,
+          date: new Date().toISOString()
+        })
+      });
+      const result = await resp.json();
+      if (!result.error) {
+        console.log('[Awareness] GAS 寫入成功 countHabit=' + result.countHabit + ' earnHabit=' + result.earnHabit);
+        return { history, gasResult: result };
+      }
+      console.warn('[Awareness] GAS 寫入回傳錯誤:', result.error);
+    } catch(err) {
+      console.warn('[Awareness] GAS 寫入失敗（不影響本頁）:', err.message);
+    }
+  } else {
+    console.warn('[Awareness] 找不到 fid，僅寫入 localStorage');
+  }
+  return { history, gasResult: null };
 }
 
+// ── 判斷獎章資格 ──
 function calcBadgeEligibility(history) {
   const countHabit   = history.filter(h => h.score >= 55).length;
   const countCulture = history.filter(h => h.score >= 80).length;
@@ -1383,23 +1326,19 @@ function calcBadgeEligibility(history) {
   return { earnHabit, earnCulture, countHabit, countCulture };
 }
 
-// ── 主入口：完成測驗後呼叫（由 submitAll 傳入完整資料）──
-async function showBadgeIfEarned(score, fullPayload) {
-  // 1. 寫 localStorage
-  const history = saveScoreLocal(score);
+async function showBadgeIfEarned(score) {
+  const { history, gasResult } = await saveScore(score);
 
-  // 2. 寫 GAS（帶完整資料）
-  const gasResult = fullPayload ? await saveAwarenessToGAS(fullPayload) : null;
-
-  // 3. 計算勳章資格（優先用 GAS 回傳）
   let countHabit, countCulture, earnHabit, earnCulture;
   if (gasResult) {
-    ({ countHabit, countCulture, earnHabit, earnCulture } = gasResult);
+    countHabit   = gasResult.countHabit;
+    countCulture = gasResult.countCulture;
+    earnHabit    = gasResult.earnHabit;
+    earnCulture  = gasResult.earnCulture;
   } else {
     ({ countHabit, countCulture, earnHabit, earnCulture } = calcBadgeEligibility(history));
   }
 
-  // 4. 結果頁進度提示
   const section = document.getElementById('earned-badges-section');
   const display = document.getElementById('earned-badges-display');
   if (section && display) {
@@ -1430,8 +1369,8 @@ async function showBadgeIfEarned(score, fullPayload) {
     }
   }
 
-  // 5. 頒獎 Overlay
   if (!earnHabit) return;
+
   const badges = earnCulture
     ? [{ src: BADGE_HABIT, name: '台語習慣家庭' }, { src: BADGE_CULTURE, name: '台語文化家庭' }]
     : [{ src: BADGE_HABIT, name: '台語習慣家庭' }];
@@ -1465,32 +1404,6 @@ async function showBadgeIfEarned(score, fullPayload) {
   overlay.classList.add('show');
   launchConfetti();
 }
-
-// ── 頁面載入：顯示我的成績狀態列 ──
-async function loadMyStatus() {
-  const fid = getAwarenessFid();
-  if (!fid) {
-    document.getElementById('myStatusNoFid').classList.add('show');
-    return;
-  }
-  try {
-    const resp = await fetch(AWARENESS_GAS_URL + '?action=getAwareness&fid=' + encodeURIComponent(fid));
-    const data = await resp.json();
-    if (data.error) return;
-    const bar = document.getElementById('myStatusBar');
-    bar.classList.add('show');
-    document.getElementById('ms-name').textContent  = data.familyName || fid;
-    const lastScore = data.history && data.history.length > 0
-      ? data.history[data.history.length - 1].score : '—';
-    document.getElementById('ms-score').textContent = lastScore + (lastScore !== '—' ? ' 分' : '');
-    document.getElementById('ms-count').textContent = data.history ? data.history.length : 0;
-    if (data.earnHabit)   document.getElementById('ms-habit').classList.remove('locked');
-    if (data.earnCulture) document.getElementById('ms-culture').classList.remove('locked');
-  } catch(e) {
-    console.warn('[MyStatus] 載入失敗:', e.message);
-  }
-}
-
 
 function closeBadgeOverlay(event) {
   if (!event || event.target === document.getElementById('badge-overlay')) {
@@ -1553,6 +1466,8 @@ function onReflectInput(idx) {
   const ta = document.getElementById('ref-' + idx);
   const btn = document.getElementById('tts-btn-' + idx);
   btn.disabled = !ta.value.trim();
+  // ★ 即時儲存反思到 state（不依賴點「標記已讀完」）
+  state.reflections[idx] = ta.value;
   // 輸入變動時清除舊 TTS 結果
   document.getElementById('tts-result-' + idx).classList.remove('show');
   ttsAudio[idx] = null;
@@ -1664,8 +1579,6 @@ function getTtsLogSummary() {
   }));
 }
 
-// 頁面載入時呼叫
-loadMyStatus();
 </script>
 </body>
 </html>
