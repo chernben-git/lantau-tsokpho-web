@@ -248,23 +248,42 @@ function getOrgFromUrl() {
 }
 
 async function initLiff() {
+  orgName = getOrgFromUrl();
+
   try {
     await liff.init({ liffId: LIFF_ID });
 
-    orgName = getOrgFromUrl();
     document.getElementById('orgName').textContent = orgName;
+
+    // 非 LINE App 環境（瀏覽器直接開啟）
+    if (!liff.isInClient()) {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('registerForm').style.display  = 'block';
+      const errEl = document.getElementById('errorMsg');
+      errEl.textContent   = '⚠️ 請用 LINE App 掃描 QR Code 開啟此頁面，勿直接用瀏覽器開啟。';
+      errEl.style.display = 'block';
+      document.getElementById('submitBtn').disabled = true;
+      return;
+    }
 
     if (liff.isLoggedIn()) {
       const profile = await liff.getProfile();
       lineUserId    = profile.userId;
     } else {
-      liff.login();
+      liff.login({ redirectUri: window.location.href });
       return;
     }
+
   } catch(e) {
     console.error('LIFF init error:', e);
-    orgName = getOrgFromUrl();
     document.getElementById('orgName').textContent = orgName;
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('registerForm').style.display  = 'block';
+    const errEl = document.getElementById('errorMsg');
+    errEl.textContent   = '❌ 系統初始化失敗，請關閉後重新掃碼。（' + e.message + '）';
+    errEl.style.display = 'block';
+    document.getElementById('submitBtn').disabled = true;
+    return;
   }
 
   document.getElementById('loadingScreen').style.display = 'none';
@@ -297,9 +316,18 @@ async function handleSubmit() {
 
   try {
     // ★ 使用 GET 方式，附帶參數
+    // ★ 防止瀏覽器直接開啟（非 LINE App 環境）寫入假 ID
+    if (!lineUserId) {
+      errorMsg.textContent   = '❌ 請從 LINE App 內開啟此頁面進行註冊';
+      errorMsg.style.display = 'block';
+      submitBtn.disabled     = false;
+      submitBtn.textContent  = '完成註冊 →';
+      return;
+    }
+
     const params = new URLSearchParams({
       action: 'liffRegister',
-      lineId: lineUserId || 'BROWSER_TEST_' + Date.now(),
+      lineId: lineUserId,
       name:   name,
       org:    orgName
     });
