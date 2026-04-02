@@ -1352,7 +1352,7 @@ async function toggleMic(){
       document.getElementById('inpTA').value=t;
       if(e.results[e.results.length-1].isFinal){
         stopMic();
-        try{const ac=new(window.AudioContext||window.webkitAudioContext)();const b=ac.createBuffer(1,1,22050);const s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0);}catch(e){}
+        try{if(!_ac||_ac.state==='closed')_ac=new(window.AudioContext||window.webkitAudioContext)();_ac.resume().catch(()=>{});}catch(e){}
         doTx();
       }
     };
@@ -1367,7 +1367,7 @@ async function toggleMic(){
         stopMic();
         const text=document.getElementById('inpTA').value.trim();
         if(text){
-          try{const ac=new(window.AudioContext||window.webkitAudioContext)();const b=ac.createBuffer(1,1,22050);const s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0);}catch(e){}
+          try{if(!_ac||_ac.state==='closed')_ac=new(window.AudioContext||window.webkitAudioContext)();_ac.resume().catch(()=>{});}catch(e){}
           doTx();
         }
       }
@@ -1534,6 +1534,7 @@ async function doTx(){
     addHist(text,d.taigi||d.tailo,le,lfc);
     lastChText=d.chText||'';
     if(autoPlay&&d.audioBase64) playWavBase64(d.audioBase64);
+    else{ if(_acKeepAlive){clearInterval(_acKeepAlive);_acKeepAlive=null;} } // 不播音就清 keepAlive
   }catch(e){
     const msg=e.name==='AbortError'?'⏱ 伺服器逾時，請檢查連線後再試':'錯誤：'+e.message;
     document.getElementById('stxt1').textContent=msg;
@@ -1556,18 +1557,12 @@ function unlockAndTx(){
     const buf=_ac.createBuffer(1,1,22050);
     const src=_ac.createBufferSource();
     src.buffer=buf;src.connect(_ac.destination);src.start(0);
-    // 啟動 keepalive：每 2 秒播一次無聲，防止 Safari suspend
+    // keepAlive：只做 resume，不建 BufferSource（避免記憶體洩漏）
     if(_acKeepAlive) clearInterval(_acKeepAlive);
     _acKeepAlive = setInterval(()=>{
-      if(!_ac || _ac.state==='closed'){clearInterval(_acKeepAlive);return;}
-      if(_ac.state==='suspended'){_ac.resume().catch(()=>{});}
-      // 播無聲 buffer 保持活躍
-      try{
-        const b=_ac.createBuffer(1,1,22050);
-        const s=_ac.createBufferSource();
-        s.buffer=b;s.connect(_ac.destination);s.start(0);
-      }catch(e){}
-    }, 2000);
+      if(!_ac || _ac.state==='closed'){clearInterval(_acKeepAlive);_acKeepAlive=null;return;}
+      if(_ac.state==='suspended') _ac.resume().catch(()=>{});
+    }, 5000);
     audioUnlocked=true;
   }catch(e){}
   doTx();
@@ -1641,7 +1636,7 @@ function unlockAndOTx(){
     src.buffer=buf;src.connect(_ac.destination);src.start(0);
     if(_acKeepAlive) clearInterval(_acKeepAlive);
     _acKeepAlive=setInterval(()=>{
-      if(!_ac||_ac.state==='closed'){clearInterval(_acKeepAlive);return;}
+      if(!_ac||_ac.state==='closed'){clearInterval(_acKeepAlive);_acKeepAlive=null;return;}
       if(_ac.state==='suspended')_ac.resume().catch(()=>{});
       try{const b=_ac.createBuffer(1,1,22050);const s=_ac.createBufferSource();s.buffer=b;s.connect(_ac.destination);s.start(0);}catch(e){}
     },2000);
