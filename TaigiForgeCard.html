@@ -1,0 +1,3280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+<title>台語好極 TaigiForge · 祝福好極六段一卡成 · 用台語創作足感心</title>
+<meta name="description" content="台語好極 TaigiForge — 母親節、父親節、三節、人生大事，六段文法一鍵成卡。18 情境收編，台語創作平台。">
+<meta name="theme-color" content="#e8703c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700;900&family=Noto+Sans+TC:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   TaigiForge · 祝福 · v11
+   ============================================ */
+:root {
+  --ink: #2a2520;
+  --paper: #fffaf0;
+  --accent: #e8703c;
+  --accent-soft: #f3a97c;
+  --accent-deep: #c85f2d;
+  --gold: #d4a13c;
+  --gold-deep: #b5892a;
+  --teal: #5ba99d;
+  --plum: #c97a8b;
+  --plum-deep: #a65566;
+  --muted: #8a7e6e;
+  --border: #f5dfb8;
+  --card: #fff8eb;
+  --card-hover: #fff0d5;
+  --subtle: #faecd2;
+  --success: #5b9e6e;
+  --warn: #e89a3c;
+  --taigi-green: #5b9e6e;
+  --font-serif: 'Noto Serif TC', serif;
+  --font-sans: 'Noto Sans TC', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+body.pro {
+  --ink: #1a1a1a;
+  --paper: #f5f0e8;
+  --accent: #c84b2e;
+  --accent-soft: #d47a5e;
+  --accent-deep: #9e3820;
+  --gold: #b5922a;
+  --teal: #2e6b5e;
+  --plum: #7a3b4d;
+  --muted: #8a8070;
+  --border: #d4cfc4;
+  --card: #faf7f2;
+  --card-hover: #f0ebe0;
+  --subtle: #ede7d9;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: var(--font-serif); min-height: 100vh; line-height: 1.8;
+  transition: background-color 0.4s ease, color 0.4s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(ellipse at top, rgba(232, 112, 60, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at bottom left, rgba(91, 169, 157, 0.04) 0%, transparent 50%);
+}
+body.pro::before {
+  background-image:
+    radial-gradient(ellipse at top, rgba(200, 75, 46, 0.03) 0%, transparent 60%),
+    radial-gradient(ellipse at bottom left, rgba(46, 107, 94, 0.03) 0%, transparent 50%);
+}
+
+/* ============ Header ============ */
+header.site-header {
+  position: sticky; top: 0; z-index: 100;
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1.5px solid var(--border);
+  padding: 1rem 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+}
+.brand { display: flex; align-items: baseline; gap: 0.8rem; cursor: pointer; }
+.logo-zh { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 700; color: var(--ink); letter-spacing: 0.08em; }
+.logo-en { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.2em; color: var(--accent); }
+.tagline-mini { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.1em; display: none; }
+@media (min-width: 900px) { .tagline-mini { display: inline; } }
+
+.header-right { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.version-switch {
+  display: flex; align-items: center; gap: 0.2rem;
+  padding: 0.25rem; border: 1.5px solid var(--border);
+  border-radius: 999px; background: var(--card);
+}
+.version-switch button {
+  border: none; background: transparent; padding: 0.3rem 0.8rem;
+  border-radius: 999px; cursor: pointer; font-family: var(--font-mono);
+  font-size: 0.68rem; letter-spacing: 0.1em; color: var(--muted);
+  transition: all 0.2s;
+}
+.version-switch button.active { background: var(--accent); color: white; font-weight: 700; }
+.version-switch button:hover:not(.active) { color: var(--ink); }
+body.pro .version-switch button.active { background: var(--accent); }
+
+.elderly-btn {
+  padding: 0.45rem 0.9rem; border: 1.5px solid var(--border); background: var(--card);
+  border-radius: 8px; cursor: pointer; font-family: var(--font-serif);
+  font-size: 0.82rem; color: var(--ink); transition: all 0.2s;
+}
+.elderly-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+body.elderly { font-size: 1.15em; }
+body.elderly .logo-zh { font-size: 1.8rem; }
+
+/* ============ Hero ============ */
+.hero {
+  text-align: center; padding: 1.5rem 1rem 1.2rem;
+  position: relative; z-index: 1;
+  max-width: 1080px; margin: 0 auto;
+}
+.hero-ornament {
+  font-family: var(--font-mono); font-size: 0.62rem;
+  letter-spacing: 0.4em; color: var(--accent); margin-bottom: 0.6rem;
+}
+.hero-ornament::before, .hero-ornament::after {
+  content: '·····'; margin: 0 0.6rem; color: var(--border); letter-spacing: 0.1em;
+}
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.3rem, 3.2vw, 1.9rem);
+  font-weight: 900; letter-spacing: 0.08em; line-height: 1.3;
+  margin-bottom: 0.3rem; color: var(--ink);
+}
+.hero-title .comma { color: var(--accent); display: inline-block; transform: translateY(-0.05em); }
+.hero-title .highlight { color: var(--accent); }
+.hero-sub {
+  font-family: var(--font-serif);
+  font-size: clamp(0.78rem, 1.4vw, 0.9rem);
+  font-weight: 500; color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+/* ============ Main Layout ============ */
+main.app-main {
+  max-width: 1200px; margin: 0 auto;
+  padding: 1rem 1rem 4rem;
+  position: relative; z-index: 1;
+}
+
+.app-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 1023px) {
+  .app-grid { grid-template-columns: 1fr; }
+}
+
+/* ============ 左側：情境 + 四維度 ============ */
+.sidebar {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  padding: 1.4rem;
+  position: sticky; top: 90px;
+  align-self: start;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+@media (max-width: 1023px) {
+  .sidebar { position: static; max-height: none; }
+}
+
+.sidebar-section { margin-bottom: 1.2rem; padding-bottom: 1.2rem; border-bottom: 1px dashed var(--border); }
+.sidebar-section:last-child { border-bottom: none; }
+.sidebar-title {
+  font-family: var(--font-serif); font-size: 0.95rem; font-weight: 700;
+  color: var(--ink); letter-spacing: 0.15em; margin-bottom: 0.8rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sidebar-title .en { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent); letter-spacing: 0.2em; }
+
+/* ============ 18 格印章矩陣 ============ */
+.stamp-matrix {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+  background: var(--ink); padding: 4px; border: 1px solid var(--ink);
+}
+@media (min-width: 1024px) {
+  .stamp-matrix { grid-template-columns: repeat(3, 1fr); }
+}
+.stamp-btn {
+  background: var(--card); border: none; padding: 0.7rem 0.3rem;
+  text-align: center; cursor: pointer; transition: all 0.2s;
+  display: flex; flex-direction: column; gap: 2px; align-items: center;
+  min-height: 64px; position: relative;
+  font-family: var(--font-serif);
+}
+.stamp-btn:hover { background: var(--card-hover); }
+.stamp-btn.active { background: var(--accent); }
+.stamp-btn.active .stamp-char { color: white; text-shadow: none; }
+.stamp-btn.active .stamp-name { color: rgba(255,255,255,0.85); }
+.stamp-btn .stamp-char {
+  font-family: var(--font-serif); font-size: 1.5rem; font-weight: 900;
+  color: var(--accent); line-height: 1.1;
+  text-shadow: 1px 1px 0 rgba(200,75,46,0.08);
+}
+.stamp-btn .stamp-name {
+  font-family: var(--font-serif); font-size: 0.72rem;
+  color: var(--muted); letter-spacing: 0.05em; line-height: 1.2;
+}
+/* 類別色條 */
+.stamp-btn[data-cat="festival"]::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--accent);
+}
+.stamp-btn[data-cat="life"]::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--gold);
+}
+.stamp-btn[data-cat="emo"]::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--teal);
+}
+.stamp-btn[data-cat="biz"]::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--plum);
+}
+.stamp-legend {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.6rem;
+  font-size: 0.7rem; color: var(--muted);
+  font-family: var(--font-serif);
+}
+.legend-dot { display: inline-flex; align-items: center; gap: 4px; }
+.legend-dot .dot { width: 10px; height: 3px; display: inline-block; }
+.legend-dot .dot.festival { background: var(--accent); }
+.legend-dot .dot.life { background: var(--gold); }
+.legend-dot .dot.emo { background: var(--teal); }
+.legend-dot .dot.biz { background: var(--plum); }
+
+/* ============ 四維度 ============ */
+.dims-wrap { margin-top: 0.8rem; }
+.dim-field { margin-bottom: 0.8rem; }
+.dim-label {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.78rem; color: var(--muted); letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+}
+.dim-label .en { font-family: var(--font-mono); font-size: 0.65rem; color: var(--gold); }
+select.dim-select, input.dim-input {
+  width: 100%; padding: 0.55rem 0.75rem;
+  border: 1.5px solid var(--border); background: var(--paper);
+  font-family: var(--font-serif); font-size: 0.9rem;
+  color: var(--ink); cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a7e6e' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.8rem center;
+  padding-right: 2rem;
+}
+select.dim-select:focus { outline: none; border-color: var(--accent); }
+
+.generate-btn {
+  width: 100%; padding: 0.95rem; background: var(--accent); color: white;
+  border: none; font-family: var(--font-serif); font-weight: 700;
+  font-size: 1rem; letter-spacing: 0.2em; cursor: pointer;
+  transition: all 0.2s; margin-top: 0.8rem;
+  box-shadow: 0 4px 14px rgba(232, 112, 60, 0.25);
+  border-radius: 2px;
+}
+.generate-btn:hover:not(:disabled) {
+  transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232, 112, 60, 0.4);
+}
+.generate-btn:disabled { background: var(--muted); box-shadow: none; cursor: not-allowed; }
+
+/* ============ 右側主區 ============ */
+.main-panel { min-height: 400px; }
+
+.candidates-section {
+  background: var(--card); border: 1.5px solid var(--border);
+  padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.candidates-header {
+  display: flex; align-items: baseline; gap: 1rem;
+  padding-bottom: 1rem; margin-bottom: 1.2rem;
+  border-bottom: 2px solid var(--accent);
+  flex-wrap: wrap;
+}
+.candidates-header h2 {
+  font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700;
+  color: var(--ink); letter-spacing: 0.1em;
+}
+.candidates-header .en { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.2em; }
+.candidates-header .count {
+  margin-left: auto; font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted);
+  padding: 2px 10px; border: 1px solid var(--border);
+}
+
+.candidates-placeholder {
+  text-align: center; padding: 3rem 2rem; color: var(--muted);
+  font-family: var(--font-serif); font-size: 1rem;
+  background: var(--paper); border: 2px dashed var(--border);
+}
+.candidates-placeholder .big {
+  font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem; font-weight: 900;
+}
+
+/* 祝福候選卡片（L3 直出） */
+.core-candidates {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.8rem;
+}
+@media (max-width: 520px) {
+  .core-candidates { grid-template-columns: 1fr; }
+}
+.core-card {
+  background: var(--paper); border: 1.5px solid var(--border);
+  padding: 1rem 1.1rem; cursor: pointer; transition: all 0.25s;
+  position: relative; opacity: 0; animation: fadeIn 0.3s forwards;
+}
+.core-card:hover {
+  background: var(--card-hover); border-color: var(--accent);
+  transform: translateY(-2px); box-shadow: 0 8px 20px rgba(232, 112, 60, 0.1);
+}
+.core-card.selected {
+  background: var(--accent); border-color: var(--accent-deep);
+  box-shadow: 0 6px 18px rgba(232, 112, 60, 0.3);
+}
+.core-card.selected .core-text { color: white; }
+.core-card.selected .core-tailo { color: rgba(255,255,255,0.85); }
+.core-card.selected .core-meta { border-top-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.8); }
+.core-card.selected .core-meta .source,
+.core-card.selected .core-meta .length-tag { background: rgba(255,255,255,0.2); color: white; }
+
+.core-text {
+  font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700;
+  color: var(--ink); letter-spacing: 0.06em; line-height: 1.5; margin-bottom: 0.3rem;
+}
+.core-tailo {
+  font-family: var(--font-mono); font-size: 0.72rem; color: var(--teal);
+  letter-spacing: 0.03em; line-height: 1.5; margin-bottom: 0.7rem; word-break: break-all;
+}
+.core-meta {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  padding-top: 0.5rem; border-top: 1px dashed var(--border);
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted);
+}
+.core-meta .source {
+  padding: 2px 6px; background: var(--subtle); color: var(--accent); font-weight: 700;
+}
+.core-meta .length-tag {
+  padding: 2px 6px; background: rgba(213, 161, 60, 0.15); color: var(--gold-deep); font-weight: 700;
+}
+.core-meta .taigi-tag {
+  padding: 2px 6px; background: var(--taigi-green); color: white; font-weight: 700;
+  font-family: var(--font-serif); letter-spacing: 0.1em;
+}
+.core-meta .hint { font-family: var(--font-serif); }
+
+/* ============ 六段創作盤 ============ */
+.create-panel {
+  background: var(--card); border: 1.5px solid var(--accent);
+  border-top: 4px solid var(--accent); padding: 1.5rem;
+  opacity: 0; max-height: 0; overflow: hidden;
+  transition: opacity 0.4s, max-height 0.4s, padding 0.4s;
+  margin-bottom: 1.5rem;
+}
+.create-panel.show { opacity: 1; max-height: 4500px; padding: 1.5rem; }
+
+.create-header {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  padding-bottom: 1rem; margin-bottom: 1.3rem; border-bottom: 1px dashed var(--border);
+}
+.create-header h3 {
+  font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700;
+  color: var(--ink); letter-spacing: 0.1em; flex: 1;
+}
+.create-header h3 .en { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.2em; margin-left: 0.5rem; font-weight: 700; }
+.back-btn {
+  padding: 0.4rem 0.9rem; background: transparent; border: 1.5px solid var(--border);
+  color: var(--muted); font-family: var(--font-serif); font-size: 0.82rem;
+  cursor: pointer; letter-spacing: 0.05em; transition: all 0.2s;
+}
+.back-btn:hover { background: var(--ink); color: white; border-color: var(--ink); }
+
+/* 六段頂部視覺 */
+.six-seg-header {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px;
+  background: var(--ink); margin-bottom: 1.2rem; color: white;
+}
+@media (max-width: 720px) {
+  .six-seg-header { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 440px) {
+  .six-seg-header { grid-template-columns: 1fr 1fr; }
+}
+.six-seg-box { padding: 0.55rem 0.4rem; background: var(--ink); text-align: center; position: relative; }
+.six-seg-box.core { background: var(--accent); }
+.six-seg-box.greeting { background: var(--plum); }
+.six-seg-box .seg-num { font-family: var(--font-mono); font-size: 0.58rem; color: var(--accent-soft); letter-spacing: 0.15em; margin-bottom: 2px; font-weight: 700; }
+.six-seg-box.core .seg-num { color: rgba(255,255,255,0.85); }
+.six-seg-box.greeting .seg-num { color: rgba(255,255,255,0.85); }
+.six-seg-box .seg-role { font-family: var(--font-serif); font-size: 0.72rem; font-weight: 700; line-height: 1.2; }
+.six-seg-box .seg-desc { font-size: 0.62rem; color: rgba(255,255,255,0.65); margin-top: 1px; display: none; }
+@media (min-width: 640px) { .six-seg-box .seg-desc { display: block; } }
+
+/* 三列創作區（頭 / 中 / 尾） */
+.create-cols {
+  display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 0.8rem;
+  margin-bottom: 1.3rem;
+}
+@media (max-width: 900px) {
+  .create-cols { grid-template-columns: 1fr; }
+}
+.create-field {
+  background: var(--paper); border: 1.5px solid var(--border); padding: 0.9rem;
+  position: relative;
+}
+.create-field.middle {
+  background: var(--ink); color: white; border-color: var(--accent); border-width: 2px;
+}
+.create-field h4 {
+  font-family: var(--font-serif); font-size: 0.92rem; font-weight: 700;
+  color: var(--ink); margin-bottom: 0.25rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.create-field.middle h4 { color: var(--accent-soft); }
+.field-badge {
+  display: inline-block; padding: 2px 8px; background: var(--accent); color: white;
+  font-size: 0.65rem; letter-spacing: 0.15em; font-weight: 900;
+}
+.create-field.middle .field-badge { background: var(--gold); color: var(--ink); }
+.field-hint {
+  font-size: 0.7rem; color: var(--muted); margin: 0.3rem 0 0.7rem;
+  padding-bottom: 0.5rem; border-bottom: 1px dashed var(--border);
+}
+.create-field.middle .field-hint {
+  color: rgba(255,255,255,0.65); border-bottom-color: rgba(255,255,255,0.2);
+}
+.field-hint em { color: var(--accent); font-style: normal; }
+.create-field.middle .field-hint em { color: var(--accent-soft); }
+
+.structure-block {
+  margin-bottom: 0.6rem; padding: 0.6rem 0.75rem;
+  background: var(--subtle); border: 1px solid var(--border);
+}
+.create-field.middle .structure-block {
+  background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15);
+}
+.block-label {
+  font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent);
+  letter-spacing: 0.15em; margin-bottom: 0.35rem; font-weight: 700;
+}
+.create-field.middle .block-label { color: var(--accent-soft); }
+.block-desc {
+  font-size: 0.68rem; color: var(--muted); margin-bottom: 0.4rem;
+}
+.create-field.middle .block-desc { color: rgba(255,255,255,0.6); }
+
+.subfield-input {
+  width: 100%; padding: 0.5rem 0.7rem; border: 1.5px solid var(--border);
+  background: var(--paper); font-family: var(--font-serif); font-size: 0.95rem;
+  color: var(--ink); letter-spacing: 0.04em; margin-bottom: 0.5rem;
+}
+.subfield-input:focus { outline: none; border-color: var(--accent); background: white; }
+
+.middle-input {
+  width: 100%; padding: 0.85rem 1rem; border: 2px solid var(--accent);
+  background: var(--paper); font-family: var(--font-serif); font-size: 1.1rem;
+  color: var(--ink); letter-spacing: 0.06em; margin-bottom: 0.6rem;
+  text-align: center; font-weight: 700;
+}
+.middle-input:focus { outline: none; border-color: var(--accent-deep); background: white; }
+
+/* Chips */
+.chips-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip {
+  position: relative; padding: 0.3rem 0.65rem;
+  background: var(--paper); border: 1.5px solid var(--border);
+  color: var(--ink); font-family: var(--font-serif); font-size: 0.82rem;
+  cursor: pointer; transition: all 0.15s; user-select: none;
+  min-height: 30px; display: inline-flex; align-items: center;
+}
+.chip:hover { background: var(--accent); color: white; border-color: var(--accent); transform: translateY(-1px); }
+.chip.particle { background: rgba(91,169,157,0.1); border-color: var(--teal); color: var(--teal); font-weight: 600; }
+.chip.particle:hover { background: var(--teal); color: white; border-color: var(--teal); }
+.chip.taigi::before {
+  content: '台'; position: absolute; top: -5px; right: -3px;
+  width: 14px; height: 14px;
+  background: var(--taigi-green); color: white;
+  border-radius: 50%; font-size: 8px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+  font-family: var(--font-serif);
+}
+.chip.taigi {
+  background: rgba(91,158,110,0.1); border-color: var(--taigi-green); color: var(--taigi-green);
+  font-weight: 600;
+}
+.chip.taigi:hover { background: var(--taigi-green); color: white; border-color: var(--taigi-green); }
+.chip.taigi:hover::before { background: white; color: var(--taigi-green); }
+.create-field.middle .chip { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.9); }
+.create-field.middle .chip:hover { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+
+.core-switcher { margin-top: 0.8rem; padding-top: 0.7rem; border-top: 1px dashed rgba(255,255,255,0.2); }
+.core-switcher-label {
+  font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-soft);
+  letter-spacing: 0.15em; margin-bottom: 0.4rem;
+}
+.core-switcher-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.switcher-chip {
+  padding: 0.3rem 0.65rem; background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.85);
+  font-family: var(--font-serif); font-size: 0.78rem; cursor: pointer;
+  transition: all 0.15s;
+}
+.switcher-chip:hover { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.switcher-chip.current { background: var(--gold); color: var(--ink); border-color: var(--gold); font-weight: 700; }
+
+/* ============ 祝賀語段 ============ */
+.greeting-field {
+  background: linear-gradient(135deg, rgba(201,122,139,0.08) 0%, rgba(201,122,139,0.03) 100%);
+  border: 2px solid var(--plum); padding: 1.1rem 1.3rem;
+  margin-bottom: 1.3rem; position: relative;
+}
+.greeting-field.hidden { display: none; }
+.greeting-field h4 {
+  font-family: var(--font-serif); font-size: 0.95rem; color: var(--plum);
+  margin-bottom: 0.25rem;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+  font-weight: 700;
+}
+.greeting-field h4 .toggle-greeting {
+  padding: 0.25rem 0.7rem; background: transparent; border: 1.5px solid var(--plum);
+  color: var(--plum); font-size: 0.72rem; cursor: pointer; letter-spacing: 0.05em;
+  font-family: var(--font-serif);
+}
+.greeting-field h4 .toggle-greeting:hover { background: var(--plum); color: white; }
+.greeting-badge-sm {
+  display: inline-block; padding: 2px 8px; background: var(--plum); color: white;
+  font-size: 0.65rem; letter-spacing: 0.15em; font-weight: 900; margin-right: 0.5rem;
+}
+.greeting-hint {
+  font-size: 0.72rem; color: var(--muted); margin-bottom: 0.9rem;
+  font-family: var(--font-serif); letter-spacing: 0.04em;
+}
+.greeting-hint em { color: var(--plum); font-style: normal; font-weight: 700; }
+
+.greeting-formula {
+  display: grid; grid-template-columns: auto 1fr auto 1fr auto 1fr; gap: 0.5rem;
+  align-items: center; padding: 0.7rem 0.9rem;
+  background: rgba(255,255,255,0.4);
+  border: 1px dashed var(--plum); margin-bottom: 0.9rem;
+}
+@media (max-width: 720px) {
+  .greeting-formula { grid-template-columns: 1fr; gap: 0.3rem; }
+  .greeting-formula .formula-fixed { display: none; }
+}
+.formula-fixed {
+  font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700;
+  color: var(--plum); letter-spacing: 0.05em; text-align: center;
+  padding: 0.3rem 0.5rem;
+}
+.formula-slot {
+  padding: 0.45rem 0.7rem; background: var(--paper);
+  border: 2px dashed var(--plum); font-family: var(--font-serif);
+  font-size: 1rem; color: var(--ink); text-align: center; min-height: 38px;
+  letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.formula-slot.filled { border-style: solid; border-color: var(--plum); background: rgba(201,122,139,0.08); font-weight: 700; }
+.formula-slot.empty { color: var(--muted); font-size: 0.78rem; }
+
+.greeting-chip-groups {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.7rem;
+}
+@media (max-width: 720px) { .greeting-chip-groups { grid-template-columns: 1fr; } }
+.greeting-chip-group {
+  padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.4);
+  border: 1px solid rgba(201,122,139,0.2);
+}
+.greeting-chip-group-label {
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--plum);
+  letter-spacing: 0.15em; margin-bottom: 0.4rem; font-weight: 700;
+}
+.greeting-chip {
+  padding: 0.3rem 0.65rem; background: var(--paper);
+  border: 1.5px solid var(--plum); color: var(--plum);
+  font-family: var(--font-serif); font-size: 0.82rem; cursor: pointer;
+  transition: all 0.15s; user-select: none;
+  display: inline-block; margin: 2px;
+  min-height: 30px;
+}
+.greeting-chip:hover, .greeting-chip.selected {
+  background: var(--plum); color: white; border-color: var(--plum);
+}
+.greeting-custom-input {
+  width: 100%; padding: 0.65rem 0.9rem;
+  border: 1.5px solid var(--plum); background: var(--paper);
+  font-family: var(--font-serif); font-size: 0.95rem;
+  color: var(--ink); letter-spacing: 0.04em; margin-top: 0.7rem;
+}
+.greeting-custom-input:focus { outline: none; border-color: var(--plum-deep); }
+
+/* ============ 即時預覽 ============ */
+.live-preview {
+  background: linear-gradient(135deg, var(--ink) 0%, #1a1612 100%);
+  color: white; padding: 1.5rem 1.8rem;
+  margin-bottom: 1rem; position: relative; overflow: hidden;
+  border: 1.5px solid var(--gold);
+}
+.live-preview::before {
+  content: '成'; position: absolute; top: 0.3rem; right: 1rem;
+  font-family: var(--font-serif); font-size: 5rem; font-weight: 900;
+  color: var(--accent); opacity: 0.12; line-height: 1;
+}
+.preview-label {
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-soft);
+  letter-spacing: 0.25em; margin-bottom: 0.7rem;
+}
+.preview-sentence {
+  font-family: var(--font-serif);
+  font-size: clamp(1.15rem, 3vw, 1.8rem);
+  font-weight: 700; color: white; letter-spacing: 0.1em;
+  line-height: 1.5; margin-bottom: 0.5rem; word-break: break-all;
+}
+.preview-sentence .seg-head-name { color: var(--gold); }
+.preview-sentence .seg-head-particle { color: #9ad4c4; }
+.preview-sentence .seg-core {
+  color: var(--accent-soft); padding: 2px 8px;
+  background: rgba(232,112,60,0.2); border: 1px solid var(--accent);
+  margin: 0 3px; display: inline-block;
+}
+.preview-sentence .seg-greeting {
+  color: #f5c4cf; padding: 2px 8px;
+  background: rgba(201,122,139,0.25); border: 1px solid var(--plum);
+  margin: 0 3px; display: inline-block;
+}
+.preview-sentence .seg-tail-name { color: var(--gold); }
+.preview-sentence .seg-tail-particle { color: #9ad4c4; }
+.preview-tailo {
+  font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-soft);
+  margin-bottom: 0.9rem; word-break: break-all; letter-spacing: 0.04em;
+}
+
+/* 台語度指標 */
+.taigi-meter-wrapper {
+  margin-bottom: 0.9rem; padding: 0.7rem 0.9rem;
+  background: rgba(91,158,110,0.15); border-left: 3px solid var(--taigi-green);
+}
+.taigi-meter-label {
+  font-family: var(--font-serif); font-size: 0.72rem; color: var(--taigi-green);
+  letter-spacing: 0.15em; margin-bottom: 0.4rem; font-weight: 700;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.taigi-meter-label .meter-val {
+  font-family: var(--font-mono); font-size: 1.15rem;
+  color: var(--gold); font-weight: 700;
+}
+.taigi-meter-label .meter-val.warn { color: var(--warn); }
+.taigi-meter-bar {
+  width: 100%; height: 6px; background: rgba(255,255,255,0.1);
+  position: relative; overflow: hidden;
+}
+.taigi-meter-fill {
+  height: 100%; background: linear-gradient(90deg, var(--taigi-green), var(--gold));
+  transition: width 0.4s ease;
+}
+.taigi-meter-fill.warn { background: linear-gradient(90deg, var(--warn), #f3a97c); }
+.taigi-meter-info {
+  margin-top: 0.4rem; font-size: 0.7rem; color: var(--accent-soft);
+  font-family: var(--font-serif); letter-spacing: 0.04em;
+}
+.taigi-meter-info .taigi-detected { color: var(--gold); font-weight: 700; }
+.taigi-meter-info .hua-detected { color: var(--warn); font-weight: 700; }
+
+/* 能量評分（可展開） */
+.energy-toggle {
+  margin-top: 0.7rem; padding-top: 0.7rem;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-soft);
+  letter-spacing: 0.15em;
+}
+.energy-toggle::after { content: '▼'; transition: transform 0.2s; font-size: 0.6rem; }
+.energy-toggle.open::after { transform: rotate(180deg); }
+.preview-energy {
+  display: none; gap: 1.2rem; padding-top: 0.6rem; flex-wrap: wrap;
+  font-size: 0.75rem; margin-top: 0.5rem;
+}
+.preview-energy.show { display: flex; }
+.preview-energy .pair { display: flex; align-items: center; gap: 0.35rem; }
+.preview-energy .k { color: var(--accent-soft); letter-spacing: 0.1em; }
+.preview-energy .v { font-family: var(--font-serif); font-weight: 600; font-size: 0.85rem; color: white; }
+.preview-energy .v.strong { color: var(--gold); }
+.preview-energy .v.weak { color: var(--muted); }
+
+.preview-suggestion {
+  margin-top: 0.8rem; padding: 0.6rem 0.9rem;
+  background: rgba(232,112,60,0.15); border-left: 3px solid var(--accent);
+  font-size: 0.82rem; color: var(--accent-soft); font-family: var(--font-serif);
+  letter-spacing: 0.04em;
+}
+.preview-suggestion .strong { color: white; font-weight: 700; }
+
+/* ============ 動作按鈕 ============ */
+.action-row { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+.action-btn {
+  padding: 0.75rem 1.3rem; border: none;
+  font-family: var(--font-serif); font-size: 0.92rem; cursor: pointer;
+  letter-spacing: 0.15em; transition: all 0.2s; font-weight: 700;
+  min-height: 44px;
+}
+.action-btn.primary {
+  background: var(--accent); color: white;
+  box-shadow: 0 3px 10px rgba(232, 112, 60, 0.25);
+}
+.action-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(232, 112, 60, 0.4); }
+.action-btn.card-gen {
+  background: var(--gold); color: var(--ink);
+  box-shadow: 0 3px 10px rgba(213, 161, 60, 0.3); font-weight: 900;
+}
+.action-btn.card-gen:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(213, 161, 60, 0.5); }
+.action-btn.ghost {
+  background: transparent; color: var(--muted); border: 1.5px solid var(--border);
+}
+.action-btn.ghost:hover { background: var(--ink); color: white; border-color: var(--ink); }
+
+/* ============ 語料庫 ============ */
+.my-library {
+  margin-top: 2rem; background: var(--card); border: 1.5px solid var(--border); padding: 1.4rem;
+}
+.library-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 2px solid var(--accent);
+  flex-wrap: wrap; gap: 0.5rem;
+}
+.library-header h3 {
+  font-family: var(--font-serif); font-size: 1.1rem; color: var(--ink); font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.library-count { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
+.library-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.library-empty {
+  text-align: center; padding: 2rem 1rem; color: var(--muted);
+  font-family: var(--font-serif); font-size: 0.88rem; font-style: italic;
+}
+.library-item {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 1rem;
+  align-items: center; padding: 0.8rem 1rem;
+  background: var(--paper); border: 1px solid var(--border);
+}
+@media (max-width: 640px) {
+  .library-item { grid-template-columns: 1fr; gap: 0.5rem; }
+}
+.library-item-text { font-family: var(--font-serif); font-size: 1rem; color: var(--ink); letter-spacing: 0.04em; }
+.library-item-tailo { font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted); margin-top: 2px; word-break: break-all; }
+.library-item-meta { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); letter-spacing: 0.05em; }
+.library-item-del {
+  padding: 0.25rem 0.7rem; background: transparent; border: 1.5px solid var(--border);
+  color: var(--muted); font-size: 0.72rem; cursor: pointer; font-family: var(--font-serif);
+  min-height: 32px;
+}
+.library-item-del:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* ============ 卡片模態框 ============ */
+.card-modal-overlay {
+  position: fixed; inset: 0; background: rgba(42, 37, 32, 0.88);
+  backdrop-filter: blur(6px); z-index: 1000;
+  display: none; align-items: center; justify-content: center;
+  padding: 1rem; overflow-y: auto;
+}
+.card-modal-overlay.show { display: flex; }
+.card-modal {
+  background: var(--paper); max-width: 1100px; width: 100%;
+  max-height: 94vh; overflow-y: auto;
+  border: 2px solid var(--ink);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  position: relative;
+}
+@media (max-width: 640px) {
+  .card-modal-overlay { padding: 0; }
+  .card-modal { max-height: 100vh; border: none; }
+}
+.card-modal-header {
+  padding: 1rem 1.5rem; background: var(--ink); color: white;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 4px solid var(--accent);
+  position: sticky; top: 0; z-index: 2;
+}
+.card-modal-header h3 {
+  font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700;
+  letter-spacing: 0.15em;
+}
+.card-modal-header h3 .en { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent-soft); letter-spacing: 0.25em; margin-left: 0.5rem; }
+.card-modal-close {
+  background: transparent; border: 1.5px solid white; color: white;
+  padding: 0.3rem 0.8rem; cursor: pointer; font-size: 0.85rem;
+  font-family: var(--font-serif); letter-spacing: 0.08em;
+  min-height: 36px;
+}
+.card-modal-close:hover { background: var(--accent); border-color: var(--accent); }
+.card-modal-body { padding: 1.2rem 1.5rem; }
+
+.card-style-tabs {
+  display: flex; gap: 4px; margin-bottom: 1rem;
+  border-bottom: 2px solid var(--ink); overflow-x: auto;
+}
+.card-style-tab {
+  padding: 0.55rem 1rem; background: var(--subtle);
+  border: 1.5px solid var(--border); border-bottom: none;
+  font-family: var(--font-serif); font-weight: 700; font-size: 0.88rem;
+  cursor: pointer; letter-spacing: 0.08em; color: var(--muted);
+  transition: all 0.2s; white-space: nowrap;
+  display: flex; align-items: center; gap: 0.3rem;
+  min-height: 40px;
+}
+.card-style-tab:hover { background: var(--card); color: var(--ink); }
+.card-style-tab.active { background: var(--ink); color: white; border-color: var(--ink); }
+.card-style-tab .style-letter {
+  font-family: var(--font-mono); font-size: 0.7rem;
+  color: var(--accent); font-weight: 900;
+}
+.card-style-tab.active .style-letter { color: var(--accent-soft); }
+
+.card-preview-wrap {
+  display: grid; grid-template-columns: 1fr 280px; gap: 1.2rem;
+}
+@media (max-width: 800px) {
+  .card-preview-wrap { grid-template-columns: 1fr; }
+}
+.card-canvas-box {
+  background: white; border: 1px solid var(--border); padding: 0.8rem;
+  display: flex; justify-content: center; align-items: center;
+  aspect-ratio: 1; position: relative; overflow: hidden;
+}
+#card-canvas {
+  max-width: 100%; max-height: 100%;
+  width: auto; height: auto; display: block;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+.card-info-panel {
+  background: var(--card); border: 1px solid var(--border); padding: 1.1rem;
+  display: flex; flex-direction: column; gap: 0.9rem;
+}
+.card-info-section { padding-bottom: 0.8rem; border-bottom: 1px dashed var(--border); }
+.card-info-section:last-of-type { border-bottom: none; padding-bottom: 0; }
+.card-info-label {
+  font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted);
+  letter-spacing: 0.2em; margin-bottom: 0.35rem;
+}
+.card-info-content {
+  font-family: var(--font-serif); font-size: 0.88rem; color: var(--ink);
+  line-height: 1.5; letter-spacing: 0.03em;
+}
+.card-info-content .highlight { color: var(--accent); font-weight: 700; }
+.card-size-info { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+.card-style-desc { font-size: 0.78rem; color: var(--muted); font-family: var(--font-serif); line-height: 1.5; font-style: italic; }
+.card-download-row { display: flex; flex-direction: column; gap: 0.5rem; }
+.card-dl-btn {
+  padding: 0.75rem 0.9rem; border: none;
+  font-family: var(--font-serif); font-weight: 700; font-size: 0.88rem;
+  cursor: pointer; letter-spacing: 0.15em; transition: all 0.2s;
+  display: flex; justify-content: space-between; align-items: center;
+  min-height: 44px;
+}
+.card-dl-btn.primary {
+  background: var(--accent); color: white;
+  box-shadow: 0 3px 10px rgba(232, 112, 60, 0.25);
+}
+.card-dl-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(232, 112, 60, 0.4); }
+.card-dl-btn.secondary {
+  background: var(--ink); color: white;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+.card-dl-btn.secondary:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(0,0,0,0.25); }
+.card-dl-btn.ghost {
+  background: transparent; color: var(--ink); border: 1.5px solid var(--border);
+}
+.card-dl-btn.ghost:hover { background: var(--ink); color: white; border-color: var(--ink); }
+.card-dl-btn .dl-icon { font-size: 1.05rem; }
+
+.flex-json-box {
+  background: #1e1e1e; color: #d4d4d4; padding: 0.9rem;
+  font-family: var(--font-mono); font-size: 0.7rem;
+  max-height: 200px; overflow-y: auto; display: none;
+  border: 1px solid var(--ink); white-space: pre-wrap; word-break: break-all;
+  line-height: 1.6;
+}
+.flex-json-box.show { display: block; }
+
+/* ============ Toast ============ */
+.toast {
+  position: fixed; top: 1.2rem; right: 1.2rem;
+  background: var(--ink); color: white; padding: 0.9rem 1.4rem;
+  border-left: 4px solid var(--gold);
+  font-family: var(--font-serif); font-size: 0.9rem; letter-spacing: 0.08em;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  transform: translateX(420px); opacity: 0; transition: all 0.35s;
+  z-index: 2000;
+}
+.toast.show { transform: translateX(0); opacity: 1; }
+@media (max-width: 640px) {
+  .toast { top: 0.5rem; right: 0.5rem; left: 0.5rem; transform: translateY(-100px); }
+  .toast.show { transform: translateY(0); }
+}
+
+/* ============ v12：Header TaigiType 外連 ============ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.header-link {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.4rem 0.85rem; border: 1.5px solid var(--teal);
+  background: var(--card); text-decoration: none;
+  color: var(--teal); font-family: var(--font-serif);
+  transition: all 0.2s; border-radius: 8px;
+  min-height: 36px;
+}
+.header-link:hover { background: var(--teal); color: white; transform: translateY(-1px); }
+.header-link .link-ch { font-size: 0.82rem; font-weight: 700; letter-spacing: 0.08em; }
+.header-link .link-en { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.15em; font-weight: 700; opacity: 0.85; }
+.header-link .link-ext { font-size: 0.85rem; opacity: 0.7; margin-left: 2px; }
+
+/* ============ v12：Hero 主 slogan ============ */
+.hero-title-main {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 3.8vw, 2.1rem);
+  font-weight: 900; letter-spacing: 0.08em; line-height: 1.3;
+  margin-bottom: 0.3rem; color: var(--ink);
+}
+.hero-title-main .comma { color: var(--accent); display: inline-block; transform: translateY(-0.05em); }
+.hero-slogan {
+  font-family: var(--font-serif);
+  font-size: clamp(0.82rem, 1.6vw, 0.95rem);
+  font-weight: 500; color: var(--accent);
+  letter-spacing: 0.18em; margin-bottom: 0.9rem;
+}
+.hero-divider {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.8rem; margin: 0.9rem auto; max-width: 400px;
+}
+.hero-divider .divider-line {
+  flex: 1; height: 1px; background: var(--border);
+}
+.hero-divider .divider-text {
+  font-family: var(--font-mono); font-size: 0.6rem;
+  letter-spacing: 0.35em; color: var(--accent); font-weight: 700;
+  white-space: nowrap;
+}
+.hero-sub-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.05rem, 2.6vw, 1.4rem);
+  font-weight: 700; letter-spacing: 0.08em; line-height: 1.3;
+  margin-bottom: 0.3rem; color: var(--ink);
+}
+.hero-sub-title .comma { color: var(--accent); }
+.hero-sub-title .highlight { color: var(--accent); }
+
+/* ============ v12：Footer 產品卡片 ============ */
+.footer-products {
+  max-width: 1200px; margin: 0 auto;
+  padding: 2rem 1rem 2.5rem;
+}
+.footer-products-heading {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1rem; margin-bottom: 2rem;
+}
+.footer-products-heading .heading-line {
+  flex: 1; height: 1px; background: var(--border); max-width: 120px;
+}
+.footer-products-heading .heading-text {
+  font-family: var(--font-mono); font-size: 0.72rem;
+  letter-spacing: 0.35em; color: var(--accent); font-weight: 700;
+  white-space: nowrap;
+}
+.footer-products-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+}
+@media (max-width: 900px) {
+  .footer-products-grid { grid-template-columns: 1fr; }
+}
+.product-card {
+  position: relative; padding: 1.5rem 1.3rem;
+  background: var(--card); border: 1.5px solid var(--border);
+  text-decoration: none; color: inherit;
+  transition: all 0.25s; display: block;
+}
+.product-card.link:hover {
+  background: var(--card-hover);
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+.product-card.current { border-color: var(--accent); border-width: 2px; }
+.product-card.soon { border-style: dashed; opacity: 0.92; }
+.product-tag {
+  position: absolute; top: -11px; right: 1rem;
+  font-family: var(--font-mono); font-size: 0.65rem;
+  padding: 3px 10px; letter-spacing: 0.15em; font-weight: 700;
+  background: var(--accent); color: white;
+}
+.product-tag.external { background: var(--teal); }
+.product-tag.soon-tag { background: var(--gold); }
+.product-name {
+  font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700;
+  color: var(--ink); letter-spacing: 0.08em;
+  margin-bottom: 0.2rem; margin-top: 0.3rem;
+}
+.product-name-en {
+  font-family: var(--font-mono); font-size: 0.7rem;
+  letter-spacing: 0.2em; color: var(--accent); font-weight: 700;
+  margin-bottom: 0.9rem;
+}
+.product-card.link:hover .product-name-en { color: var(--ink); }
+.product-desc {
+  font-family: var(--font-serif); font-size: 0.85rem;
+  color: var(--ink); line-height: 1.9; letter-spacing: 0.03em;
+  margin-bottom: 0.9rem;
+}
+.product-stats {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  padding-top: 0.8rem; border-top: 1px dashed var(--border);
+}
+.product-stats .stat {
+  font-family: var(--font-mono); font-size: 0.68rem;
+  padding: 3px 8px; background: var(--subtle);
+  color: var(--accent); letter-spacing: 0.08em; font-weight: 700;
+}
+.product-card.current .product-stats .stat { background: var(--accent); color: white; }
+
+.footer-motto-wrap {
+  padding: 1.5rem 1rem 2rem; border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+/* ============ v12 手機優化 ============ */
+@media (max-width: 640px) {
+  .header-link {
+    padding: 0.35rem 0.65rem; gap: 0.2rem; min-height: 32px;
+  }
+  .header-link .link-ch { font-size: 0.75rem; }
+  .header-link .link-en { display: none; }
+  .hero-title-main { font-size: 1.35rem; letter-spacing: 0.06em; }
+  .hero-slogan { font-size: 0.78rem; letter-spacing: 0.12em; margin-bottom: 0.7rem; }
+  .hero-sub-title { font-size: 1rem; letter-spacing: 0.05em; }
+  .hero-sub { font-size: 0.76rem; }
+  .hero-divider { margin: 0.7rem auto; }
+  .hero-divider .divider-text { font-size: 0.55rem; letter-spacing: 0.25em; }
+  .footer-products { padding: 1.2rem 0.8rem 1.5rem; }
+  .footer-products-heading .heading-text { font-size: 0.65rem; letter-spacing: 0.2em; }
+  .footer-products-heading .heading-line { max-width: 40px; }
+  .product-card { padding: 1.2rem 1rem; }
+  .product-name { font-size: 1.1rem; }
+  .product-desc { font-size: 0.82rem; line-height: 1.7; }
+}
+
+@media (max-width: 380px) {
+  .header-right { gap: 0.35rem; flex-wrap: wrap; }
+  .elderly-btn { display: none; }
+}
+
+/* ============ Footer ============ */
+footer.site-footer {
+  margin-top: 3rem; padding: 2rem 1rem 1.5rem;
+  border-top: 1.5px solid var(--border); text-align: center;
+  background: var(--subtle);
+}
+.footer-motto {
+  font-family: var(--font-serif); font-size: 0.95rem; color: var(--ink);
+  letter-spacing: 0.3em; margin-bottom: 0.5rem; font-weight: 500;
+}
+.footer-meta {
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted);
+  letter-spacing: 0.15em;
+}
+
+/* ============ 手機優化 ============ */
+@media (max-width: 640px) {
+  header.site-header { padding: 0.75rem 0.9rem; }
+  .logo-zh { font-size: 1.25rem; }
+  .logo-en { font-size: 0.68rem; }
+  .hero { padding: 1.5rem 1rem 1.2rem; }
+  main.app-main { padding: 0.8rem 0.8rem 3rem; }
+  .sidebar { padding: 1rem; }
+  .candidates-section { padding: 1rem; }
+  .create-panel.show { padding: 1rem; }
+  .create-field { padding: 0.75rem; }
+  .core-text { font-size: 1.15rem; }
+  .preview-sentence { font-size: 1.1rem; letter-spacing: 0.06em; }
+  .stamp-btn { min-height: 58px; }
+  .stamp-btn .stamp-char { font-size: 1.35rem; }
+  .action-row { flex-direction: column; }
+  .action-btn { width: 100%; }
+  .six-seg-box { padding: 0.4rem 0.3rem; }
+  .six-seg-box .seg-role { font-size: 0.65rem; }
+  .card-modal-body { padding: 0.9rem; }
+  .card-style-tab { padding: 0.5rem 0.8rem; font-size: 0.82rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="brand" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <span class="logo-zh">台語好極</span>
+    <span class="logo-en">TAIGIFORGE</span>
+    <span class="tagline-mini">·&nbsp;&nbsp;祝福生成</span>
+  </div>
+  <div class="header-right">
+    <a class="header-link" href="https://taigi-phonetic.netlify.app/taigi-typing.html" target="_blank" rel="noopener">
+      <span class="link-ch">打字</span>
+      <span class="link-en">TaigiType</span>
+      <span class="link-ext">↗</span>
+    </a>
+    <div class="version-switch" id="versionSwitch">
+      <button class="active" onclick="toggleVersion('family')" id="ver-family">Family</button>
+      <button onclick="toggleVersion('pro')" id="ver-pro">Pro</button>
+    </div>
+    <button class="elderly-btn" onclick="toggleElderly()">字看無清楚？點這</button>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-ornament">TAIGIFORGE · MADE IN TAIWAN</div>
+  <h1 class="hero-title-main">台語好極<span class="comma">，</span>創作好記</h1>
+  <p class="hero-slogan">用台語創作足感心</p>
+  <div class="hero-divider">
+    <span class="divider-line"></span>
+    <span class="divider-text">BLESSING · FORGE</span>
+    <span class="divider-line"></span>
+  </div>
+  <h2 class="hero-sub-title">祝福好極<span class="comma">，</span>六段一卡成<span class="highlight">。</span></h2>
+  <p class="hero-sub">18 情境收編 · 六段文法 · 一鍵下載卡片</p>
+</section>
+
+<!-- Main -->
+<main class="app-main">
+  <div class="app-grid">
+
+    <!-- 左側 Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">
+          <span>情境 · 18 格</span>
+          <span class="en">STAMPS</span>
+        </div>
+        <div class="stamp-matrix" id="stamp-matrix">
+          <!-- 節日慶典（6）-->
+          <button class="stamp-btn active" data-preset="newyear" data-cat="festival">
+            <div class="stamp-char">春</div><div class="stamp-name">春節</div>
+          </button>
+          <button class="stamp-btn" data-preset="dragonboat" data-cat="festival">
+            <div class="stamp-char">端</div><div class="stamp-name">端午</div>
+          </button>
+          <button class="stamp-btn" data-preset="midautumn" data-cat="festival">
+            <div class="stamp-char">秋</div><div class="stamp-name">中秋</div>
+          </button>
+          <button class="stamp-btn" data-preset="mother" data-cat="festival">
+            <div class="stamp-char">母</div><div class="stamp-name">母親節</div>
+          </button>
+          <button class="stamp-btn" data-preset="father" data-cat="festival">
+            <div class="stamp-char">父</div><div class="stamp-name">父親節</div>
+          </button>
+          <button class="stamp-btn" data-preset="teacher" data-cat="festival">
+            <div class="stamp-char">師</div><div class="stamp-name">教師節</div>
+          </button>
+          <!-- 人生事件（6）-->
+          <button class="stamp-btn" data-preset="birthday" data-cat="life">
+            <div class="stamp-char">慶</div><div class="stamp-name">生日</div>
+          </button>
+          <button class="stamp-btn" data-preset="longevity" data-cat="life">
+            <div class="stamp-char">壽</div><div class="stamp-name">壽誕</div>
+          </button>
+          <button class="stamp-btn" data-preset="wedding" data-cat="life">
+            <div class="stamp-char">婚</div><div class="stamp-name">結婚</div>
+          </button>
+          <button class="stamp-btn" data-preset="housewarm" data-cat="life">
+            <div class="stamp-char">厝</div><div class="stamp-name">入厝</div>
+          </button>
+          <button class="stamp-btn" data-preset="promotion" data-cat="life">
+            <div class="stamp-char">升</div><div class="stamp-name">升遷</div>
+          </button>
+          <button class="stamp-btn" data-preset="graduation" data-cat="life">
+            <div class="stamp-char">學</div><div class="stamp-name">畢業</div>
+          </button>
+          <!-- 情感（5）+ 商業（1）-->
+          <button class="stamp-btn" data-preset="thanks" data-cat="emo">
+            <div class="stamp-char">恩</div><div class="stamp-name">感恩</div>
+          </button>
+          <button class="stamp-btn" data-preset="apology" data-cat="emo">
+            <div class="stamp-char">歉</div><div class="stamp-name">道歉</div>
+          </button>
+          <button class="stamp-btn" data-preset="encourage" data-cat="emo">
+            <div class="stamp-char">勵</div><div class="stamp-name">鼓勵</div>
+          </button>
+          <button class="stamp-btn" data-preset="valentine" data-cat="emo">
+            <div class="stamp-char">情</div><div class="stamp-name">情人節</div>
+          </button>
+          <button class="stamp-btn" data-preset="christmas" data-cat="emo">
+            <div class="stamp-char">聖</div><div class="stamp-name">聖誕節</div>
+          </button>
+          <button class="stamp-btn" data-preset="opening" data-cat="biz">
+            <div class="stamp-char">開</div><div class="stamp-name">開幕</div>
+          </button>
+        </div>
+        <div class="stamp-legend">
+          <span class="legend-dot"><span class="dot festival"></span>節日</span>
+          <span class="legend-dot"><span class="dot life"></span>人生</span>
+          <span class="legend-dot"><span class="dot emo"></span>情感</span>
+          <span class="legend-dot"><span class="dot biz"></span>商業</span>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">
+          <span>四維度微調</span>
+          <span class="en">TUNE</span>
+        </div>
+        <div class="dims-wrap">
+          <div class="dim-field">
+            <div class="dim-label"><span>對誰說</span><span class="en">target</span></div>
+            <select class="dim-select" id="target">
+              <option value="阿母">阿母（母親）</option>
+              <option value="阿爸">阿爸（父親）</option>
+              <option value="同事">同事</option>
+              <option value="眾人">眾人（公開場合）</option>
+              <option value="囡仔">囡仔（孩子）</option>
+              <option value="朋友">朋友</option>
+              <option value="上司">上司長輩</option>
+            </select>
+          </div>
+          <div class="dim-field">
+            <div class="dim-label"><span>什麼場合</span><span class="en">occasion</span></div>
+            <select class="dim-select" id="occasion">
+              <optgroup label="節日慶典">
+                <option value="新年">春節／新年</option>
+                <option value="端午">端午節</option>
+                <option value="中秋">中秋節</option>
+                <option value="母親節">母親節</option>
+                <option value="父親節">父親節</option>
+                <option value="教師節">教師節</option>
+              </optgroup>
+              <optgroup label="人生事件">
+                <option value="生日">生日（一般）</option>
+                <option value="壽誕">壽誕（大壽）</option>
+                <option value="結婚">結婚</option>
+                <option value="入厝">入厝</option>
+                <option value="升遷">升遷</option>
+                <option value="畢業">畢業</option>
+              </optgroup>
+              <optgroup label="情感表達">
+                <option value="感恩">感恩</option>
+                <option value="道歉">道歉</option>
+                <option value="鼓勵">鼓勵</option>
+                <option value="情人節">情人節</option>
+                <option value="聖誕節">聖誕節</option>
+                <option value="祝福">通用祝福</option>
+              </optgroup>
+              <optgroup label="商業典禮">
+                <option value="開幕">開幕</option>
+                <option value="典禮">典禮</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="dim-field">
+            <div class="dim-label"><span>達到什麼</span><span class="en">effect</span></div>
+            <select class="dim-select" id="effect">
+              <option value="感動">感動</option>
+              <option value="溫暖">溫暖</option>
+              <option value="肯定">肯定</option>
+              <option value="激勵">激勵</option>
+              <option value="莊重">莊重</option>
+            </select>
+          </div>
+          <div class="dim-field">
+            <div class="dim-label"><span>什麼風格</span><span class="en">style</span></div>
+            <select class="dim-select" id="style">
+              <option value="親切">親切</option>
+              <option value="正式">正式</option>
+              <option value="誠懇">誠懇</option>
+              <option value="莊重">莊重</option>
+              <option value="俏皮">俏皮</option>
+            </select>
+          </div>
+          <button class="generate-btn" id="gen-btn" onclick="runPipeline()">生 成 祝 福</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右側主區 -->
+    <div class="main-panel">
+
+      <!-- 祝福候選（L3 直出）-->
+      <section class="candidates-section" id="candidates-section">
+        <div class="candidates-header">
+          <h2>祝福候選</h2>
+          <span class="en">BLESSING POOL</span>
+          <span class="count" id="candidates-count">— 候選待選</span>
+        </div>
+        <div id="candidates-body">
+          <div class="candidates-placeholder">
+            <div class="big">←</div>
+            <div>請從左側選一個情境印章</div>
+            <div style="font-size: 0.85rem; margin-top: 0.5rem;">再按「生成祝福」</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 六段創作盤 -->
+      <section class="create-panel" id="create-panel">
+        <div class="create-header">
+          <button class="back-btn" onclick="backToChoices()">← 換個祝福詞</button>
+          <h3>六段創作盤 <span class="en">SIX-SEGMENT FORGE</span></h3>
+        </div>
+
+        <!-- 六段視覺 -->
+        <div class="six-seg-header">
+          <div class="six-seg-box"><div class="seg-num">①</div><div class="seg-role">稱謂</div></div>
+          <div class="six-seg-box"><div class="seg-num">②</div><div class="seg-role">頭助詞</div></div>
+          <div class="six-seg-box core"><div class="seg-num">③</div><div class="seg-role">核心</div></div>
+          <div class="six-seg-box greeting"><div class="seg-num">④</div><div class="seg-role">祝賀語</div></div>
+          <div class="six-seg-box"><div class="seg-num">⑤</div><div class="seg-role">署名</div></div>
+          <div class="six-seg-box"><div class="seg-num">⑥</div><div class="seg-role">敬詞</div></div>
+        </div>
+
+        <!-- 三列創作區 -->
+        <div class="create-cols">
+          <div class="create-field">
+            <h4><span>頭部 · 稱謂 + 助詞</span><span class="field-badge">頭</span></h4>
+            <div class="field-hint"><em>帶「台」標籤最夠台</em></div>
+            <div class="structure-block">
+              <div class="block-label">① 稱謂</div>
+              <input type="text" class="subfield-input" id="head-name" placeholder="如：阮阿母" maxlength="12">
+              <div class="chips-row" id="head-name-chips"></div>
+            </div>
+            <div class="structure-block">
+              <div class="block-label">② 頭助詞</div>
+              <div class="block-desc">稱呼後語氣</div>
+              <input type="text" class="subfield-input" id="head-particle" placeholder="可空" maxlength="6">
+              <div class="chips-row" id="head-particle-chips"></div>
+            </div>
+          </div>
+
+          <div class="create-field middle">
+            <h4><span>中間層 · 台語祝福</span><span class="field-badge">中</span></h4>
+            <div class="field-hint"><em>可改或直接換</em></div>
+            <input type="text" class="middle-input" id="middle-input" placeholder="選一個祝福詞" maxlength="16">
+            <div class="core-switcher">
+              <div class="core-switcher-label">快速切換</div>
+              <div class="core-switcher-chips" id="core-switcher-chips"></div>
+            </div>
+          </div>
+
+          <div class="create-field">
+            <h4><span>尾部 · 署名 + 助詞</span><span class="field-badge">尾</span></h4>
+            <div class="field-hint"><em>誰祝福 → 怎麼祝福</em></div>
+            <div class="structure-block">
+              <div class="block-label">⑤ 署名</div>
+              <div class="block-desc">誰寫的祝福</div>
+              <input type="text" class="subfield-input" id="tail-name" placeholder="如：阮秀英" maxlength="12">
+              <div class="chips-row" id="tail-name-chips"></div>
+            </div>
+            <div class="structure-block">
+              <div class="block-label">⑥ 敬詞</div>
+              <div class="block-desc">敬上／祝／拜上</div>
+              <input type="text" class="subfield-input" id="tail-particle" placeholder="可空" maxlength="8">
+              <div class="chips-row" id="tail-particle-chips"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ④ 祝賀語段 -->
+        <div class="greeting-field" id="greeting-field">
+          <h4>
+            <span><span class="greeting-badge-sm">④</span>祝賀語 · 節日／慶典／人生事件</span>
+            <button class="toggle-greeting" onclick="toggleGreetingEnable()" id="toggle-greeting-btn">停用此段</button>
+          </h4>
+          <div class="greeting-hint"><em>三欄點選</em>自動組合「祝 + 對象 + 事件 + 吉祥詞」 · 或自訂</div>
+          <div class="greeting-formula">
+            <div class="formula-fixed">祝</div>
+            <div class="formula-slot empty" id="slot-who">對象</div>
+            <div class="formula-fixed">·</div>
+            <div class="formula-slot empty" id="slot-event">事件</div>
+            <div class="formula-fixed">·</div>
+            <div class="formula-slot empty" id="slot-wish">吉祥詞</div>
+          </div>
+          <div class="greeting-chip-groups">
+            <div class="greeting-chip-group">
+              <div class="greeting-chip-group-label">對象 · WHO</div>
+              <div id="greeting-who-chips"></div>
+            </div>
+            <div class="greeting-chip-group">
+              <div class="greeting-chip-group-label">事件 · EVENT</div>
+              <div id="greeting-event-chips"></div>
+            </div>
+            <div class="greeting-chip-group">
+              <div class="greeting-chip-group-label">吉祥詞 · WISH</div>
+              <div id="greeting-wish-chips"></div>
+            </div>
+          </div>
+          <input type="text" class="greeting-custom-input" id="greeting-custom"
+                 placeholder="或自訂整段（如：祝妳母親節平安喜樂）" maxlength="20">
+        </div>
+
+        <!-- 即時預覽 -->
+        <div class="live-preview">
+          <div class="preview-label">即時預覽 · LIVE</div>
+          <div class="preview-sentence" id="preview-sentence">—</div>
+          <div class="preview-tailo" id="preview-tailo">—</div>
+          <div class="taigi-meter-wrapper">
+            <div class="taigi-meter-label">
+              <span>台語度 · TAIGI SCORE</span>
+              <span class="meter-val" id="taigi-meter-val">0%</span>
+            </div>
+            <div class="taigi-meter-bar">
+              <div class="taigi-meter-fill" id="taigi-meter-fill" style="width: 0%"></div>
+            </div>
+            <div class="taigi-meter-info" id="taigi-meter-info">偵測到的字會顯示在這裡</div>
+          </div>
+          <div class="preview-suggestion" id="preview-suggestion"></div>
+          <div class="energy-toggle" onclick="toggleEnergyDetail()" id="energy-toggle">能量細節 · ENERGY DETAIL</div>
+          <div class="preview-energy" id="preview-energy"></div>
+        </div>
+
+        <!-- 動作按鈕 -->
+        <div class="action-row">
+          <button class="action-btn card-gen" onclick="openCardModal()">⚡ 產 · 祝福卡片</button>
+          <button class="action-btn primary" onclick="saveToLibrary()">✓ 入我的語料庫</button>
+          <button class="action-btn ghost" onclick="resetCreation()">↻ 清空頭尾</button>
+        </div>
+      </section>
+
+      <!-- 語料庫 -->
+      <section class="my-library">
+        <div class="library-header">
+          <h3>我的語料庫 · MY CORPUS</h3>
+          <span class="library-count" id="library-count">0 條</span>
+        </div>
+        <div class="library-list" id="library-list">
+          <div class="library-empty">尚無入庫句子</div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="footer-products">
+    <div class="footer-products-heading">
+      <span class="heading-line"></span>
+      <span class="heading-text">台語好極家族 · TAIGIFORGE FAMILY</span>
+      <span class="heading-line"></span>
+    </div>
+    <div class="footer-products-grid">
+      <div class="product-card current">
+        <div class="product-tag">你在這裡</div>
+        <div class="product-name">祝福好極</div>
+        <div class="product-name-en">BLESSING FORGE</div>
+        <div class="product-desc">
+          六段文法 · 18 情境收編<br>
+          母親節／父親節／三節／人生大事<br>
+          一鍵下載祝福卡片
+        </div>
+        <div class="product-stats">
+          <span class="stat">18 情境</span>
+          <span class="stat">108 候選</span>
+          <span class="stat">3 種卡片風格</span>
+        </div>
+      </div>
+
+      <a class="product-card link" href="https://taigi-phonetic.netlify.app/taigi-typing.html" target="_blank" rel="noopener">
+        <div class="product-tag external">前往 ↗</div>
+        <div class="product-name">台語打字系統</div>
+        <div class="product-name-en">TAIGITYPE</div>
+        <div class="product-desc">
+          全球最大台語智慧輸入系統<br>
+          台羅 / 注音雙輸入<br>
+          API 平台 · BETA v0.1
+        </div>
+        <div class="product-stats">
+          <span class="stat">92,874 字</span>
+          <span class="stat">72,991 前綴索引</span>
+          <span class="stat">4,920 前綴種類</span>
+        </div>
+      </a>
+
+      <a class="product-card link soon" href="taigi-forge.html">
+        <div class="product-tag soon-tag">建置中</div>
+        <div class="product-name">Pro 完整工坊</div>
+        <div class="product-name-en">PRO FORGE</div>
+        <div class="product-desc">
+          四層工坊 + 兩項未來<br>
+          輸入 → 生成 → 批改 → 作品<br>
+          語音創作 · 造字
+        </div>
+        <div class="product-stats">
+          <span class="stat">5 層</span>
+          <span class="stat">Family / Pro</span>
+          <span class="stat">前往 →</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="footer-motto-wrap">
+    <div class="footer-motto">為文化生根 · 為台語續命 · 為往聖繼絕學 · 為台灣開文明</div>
+    <div class="footer-meta">台語好極 TaigiForge · 劍橋分析股份有限公司 · MADE IN TAIWAN · 2026 廠慶版</div>
+  </div>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast">—</div>
+
+<!-- 卡片模態框 -->
+<div class="card-modal-overlay" id="card-modal-overlay">
+  <div class="card-modal">
+    <div class="card-modal-header">
+      <h3>祝福卡片 <span class="en">CARD OUTPUT</span></h3>
+      <button class="card-modal-close" onclick="closeCardModal()">✕ 關閉</button>
+    </div>
+    <div class="card-modal-body">
+      <div class="card-style-tabs">
+        <div class="card-style-tab active" data-style="rice" onclick="switchCardStyle('rice')">
+          <span class="style-letter">A</span>宣紙印章
+        </div>
+        <div class="card-style-tab" data-style="modern" onclick="switchCardStyle('modern')">
+          <span class="style-letter">B</span>卡片現代
+        </div>
+        <div class="card-style-tab" data-style="scroll" onclick="switchCardStyle('scroll')">
+          <span class="style-letter">C</span>書法掛軸
+        </div>
+      </div>
+      <div class="card-preview-wrap">
+        <div class="card-canvas-box">
+          <canvas id="card-canvas" width="1080" height="1080"></canvas>
+        </div>
+        <div class="card-info-panel">
+          <div class="card-info-section">
+            <div class="card-info-label">風格 · STYLE</div>
+            <div class="card-style-desc" id="card-style-desc">宣紙印章風 · 傳統、莊重，適合長輩、三節、壽誕</div>
+          </div>
+          <div class="card-info-section">
+            <div class="card-info-label">尺寸 · SIZE</div>
+            <div class="card-size-info">1080 × 1080 px · 方形 1:1</div>
+          </div>
+          <div class="card-info-section">
+            <div class="card-info-label">內容 · CONTENT</div>
+            <div class="card-info-content" id="card-content-preview">—</div>
+          </div>
+          <div class="card-info-section">
+            <div class="card-info-label">下載 · DOWNLOAD</div>
+            <div class="card-download-row">
+              <button class="card-dl-btn primary" onclick="downloadCard()">
+                <span>下載 PNG</span><span class="dl-icon">↓</span>
+              </button>
+              <button class="card-dl-btn secondary" onclick="toggleFlexJson()">
+                <span>LINE Flex Message</span><span class="dl-icon">{ }</span>
+              </button>
+              <button class="card-dl-btn ghost" onclick="copyCardImage()">
+                <span>複製圖片到剪貼簿</span><span class="dl-icon">⧉</span>
+              </button>
+            </div>
+          </div>
+          <div class="flex-json-box" id="flex-json-box">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ 版本切換 / 長者模式 / 能量細節 ============
+function toggleVersion(v) {
+  if (v === 'pro') {
+    // Pro 版：跳去完整工坊（你原本設計的 taigi-forge.html）
+    window.location.href = 'taigi-forge.html';
+    return;
+  }
+  // Family 就是當前頁
+  document.body.classList.remove('pro');
+  document.getElementById('ver-family').classList.add('active');
+  document.getElementById('ver-pro').classList.remove('active');
+}
+function toggleElderly() {
+  document.body.classList.toggle('elderly');
+}
+function toggleEnergyDetail() {
+  document.getElementById('energy-toggle').classList.toggle('open');
+  document.getElementById('preview-energy').classList.toggle('show');
+}
+
+// ============ v11 核心（繼承 v10）============
+
+// ============================================================
+// 台語特有字庫（用於台語度計算）
+// ============================================================
+// 強台語字：一出現台語度就大幅加分
+const TAIGI_STRONG = new Set([
+  '兮', '攏', '恁', '汝', '阮', '仔', '囝', '後生', '大漢', '趁', '百二', '規世人',
+  '查某', '厝', '頭家', '歹勢', '逐家', '一世人', '入骨髓', '老母', '心肝',
+  '尾', '跟', '是', '共', '伊', '伊兮', '佇', '抑是', '煞', '爻', '去', '來',
+  '阮兜', '汝兜', '恁兜', '阮老母', '阮阿母', '阮阿爸', '阮後生', '阮查某囝',
+  '疼', '惜', '疼惜', '疼你', '疼汝', '疼伊', '疼阮', '食', '食飽', '出門',
+  '愛你兮', '愛汝兮', '愛伊兮', '心肝寶貝', '心愛兮'
+]);
+
+// 中台語字：稍微加分
+const TAIGI_MID = new Set([
+  '媽', '爸', '阿', '囡', '仔', '啊', '欸', '哦', '喔', '囉', '咧',
+  '感念', '多謝', '真', '正', '大', '滿', '庇', '保庇', '平安', '康健',
+  '趁錢', '歲', '栽培', '祝福', '有緣', '歡喜', '福氣', '喜樂',
+  '做伙', '鬥陣', '作陣', '逐家好', '恭喜', '賺', '運氣'
+]);
+
+// 華語味字：扣分
+const HUA_WORDS = new Set([
+  '妳', '您', '媽媽', '爸爸', '的的', '兒子', '女兒',
+  '祝您', '祝你們', '您好', '您的', '媽咪', '爸比',
+  '親愛的您', '敬愛的您', '愛你的'
+]);
+
+// 計算台語度
+function computeTaigiScore(sentence) {
+  if (!sentence || sentence.length === 0) {
+    return { score: 0, level: 'none', detected: [], hua: [] };
+  }
+
+  let strongCount = 0;
+  let midCount = 0;
+  let huaCount = 0;
+  const detected = [];
+  const hua = [];
+
+  // 偵測多字詞
+  TAIGI_STRONG.forEach(w => {
+    if (sentence.includes(w)) {
+      strongCount += w.length * 2;
+      if (!detected.includes(w)) detected.push(w);
+    }
+  });
+  TAIGI_MID.forEach(w => {
+    if (sentence.includes(w) && !Array.from(TAIGI_STRONG).some(s => s.includes(w))) {
+      midCount += w.length;
+      if (!detected.includes(w)) detected.push(w);
+    }
+  });
+  HUA_WORDS.forEach(w => {
+    if (sentence.includes(w)) {
+      huaCount += w.length * 2;
+      if (!hua.includes(w)) hua.push(w);
+    }
+  });
+
+  const total = sentence.length;
+  // 調整後的公式：以句長為分母，台語字覆蓋比例為主
+  const taigiCoverage = (strongCount * 1.2 + midCount * 0.8);  // 台語字覆蓋的字符數（含權重）
+  const huaPenalty = huaCount * 1.5;  // 華語味字的扣分
+  // 最高 100 要有至少 60% 的字符都是台語味才達到
+  let score = Math.round(((taigiCoverage - huaPenalty) / total) * 100);
+  score = Math.max(0, Math.min(100, score));
+
+  let level = 'low';
+  if (score >= 70) level = 'high';
+  else if (score >= 40) level = 'mid';
+
+  return { score, level, detected: detected.slice(0, 8), hua: hua.slice(0, 4) };
+}
+
+// ============================================================
+// L1 語意類
+// ============================================================
+const SEMANTIC_CLASSES = {
+  'love':     { core: '愛', source: '釋詁·第128則', members: [
+    { c: '愛', tailo: 'ài', u: 1.84 }, { c: '疼', tailo: 'thiànn', u: 1.70 },
+    { c: '惜', tailo: 'sioh', u: 1.65 }
+  ]},
+  'thanks':   { core: '謝', source: '釋詁·第102則', members: [
+    { c: '謝', tailo: 'siā', u: 1.65 }, { c: '感', tailo: 'kám', u: 1.60 },
+    { c: '念', tailo: 'liām', u: 1.55 }
+  ]},
+  'blessing': { core: '福', source: '釋詁·第74則', members: [
+    { c: '福', tailo: 'hok', u: 1.80 }, { c: '祿', tailo: 'lo̍k', u: 1.55 }
+  ]},
+  'joy':      { core: '樂', source: '釋詁·第11則', members: [
+    { c: '喜', tailo: 'hí', u: 1.77 }, { c: '樂', tailo: 'lo̍k', u: 1.68 }
+  ]},
+  'lucky':    { core: '吉', source: '俗通用', members: [
+    { c: '吉', tailo: 'kiat', u: 1.70 }
+  ]},
+  'respect':  { core: '敬', source: '釋詁·第76則', members: [
+    { c: '敬', tailo: 'kìng', u: 1.65 }
+  ]},
+  'many':     { core: '眾', source: '釋詁·第65則', members: [
+    { c: '眾', tailo: 'tsìng', u: 1.70 }
+  ]}
+};
+
+const PRESETS = {
+  // 節日
+  mother:     { target: '阿母', occasion: '母親節', effect: '感動', style: '親切' },
+  father:     { target: '阿爸', occasion: '父親節', effect: '感動', style: '親切' },
+  newyear:    { target: '眾人', occasion: '新年', effect: '激勵', style: '親切' },
+  dragonboat: { target: '朋友', occasion: '端午', effect: '溫暖', style: '親切' },
+  midautumn:  { target: '朋友', occasion: '中秋', effect: '溫暖', style: '誠懇' },
+  teacher:    { target: '上司', occasion: '教師節', effect: '感動', style: '誠懇' },
+  // 人生
+  birthday:   { target: '同事', occasion: '生日', effect: '溫暖', style: '誠懇' },
+  longevity:  { target: '阿母', occasion: '壽誕', effect: '莊重', style: '莊重' },
+  wedding:    { target: '朋友', occasion: '結婚', effect: '溫暖', style: '誠懇' },
+  housewarm:  { target: '朋友', occasion: '入厝', effect: '溫暖', style: '親切' },
+  promotion:  { target: '同事', occasion: '升遷', effect: '肯定', style: '誠懇' },
+  graduation: { target: '囡仔', occasion: '畢業', effect: '激勵', style: '誠懇' },
+  // 情感
+  thanks:     { target: '阿母', occasion: '感恩', effect: '感動', style: '親切' },
+  apology:    { target: '朋友', occasion: '道歉', effect: '誠懇', style: '誠懇' },
+  encourage:  { target: '朋友', occasion: '鼓勵', effect: '激勵', style: '親切' },
+  valentine:  { target: '朋友', occasion: '情人節', effect: '溫暖', style: '俏皮' },
+  christmas:  { target: '朋友', occasion: '聖誕節', effect: '溫暖', style: '俏皮' },
+  // 商業
+  opening:    { target: '眾人', occasion: '開幕', effect: '莊重', style: '正式' }
+};
+
+// ============================================================
+// 中間層台語祝福（isTaigi 標註）
+// ============================================================
+const CORE_CANDIDATES = {
+  '感恩': [
+    { c: '疼惜阮規世人', tailo: 'thiànn-sioh-gún-kui-sì-lâng', source: '台語·愛', hint: '最夠台', isTaigi: true },
+    { c: '感謝汝一世人兮情', tailo: 'kám-siā-lí-it-sì-lâng-ê-tsîng', source: '台語諺語', hint: '台語味強', isTaigi: true },
+    { c: '兮疼深入骨髓', tailo: 'ê-thiànn-tshim-ji̍p-kut-tshuè', source: '台語·深', hint: '深度感', isTaigi: true },
+    { c: '多謝栽培阮大漢', tailo: 'to-siā-tsai-puê-gún-tuā-hàn', source: '民俗·謝', hint: '長輩用', isTaigi: true },
+    { c: '感念汝一生付出', tailo: 'kám-liām-lí-it-sing-hù-tshut', source: '釋詁·念', hint: '通用', isTaigi: false },
+    { c: '阿母一世人兮辛勞', tailo: 'a-bú-it-sì-lâng-ê-sin-lô', source: '台語·辛勞', hint: '傳統感', isTaigi: true }
+  ],
+  // 新增：母親節（比感恩更明確）
+  '母親節': [
+    { c: '阿母兮疼世間無比', tailo: 'a-bú-ê-thiànn-sè-kan-bô-pí', source: '台語·無比', hint: '最夠台', isTaigi: true },
+    { c: '一世人為阮拖磨', tailo: 'it-sì-lâng-uī-gún-thua-buâ', source: '台語俗諺', hint: '辛勞感', isTaigi: true },
+    { c: '母親兮恩山高海深', tailo: 'bú-tshin-ê-un-suann-kuân-hái-tshim', source: '古典·恩', hint: '莊重', isTaigi: false },
+    { c: '阮阿母兮手仔萬能', tailo: 'gún-a-bú-ê-tshiú-á-bān-lîng', source: '台語日常', hint: '親切', isTaigi: true },
+    { c: '阿母兮心比天闊', tailo: 'a-bú-ê-sim-pí-thinn-khuah', source: '台語·心', hint: '胸懷', isTaigi: true },
+    { c: '感念阿母養育情', tailo: 'kám-liām-a-bú-ióng-io̍k-tsîng', source: '釋詁·念', hint: '傳統', isTaigi: false }
+  ],
+  // 新增：父親節
+  '父親節': [
+    { c: '阿爸兮肩頭萬斤重', tailo: 'a-pah-ê-king-thâu-bān-kin-tāng', source: '台語·肩頭', hint: '最夠台', isTaigi: true },
+    { c: '阮阿爸兮背影永遠兮山', tailo: 'gún-a-pah-ê-puē-iánn-íng-uán-ê-suann', source: '台語·背影', hint: '意象', isTaigi: true },
+    { c: '阿爸兮汗為阮流', tailo: 'a-pah-ê-kuānn-uī-gún-lâu', source: '台語·汗', hint: '辛勞', isTaigi: true },
+    { c: '父親兮恩重如山', tailo: 'hū-tshin-ê-un-tāng-jû-suann', source: '古典·恩', hint: '莊重', isTaigi: false },
+    { c: '阿爸一生為厝拚', tailo: 'a-pah-it-sing-uī-tshù-piànn', source: '台語·拚', hint: '為家', isTaigi: true },
+    { c: '多謝阿爸養阮大', tailo: 'to-siā-a-pah-ióng-gún-tuā', source: '台語日常', hint: '親切', isTaigi: true }
+  ],
+  '生日': [
+    { c: '福氣滿滿到百二', tailo: 'hok-khì-muá-muá-kàu-pah-jī', source: '台語俗諺', hint: '最經典', isTaigi: true },
+    { c: '健康長壽到百二', tailo: 'kiān-khong-tn̂g-siū-kàu-pah-jī', source: '台語俗諺', hint: '通用', isTaigi: true },
+    { c: '規世人平安大順遂', tailo: 'kui-sì-lâng-pîng-an-tuā-sūn-suî', source: '台語·順遂', hint: '平安', isTaigi: true },
+    { c: '好運攏來福氣滿', tailo: 'hó-ūn-lóng-lâi-hok-khì-muá', source: '台語·攏', hint: '運氣', isTaigi: true },
+    { c: '歲歲年年攏好運', tailo: 'suè-suè-nî-nî-lóng-hó-ūn', source: '台語日常', hint: '年年', isTaigi: true },
+    { c: '恭喜發大財趁大錢', tailo: 'kiong-hí-huat-tuā-tsâi-thàn-tuā-tsînn', source: '民俗·財', hint: '俗擱有力', isTaigi: true }
+  ],
+  // 新增：壽誕（長輩大壽，比一般生日莊重）
+  '壽誕': [
+    { c: '福如東海壽比南山', tailo: 'hok-jû-tang-hái-siū-pí-lâm-suann', source: '古典', hint: '最經典', isTaigi: false },
+    { c: '松柏長青鶴髮童顏', tailo: 'siông-pik-tn̂g-tshing-ho̍h-huat-tông-gân', source: '古典', hint: '莊重', isTaigi: false },
+    { c: '百二大壽福壽雙全', tailo: 'pah-jī-tāi-siū-hok-siū-siang-tsuân', source: '台語·百二', hint: '最夠台', isTaigi: true },
+    { c: '南山不老東海無波', tailo: 'lâm-suann-put-ló-tang-hái-bô-pho', source: '古典', hint: '典雅', isTaigi: false },
+    { c: '老神在在福氣百二', tailo: 'lāu-sîn-tsāi-tsāi-hok-khì-pah-jī', source: '台語俗諺', hint: '自在', isTaigi: true },
+    { c: '龜鶴齊齡福祿綿長', tailo: 'ku-ho̍h-tsê-lîng-hok-lo̍k-biân-tn̂g', source: '古典', hint: '大壽', isTaigi: false }
+  ],
+  '典禮': [
+    { c: '福氣臨門萬事順', tailo: 'hok-khì-lîm-mn̂g-bān-sū-sūn', source: '釋詁·福', hint: '七字莊重', isTaigi: false },
+    { c: '逐家好事攏總來', tailo: 'ta̍k-ke-hó-sū-lóng-tsóng-lâi', source: '台語·逐家', hint: '最夠台', isTaigi: true },
+    { c: '天公保庇大家好', tailo: 'thinn-kong-pó-pì-tāi-ka-hó', source: '台語·保庇', hint: '神明', isTaigi: true },
+    { c: '萬事如意福氣滿', tailo: 'bān-sū-jû-ì-hok-khì-muá', source: '釋詁·吉', hint: '通用', isTaigi: false },
+    { c: '風調雨順國泰民安', tailo: 'hong-tiâu-ú-sūn-kok-thài-bîn-an', source: '古典', hint: '大場面', isTaigi: false },
+    { c: '做伙鬥陣攏歡喜', tailo: 'tsò-hué-tàu-tīn-lóng-huann-hí', source: '台語·做伙', hint: '團結', isTaigi: true }
+  ],
+  '鼓勵': [
+    { c: '天公疼憨人', tailo: 'thinn-kong-thiànn-gōng-lâng', source: '台語俗諺', hint: '5字俗諺', isTaigi: true },
+    { c: '規世人平安順序', tailo: 'kui-sì-lâng-pîng-an-sūn-sī', source: '台語', hint: '順遂', isTaigi: true },
+    { c: '勇敢向前無煩惱', tailo: 'ióng-kám-hiòng-tsîng-bô-huân-ló', source: '台語', hint: '鼓舞', isTaigi: true },
+    { c: '好運攏會到', tailo: 'hó-ūn-lóng-ē-kàu', source: '台語·攏', hint: '簡短', isTaigi: true },
+    { c: '加油一定會成功', tailo: 'ka-iû-it-tīng-ē-sîng-kong', source: '現代', hint: '直白', isTaigi: false },
+    { c: '堅心做事攏會成', tailo: 'kian-sim-tsò-sū-lóng-ē-sîng', source: '台語·堅心', hint: '信念', isTaigi: true }
+  ],
+  '道歉': [
+    { c: '真歹勢請多包涵', tailo: 'tsin-pháinn-sè-tshiánn-to-pau-hâm', source: '台語', hint: '最夠台', isTaigi: true },
+    { c: '阮兮不對請原諒', tailo: 'gún-ê-put-tuì-tshiánn-guân-liōng', source: '台語·阮', hint: '誠懇', isTaigi: true },
+    { c: '千錯萬錯攏是阮', tailo: 'tshian-tshò-bān-tshò-lóng-sī-gún', source: '台語', hint: '認錯', isTaigi: true },
+    { c: '萬分歉意請見諒', tailo: 'bān-hun-khiàm-ì-tshiánn-kiàn-liōng', source: '釋詁·歉', hint: '書面', isTaigi: false },
+    { c: '真心對不起請包容', tailo: 'tsin-sim-tuì-put-khí-tshiánn-pau-iông', source: '民俗', hint: '誠懇', isTaigi: false }
+  ],
+  '祝福': [
+    { c: '天上地下攏保庇', tailo: 'thinn-tshiūnn-tē-ē-lóng-pó-pì', source: '台語俗諺', hint: '神明保佑', isTaigi: true },
+    { c: '歲歲平安年年好', tailo: 'suè-suè-pîng-an-nî-nî-hó', source: '民俗·時間福', hint: '長久平安', isTaigi: true },
+    { c: '身體康健萬事興', tailo: 'sin-thé-khong-kiān-bān-sū-hing', source: '台語·康健', hint: '實用型', isTaigi: true },
+    { c: '規世人攏平安順遂', tailo: 'kui-sì-lâng-lóng-pîng-an-sūn-suî', source: '台語·規世人', hint: '最夠台', isTaigi: true },
+    { c: '福氣滿滿兮人生', tailo: 'hok-khì-muá-muá-ê-jîn-sing', source: '台語·兮', hint: '台語味', isTaigi: true },
+    { c: '世世代代福綿綿', tailo: 'sè-sè-tāi-tāi-hok-biân-biân', source: '古典祝詞', hint: '綿長', isTaigi: false }
+  ],
+  '入厝': [
+    { c: '新厝住甲老大漢', tailo: 'sin-tshù-tuà-kah-lāu-tuā-hàn', source: '台語俗諺', hint: '最夠台', isTaigi: true },
+    { c: '新厝落成萬事興', tailo: 'sin-tshù-lo̍h-sîng-bān-sū-hing', source: '台語', hint: '事業', isTaigi: true },
+    { c: '福氣滿厝攏歡喜', tailo: 'hok-khì-muá-tshù-lóng-huann-hí', source: '台語·厝', hint: '喜氣', isTaigi: true },
+    { c: '新厝新氣象大發', tailo: 'sin-tshù-sin-khì-siōng-tuā-huat', source: '民俗', hint: '財運', isTaigi: true },
+    { c: '好厝好運好人生', tailo: 'hó-tshù-hó-ūn-hó-jîn-sing', source: '台語', hint: '順序', isTaigi: true },
+    { c: '厝頂厝底攏平安', tailo: 'tshù-tíng-tshù-té-lóng-pîng-an', source: '台語俗諺', hint: '保平安', isTaigi: true }
+  ],
+  '升遷': [
+    { c: '頭路順遂步步高', tailo: 'thâu-lōo-sūn-suî-pōo-pōo-ko', source: '台語·頭路', hint: '最夠台', isTaigi: true },
+    { c: '官運亨通步步高升', tailo: 'kuann-ūn-hing-thong-pōo-pōo-ko-sing', source: '古典', hint: '官場', isTaigi: false },
+    { c: '事業做甲天邊去', tailo: 'sū-gia̍p-tsò-kah-thinn-pinn-khì', source: '台語俗諺', hint: '台語味', isTaigi: true },
+    { c: '平步青雲大發達', tailo: 'pîng-pōo-tshing-hûn-tuā-huat-ta̍t', source: '古典', hint: '傳統', isTaigi: false },
+    { c: '前途光明大鵬展翅', tailo: 'tsîng-tôo-kong-bîng-tāi-phîng-tián-si̍t', source: '古典', hint: '光明', isTaigi: false },
+    { c: '順順趁大錢大發', tailo: 'sūn-sūn-thàn-tuā-tsînn-tuā-huat', source: '台語·趁錢', hint: '財氣', isTaigi: true }
+  ],
+  '結婚': [
+    { c: '百年好合永結同心', tailo: 'pah-nî-hó-ha̍p-íng-kiat-tông-sim', source: '古典', hint: '傳統', isTaigi: false },
+    { c: '兩家成一家兮緣分', tailo: 'nn̄g-ke-sîng-tsi̍t-ke-ê-iân-hun', source: '台語·兮', hint: '緣分', isTaigi: true },
+    { c: '做伙一世人兮幸福', tailo: 'tsò-hué-it-sì-lâng-ê-hīng-hok', source: '台語·做伙', hint: '最夠台', isTaigi: true },
+    { c: '鴛鴦水鴨攏雙雙對對', tailo: 'uan-iang-tsuí-ah-lóng-siang-siang-tuì-tuì', source: '台語俗諺', hint: '成雙', isTaigi: true },
+    { c: '夫妻相疼相惜一輩子', tailo: 'hu-tshe-siong-thiànn-siong-sioh-it-puè-tsú', source: '台語·相疼', hint: '恩愛', isTaigi: true },
+    { c: '琴瑟和鳴白頭偕老', tailo: 'khîm-sik-hô-bîng-pe̍h-thâu-kai-lāu', source: '古典', hint: '典雅', isTaigi: false }
+  ],
+  '新年': [
+    { c: '新年行大運攏趁錢', tailo: 'sin-nî-kiânn-tuā-ūn-lóng-thàn-tsînn', source: '台語俗諺', hint: '最夠台', isTaigi: true },
+    { c: '恭喜發財萬事如意', tailo: 'kiong-hí-huat-tsâi-bān-sū-jû-ì', source: '民俗', hint: '通用', isTaigi: false },
+    { c: '新春大吉大發利市', tailo: 'sin-tshun-tāi-kiat-tuā-huat-lī-tshī', source: '民俗', hint: '傳統', isTaigi: false },
+    { c: '年年有餘福氣攏滿', tailo: 'nî-nî-iú-î-hok-khì-lóng-muá', source: '台語·攏', hint: '富足', isTaigi: true },
+    { c: '龍飛鳳舞大展鴻圖', tailo: 'liông-hui-hōng-bú-tāi-tián-hông-tôo', source: '古典', hint: '氣勢', isTaigi: false },
+    { c: '好運到厝福氣臨門', tailo: 'hó-ūn-kàu-tshù-hok-khì-lîm-mn̂g', source: '台語·厝', hint: '家運', isTaigi: true }
+  ],
+  // 新增：端午節
+  '端午': [
+    { c: '吃粽節節高', tailo: 'tsia̍h-tsàng-tseh-tseh-kuân', source: '台語俗諺', hint: '最夠台', isTaigi: true },
+    { c: '端午安康粽香滿', tailo: 'tuan-ngóo-an-khong-tsàng-phang-muá', source: '台語·粽', hint: '節氣感', isTaigi: true },
+    { c: '龍舟競渡逐家歡喜', tailo: 'liông-tsiu-king-tōo-ta̍k-ke-huann-hí', source: '台語·逐家', hint: '節慶', isTaigi: true },
+    { c: '艾草避邪保平安', tailo: 'gāi-tsháu-pī-siâ-pó-pîng-an', source: '民俗·艾', hint: '傳統', isTaigi: false },
+    { c: '粽香滿厝福氣來', tailo: 'tsàng-phang-muá-tshù-hok-khì-lâi', source: '台語·厝', hint: '家運', isTaigi: true },
+    { c: '節節平安事事如意', tailo: 'tseh-tseh-pîng-an-sū-sū-jû-ì', source: '民俗', hint: '通用', isTaigi: false }
+  ],
+  // 新增：中秋節
+  '中秋': [
+    { c: '月圓人圓事事圓', tailo: 'gue̍h-înn-lâng-înn-sū-sū-înn', source: '古典·圓', hint: '最經典', isTaigi: false },
+    { c: '月娘照阮兜兮路', tailo: 'gue̍h-niû-tsiò-gún-tau-ê-lōo', source: '台語·月娘', hint: '最夠台', isTaigi: true },
+    { c: '中秋月光照滿厝', tailo: 'tiong-tshiu-gue̍h-kng-tsiò-muá-tshù', source: '台語·厝', hint: '溫馨', isTaigi: true },
+    { c: '月餅甜甜逐家好', tailo: 'gue̍h-piánn-tinn-tinn-ta̍k-ke-hó', source: '台語·逐家', hint: '親切', isTaigi: true },
+    { c: '千里共嬋娟相思長', tailo: 'tshian-lí-kiōng-siân-kuan-siong-su-tn̂g', source: '古典', hint: '典雅', isTaigi: false },
+    { c: '月圓人更圓厝更圓', tailo: 'gue̍h-înn-lâng-kōng-înn-tshù-kōng-înn', source: '台語·圓', hint: '團圓', isTaigi: true }
+  ],
+  // 新增：教師節
+  '教師節': [
+    { c: '師恩如山深似海', tailo: 'su-un-jû-suann-tshim-sū-hái', source: '古典·恩', hint: '最經典', isTaigi: false },
+    { c: '阮兮老師一生兮感念', tailo: 'gún-ê-lāu-su-it-sing-ê-kám-liām', source: '台語·兮', hint: '最夠台', isTaigi: true },
+    { c: '多謝老師教阮大漢', tailo: 'to-siā-lāu-su-kà-gún-tuā-hàn', source: '台語·大漢', hint: '親切', isTaigi: true },
+    { c: '桃李滿天下師恩無盡', tailo: 'thô-lí-muá-thian-hā-su-un-bô-tsīn', source: '古典', hint: '典雅', isTaigi: false },
+    { c: '老師兮話阮記規世人', tailo: 'lāu-su-ê-uē-gún-kì-kui-sì-lâng', source: '台語·規世人', hint: '感恩', isTaigi: true },
+    { c: '一日為師終身為父', tailo: 'it-ji̍t-uî-su-tsiong-sin-uî-hū', source: '古典', hint: '傳統', isTaigi: false }
+  ],
+  '開幕': [
+    { c: '生意興隆攏大趁錢', tailo: 'sing-ì-hing-liông-lóng-tuā-thàn-tsînn', source: '台語·趁錢', hint: '最夠台', isTaigi: true },
+    { c: '開張大吉萬事興', tailo: 'khui-tiunn-tāi-kiat-bān-sū-hing', source: '民俗', hint: '通用', isTaigi: false },
+    { c: '客人滿堂財源廣進', tailo: 'kheh-jîn-muá-tn̂g-tsâi-guân-kóng-tsìn', source: '古典', hint: '旺', isTaigi: false },
+    { c: '頭家好運步步發', tailo: 'thâu-ke-hó-ūn-pōo-pōo-huat', source: '台語·頭家', hint: '台語', isTaigi: true },
+    { c: '鴻圖大展財源滾滾', tailo: 'hông-tôo-tāi-tián-tsâi-guân-kún-kún', source: '古典', hint: '氣勢', isTaigi: false },
+    { c: '生意做甲天邊去', tailo: 'sing-ì-tsò-kah-thinn-pinn-khì', source: '台語俗諺', hint: '誇張法', isTaigi: true }
+  ],
+  '畢業': [
+    { c: '鵬程萬里前途光明', tailo: 'phîng-tîng-bān-lí-tsîng-tôo-kong-bîng', source: '古典', hint: '傳統', isTaigi: false },
+    { c: '學成歸厝大有為', tailo: 'ha̍k-sîng-kui-tshù-tuā-iú-uī', source: '台語·厝', hint: '最夠台', isTaigi: true },
+    { c: '頭路順利步步發', tailo: 'thâu-lōo-sūn-lī-pōo-pōo-huat', source: '台語·頭路', hint: '職涯', isTaigi: true },
+    { c: '前途一片光明大展', tailo: 'tsîng-tôo-it-phiàn-kong-bîng-tāi-tián', source: '現代', hint: '通用', isTaigi: false },
+    { c: '學成出師攏順利', tailo: 'ha̍k-sîng-tshut-su-lóng-sūn-lī', source: '台語·攏', hint: '成就', isTaigi: true },
+    { c: '書讀完開始大發達', tailo: 'tsu-tha̍k-uân-khai-sí-tuā-huat-ta̍t', source: '台語', hint: '口語', isTaigi: true }
+  ],
+  // 新增：情人節
+  '情人節': [
+    { c: '疼汝兮心永遠無變', tailo: 'thiànn-lí-ê-sim-íng-uán-bô-piàn', source: '台語·兮', hint: '最夠台', isTaigi: true },
+    { c: '做伙一世人愛汝袂煞', tailo: 'tsò-hué-it-sì-lâng-ài-lí-bē-suah', source: '台語·袂煞', hint: '死心塌地', isTaigi: true },
+    { c: '心肝內底攏是汝', tailo: 'sim-kuann-lāi-té-lóng-sī-lí', source: '台語·心肝', hint: '深情', isTaigi: true },
+    { c: '真心愛汝一世無變', tailo: 'tsin-sim-ài-lí-it-sì-bô-piàn', source: '台語', hint: '誓言', isTaigi: true },
+    { c: '汝是阮心內兮唯一', tailo: 'lí-sī-gún-sim-lāi-ê-uî-it', source: '台語·兮', hint: '浪漫', isTaigi: true },
+    { c: '願和汝攜手規世人', tailo: 'guān-hām-lí-hê-tshiú-kui-sì-lâng', source: '台語·規世人', hint: '承諾', isTaigi: true }
+  ],
+  // 新增：聖誕節
+  '聖誕節': [
+    { c: '聖誕快樂平安喜樂', tailo: 'sìng-tàn-khuài-lo̍k-pîng-an-hí-lo̍k', source: '現代', hint: '通用', isTaigi: false },
+    { c: '聖誕老人送好運', tailo: 'sìng-tàn-lāu-lâng-sàng-hó-ūn', source: '台語', hint: '親切', isTaigi: true },
+    { c: '歡喜過節逐家平安', tailo: 'huann-hí-kuè-tseh-ta̍k-ke-pîng-an', source: '台語·逐家', hint: '最夠台', isTaigi: true },
+    { c: '鈴聲叮噹好運到厝', tailo: 'lîng-siann-tin-tang-hó-ūn-kàu-tshù', source: '台語·厝', hint: '家運', isTaigi: true },
+    { c: '聖誕節日福氣滿滿', tailo: 'sìng-tàn-tseh-ji̍t-hok-khì-muá-muá', source: '台語·福氣', hint: '喜氣', isTaigi: true },
+    { c: '平安夜逐家有福氣', tailo: 'pîng-an-iā-ta̍k-ke-iú-hok-khì', source: '台語·逐家', hint: '節慶', isTaigi: true }
+  ]
+};
+
+// ============================================================
+// 頭部稱謂 + 頭助詞（台語化）
+// ============================================================
+// isTaigi 為 true 的會有「台」標籤
+const HEAD_NAME_REFS = {
+  '阿母': [
+    { t: '阮阿母', isTaigi: true },
+    { t: '阮上敬愛兮阿母', isTaigi: true },
+    { t: '我心肝兮阿母', isTaigi: true },
+    { t: '阮老母', isTaigi: true },
+    { t: '親愛的阿母', isTaigi: false },
+    { t: '敬愛的阿母', isTaigi: false }
+  ],
+  '阿爸': [
+    { t: '阮阿爸', isTaigi: true },
+    { t: '阮上敬愛兮阿爸', isTaigi: true },
+    { t: '我心肝兮阿爸', isTaigi: true },
+    { t: '阮老爸', isTaigi: true },
+    { t: '親愛的阿爸', isTaigi: false },
+    { t: '敬愛的阿爸', isTaigi: false }
+  ],
+  '同事': [
+    { t: '逐家', isTaigi: true },
+    { t: '阮兮好同事', isTaigi: true },
+    { t: '做伙打拼兮伙伴', isTaigi: true },
+    { t: '鬥陣兮好兄弟', isTaigi: true },
+    { t: '親愛的同事', isTaigi: false },
+    { t: '敬愛的同事', isTaigi: false }
+  ],
+  '眾人': [
+    { t: '逐家', isTaigi: true },
+    { t: '各位父老鄉親', isTaigi: true },
+    { t: '阮兮兄弟姊妹', isTaigi: true },
+    { t: '各位好朋友', isTaigi: true },
+    { t: '各位', isTaigi: false },
+    { t: '敬愛的大家', isTaigi: false }
+  ],
+  '囡仔': [
+    { t: '阮兮囝', isTaigi: true },
+    { t: '心肝寶貝', isTaigi: true },
+    { t: '阿母兮心肝', isTaigi: true },
+    { t: '阮兜兮囝仔', isTaigi: true },
+    { t: '乖囝', isTaigi: true },
+    { t: '親愛的寶貝', isTaigi: false }
+  ],
+  '朋友': [
+    { t: '阮兮好朋友', isTaigi: true },
+    { t: '老朋友', isTaigi: true },
+    { t: '做伙兮兄弟', isTaigi: true },
+    { t: '鬥陣兮朋友', isTaigi: true },
+    { t: '親愛的朋友', isTaigi: false },
+    { t: '好兄弟', isTaigi: false }
+  ],
+  '上司': [
+    { t: '敬愛兮頭家', isTaigi: true },
+    { t: '阮兮老師', isTaigi: true },
+    { t: '尊敬兮先進', isTaigi: true },
+    { t: '敬愛的長官', isTaigi: false },
+    { t: '尊敬的老師', isTaigi: false },
+    { t: '敬啟者', isTaigi: false }
+  ]
+};
+
+// 頭助詞（稱謂後的尾音）
+const HEAD_PARTICLES = {
+  '親切': [
+    { t: '啊', isTaigi: true },
+    { t: '喔', isTaigi: true },
+    { t: '仔', isTaigi: true },
+    { t: '欸', isTaigi: true },
+    { t: '咧', isTaigi: true },
+    { t: '呢', isTaigi: false }
+  ],
+  '正式': [
+    { t: '恁', isTaigi: true },
+    { t: '逐家', isTaigi: true },
+    { t: '各位', isTaigi: false },
+    { t: '諸君', isTaigi: false },
+    { t: '們', isTaigi: false },
+    { t: '先進', isTaigi: false }
+  ],
+  '誠懇': [
+    { t: '啊', isTaigi: true },
+    { t: '恁', isTaigi: true },
+    { t: '我心愛兮', isTaigi: true },
+    { t: '真心兮', isTaigi: true },
+    { t: '真心的', isTaigi: false },
+    { t: '我的', isTaigi: false }
+  ],
+  '莊重': [
+    { t: '恁', isTaigi: true },
+    { t: '敬啟', isTaigi: false },
+    { t: '閣下', isTaigi: false },
+    { t: '大人', isTaigi: false },
+    { t: '先生', isTaigi: false },
+    { t: '女士', isTaigi: false }
+  ],
+  '俏皮': [
+    { t: '咧', isTaigi: true },
+    { t: '欸', isTaigi: true },
+    { t: '啦', isTaigi: true },
+    { t: '囉', isTaigi: true },
+    { t: '耶', isTaigi: false },
+    { t: '呦', isTaigi: false }
+  ]
+};
+
+// ============================================================
+// 尾部助詞 + 署名（台語化）
+// ============================================================
+// v9：尾助詞 = 真正的句尾敬詞（誰祝福你 → 怎麼祝福）
+// 「敬上」「祝」「拜上」「謹啟」這類，永遠在最後
+const TAIL_PARTICLE_REFS = {
+  '感恩': [
+    { t: '敬上', isTaigi: false },
+    { t: '上', isTaigi: true },
+    { t: '拜上', isTaigi: false },
+    { t: '感恩', isTaigi: true },
+    { t: '謹啟', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '生日': [
+    { t: '祝', isTaigi: true },
+    { t: '祝福', isTaigi: false },
+    { t: '上', isTaigi: true },
+    { t: '敬上', isTaigi: false },
+    { t: '賀', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '典禮': [
+    { t: '敬啟', isTaigi: false },
+    { t: '謹啟', isTaigi: false },
+    { t: '敬上', isTaigi: false },
+    { t: '謹致', isTaigi: false },
+    { t: '共勉', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '鼓勵': [
+    { t: '上', isTaigi: true },
+    { t: '祝', isTaigi: true },
+    { t: '鬥陣', isTaigi: true },
+    { t: '陪你', isTaigi: false },
+    { t: '加油', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '道歉': [
+    { t: '謹致', isTaigi: false },
+    { t: '敬上', isTaigi: false },
+    { t: '上', isTaigi: true },
+    { t: '懺悔', isTaigi: false },
+    { t: '叩首', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '祝福': [
+    { t: '祝', isTaigi: true },
+    { t: '上', isTaigi: true },
+    { t: '敬上', isTaigi: false },
+    { t: '祝福', isTaigi: false },
+    { t: '謹祝', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '入厝': [
+    { t: '賀', isTaigi: false },
+    { t: '敬賀', isTaigi: false },
+    { t: '祝', isTaigi: true },
+    { t: '上', isTaigi: true },
+    { t: '同賀', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '升遷': [
+    { t: '賀', isTaigi: false },
+    { t: '恭賀', isTaigi: false },
+    { t: '上', isTaigi: true },
+    { t: '同賀', isTaigi: false },
+    { t: '祝', isTaigi: true },
+    { t: '', isTaigi: false }
+  ],
+  '結婚': [
+    { t: '賀', isTaigi: false },
+    { t: '敬賀', isTaigi: false },
+    { t: '同賀', isTaigi: false },
+    { t: '上', isTaigi: true },
+    { t: '祝福', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '新年': [
+    { t: '拜', isTaigi: true },
+    { t: '拜上', isTaigi: false },
+    { t: '敬賀', isTaigi: false },
+    { t: '祝', isTaigi: true },
+    { t: '同賀', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '開幕': [
+    { t: '敬賀', isTaigi: false },
+    { t: '謹賀', isTaigi: false },
+    { t: '同賀', isTaigi: false },
+    { t: '敬上', isTaigi: false },
+    { t: '祝', isTaigi: true },
+    { t: '', isTaigi: false }
+  ],
+  '畢業': [
+    { t: '祝', isTaigi: true },
+    { t: '上', isTaigi: true },
+    { t: '敬上', isTaigi: false },
+    { t: '勉', isTaigi: false },
+    { t: '同賀', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '母親節': [
+    { t: '敬上', isTaigi: false },
+    { t: '上', isTaigi: true },
+    { t: '拜上', isTaigi: false },
+    { t: '叩首', isTaigi: false },
+    { t: '感恩', isTaigi: true },
+    { t: '', isTaigi: false }
+  ],
+  '父親節': [
+    { t: '敬上', isTaigi: false },
+    { t: '上', isTaigi: true },
+    { t: '拜上', isTaigi: false },
+    { t: '叩首', isTaigi: false },
+    { t: '感恩', isTaigi: true },
+    { t: '', isTaigi: false }
+  ],
+  '端午': [
+    { t: '同賀', isTaigi: false },
+    { t: '敬賀', isTaigi: false },
+    { t: '祝', isTaigi: true },
+    { t: '上', isTaigi: true },
+    { t: '', isTaigi: false }
+  ],
+  '中秋': [
+    { t: '同賀', isTaigi: false },
+    { t: '敬賀', isTaigi: false },
+    { t: '祝', isTaigi: true },
+    { t: '上', isTaigi: true },
+    { t: '', isTaigi: false }
+  ],
+  '教師節': [
+    { t: '敬上', isTaigi: false },
+    { t: '拜上', isTaigi: false },
+    { t: '叩謝', isTaigi: false },
+    { t: '上', isTaigi: true },
+    { t: '感恩', isTaigi: true },
+    { t: '', isTaigi: false }
+  ],
+  '壽誕': [
+    { t: '敬賀', isTaigi: false },
+    { t: '謹賀', isTaigi: false },
+    { t: '叩首', isTaigi: false },
+    { t: '拜上', isTaigi: false },
+    { t: '同賀', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '情人節': [
+    { t: '上', isTaigi: true },
+    { t: '愛妳', isTaigi: false },
+    { t: '愛汝', isTaigi: true },
+    { t: '永遠', isTaigi: false },
+    { t: '心', isTaigi: false },
+    { t: '', isTaigi: false }
+  ],
+  '聖誕節': [
+    { t: '同賀', isTaigi: false },
+    { t: '祝', isTaigi: true },
+    { t: '敬賀', isTaigi: false },
+    { t: '上', isTaigi: true },
+    { t: '', isTaigi: false }
+  ]
+};
+
+const TAIL_NAME_REFS = {
+  '感恩': [
+    { t: '阮', isTaigi: true },
+    { t: '阮兮囝', isTaigi: true },
+    { t: '汝兮後生', isTaigi: true },
+    { t: '阮秀英', isTaigi: true },
+    { t: '仕賓仔', isTaigi: true },
+    { t: '我', isTaigi: false }
+  ],
+  '生日': [
+    { t: '阮', isTaigi: true },
+    { t: '阮秀英', isTaigi: true },
+    { t: '逐家', isTaigi: true },
+    { t: '阿爸阿母', isTaigi: true },
+    { t: '大家', isTaigi: false },
+    { t: '志明', isTaigi: false }
+  ],
+  '典禮': [
+    { t: '仕賓仔', isTaigi: true },
+    { t: '阮兮全體同仁', isTaigi: true },
+    { t: '敬上', isTaigi: false },
+    { t: '謹啟', isTaigi: false },
+    { t: '主辦單位', isTaigi: false },
+    { t: '董事長', isTaigi: false }
+  ],
+  '鼓勵': [
+    { t: '阮', isTaigi: true },
+    { t: '汝兮朋友', isTaigi: true },
+    { t: '阮兜兮逐家', isTaigi: true },
+    { t: '支持你的我', isTaigi: false },
+    { t: '我', isTaigi: false },
+    { t: '老朋友', isTaigi: false }
+  ],
+  '道歉': [
+    { t: '阮', isTaigi: true },
+    { t: '仕賓仔', isTaigi: true },
+    { t: '真心錯兮阮', isTaigi: true },
+    { t: '我', isTaigi: false },
+    { t: '——我', isTaigi: false },
+    { t: '志明', isTaigi: false }
+  ],
+  '祝福': [
+    { t: '阮', isTaigi: true },
+    { t: '阮秀英', isTaigi: true },
+    { t: '逐家', isTaigi: true },
+    { t: '我', isTaigi: false },
+    { t: '朋友', isTaigi: false },
+    { t: '大家', isTaigi: false }
+  ],
+  '入厝': [{t:'阮',isTaigi:true},{t:'阮兜逐家',isTaigi:true},{t:'好厝邊',isTaigi:true},{t:'阮秀英',isTaigi:true},{t:'我',isTaigi:false},{t:'老朋友',isTaigi:false}],
+  '升遷': [{t:'阮',isTaigi:true},{t:'阮兮同仁',isTaigi:true},{t:'仕賓仔',isTaigi:true},{t:'同事們',isTaigi:false},{t:'我',isTaigi:false},{t:'好朋友',isTaigi:false}],
+  '結婚': [{t:'阮',isTaigi:true},{t:'阮兮好朋友',isTaigi:true},{t:'逐家',isTaigi:true},{t:'新娘新郎',isTaigi:false},{t:'全體親友',isTaigi:false},{t:'我',isTaigi:false}],
+  '新年': [{t:'阮',isTaigi:true},{t:'阮兜逐家',isTaigi:true},{t:'逐家',isTaigi:true},{t:'我',isTaigi:false},{t:'全家',isTaigi:false},{t:'志明',isTaigi:false}],
+  '開幕': [{t:'阮',isTaigi:true},{t:'好厝邊',isTaigi:true},{t:'阮頭家',isTaigi:true},{t:'朋友',isTaigi:false},{t:'合作夥伴',isTaigi:false},{t:'董事長',isTaigi:false}],
+  '畢業': [{t:'阮',isTaigi:true},{t:'阮老師',isTaigi:true},{t:'阮兜逐家',isTaigi:true},{t:'爸媽',isTaigi:false},{t:'我',isTaigi:false},{t:'學長姊',isTaigi:false}],
+  '母親節': [{t:'阮兮囝',isTaigi:true},{t:'汝兮後生',isTaigi:true},{t:'阮秀英',isTaigi:true},{t:'仕賓仔',isTaigi:true},{t:'我',isTaigi:false},{t:'愛妳的兒女',isTaigi:false}],
+  '父親節': [{t:'阮兮囝',isTaigi:true},{t:'汝兮後生',isTaigi:true},{t:'阮秀英',isTaigi:true},{t:'仕賓仔',isTaigi:true},{t:'我',isTaigi:false},{t:'敬愛您的兒女',isTaigi:false}],
+  '端午': [{t:'阮',isTaigi:true},{t:'阮兜逐家',isTaigi:true},{t:'好厝邊',isTaigi:true},{t:'逐家',isTaigi:true},{t:'我',isTaigi:false},{t:'全家',isTaigi:false}],
+  '中秋': [{t:'阮',isTaigi:true},{t:'阮兜逐家',isTaigi:true},{t:'在外兮囝',isTaigi:true},{t:'逐家',isTaigi:true},{t:'我',isTaigi:false},{t:'全家',isTaigi:false}],
+  '教師節': [{t:'汝兮學生',isTaigi:true},{t:'阮',isTaigi:true},{t:'永遠感念兮學生',isTaigi:true},{t:'敬愛您的學生',isTaigi:false},{t:'仕賓',isTaigi:false},{t:'我',isTaigi:false}],
+  '壽誕': [{t:'阮兒孫',isTaigi:true},{t:'晚輩敬賀',isTaigi:false},{t:'阮兜全體',isTaigi:true},{t:'眾親友',isTaigi:false},{t:'敬上',isTaigi:false},{t:'阮秀英',isTaigi:true}],
+  '情人節': [{t:'愛汝兮我',isTaigi:true},{t:'汝兮仕賓',isTaigi:true},{t:'阮',isTaigi:true},{t:'永遠愛你的我',isTaigi:false},{t:'我',isTaigi:false},{t:'寶貝',isTaigi:false}],
+  '聖誕節': [{t:'阮',isTaigi:true},{t:'阮兜逐家',isTaigi:true},{t:'好朋友',isTaigi:true},{t:'我',isTaigi:false},{t:'全家',isTaigi:false},{t:'你的朋友',isTaigi:false}]
+};
+
+// ============================================================
+// 祝賀語公式：祝 + 對象 + 事件 + 吉祥詞
+// ============================================================
+const GREETING_WHO = {
+  '阿母': [{t:'妳',isTaigi:false},{t:'汝',isTaigi:true},{t:'阮阿母',isTaigi:true},{t:'阿母',isTaigi:true}],
+  '阿爸': [{t:'您',isTaigi:false},{t:'汝',isTaigi:true},{t:'阮阿爸',isTaigi:true},{t:'阿爸',isTaigi:true}],
+  '同事': [{t:'你',isTaigi:false},{t:'汝',isTaigi:true},{t:'恁',isTaigi:true},{t:'逐家',isTaigi:true}],
+  '眾人': [{t:'恁',isTaigi:true},{t:'逐家',isTaigi:true},{t:'各位',isTaigi:false},{t:'大家',isTaigi:false}],
+  '囡仔': [{t:'你',isTaigi:false},{t:'汝',isTaigi:true},{t:'阮囝',isTaigi:true},{t:'阮兮寶貝',isTaigi:true}],
+  '朋友': [{t:'你',isTaigi:false},{t:'汝',isTaigi:true},{t:'恁',isTaigi:true},{t:'阮兄弟',isTaigi:true}],
+  '上司': [{t:'您',isTaigi:false},{t:'頭家',isTaigi:true},{t:'長官',isTaigi:false},{t:'老師',isTaigi:false}]
+};
+
+const GREETING_EVENT = {
+  '感恩':  [],
+  '生日':  [{t:'生日',isTaigi:false},{t:'生辰',isTaigi:false},{t:'好日子',isTaigi:true}],
+  '壽誕':  [{t:'大壽',isTaigi:false},{t:'壽誕',isTaigi:false},{t:'貴壽',isTaigi:false},{t:'百二大壽',isTaigi:true}],
+  '典禮':  [{t:'今仔日',isTaigi:true},{t:'諸位',isTaigi:false},{t:'大家',isTaigi:false}],
+  '鼓勵':  [],
+  '道歉':  [],
+  '祝福':  [{t:'逐日',isTaigi:true},{t:'規年',isTaigi:true},{t:'以後',isTaigi:false}],
+  '入厝':  [{t:'新厝',isTaigi:true},{t:'入厝',isTaigi:true},{t:'厝頂',isTaigi:true}],
+  '升遷':  [{t:'升官',isTaigi:false},{t:'升遷',isTaigi:false},{t:'高升',isTaigi:false},{t:'新頭路',isTaigi:true}],
+  '結婚':  [{t:'新婚',isTaigi:false},{t:'結婚',isTaigi:false},{t:'新人',isTaigi:false},{t:'成家',isTaigi:false}],
+  '新年':  [{t:'新年',isTaigi:false},{t:'新春',isTaigi:false},{t:'過年',isTaigi:true},{t:'逐年',isTaigi:true}],
+  '開幕':  [{t:'開張',isTaigi:false},{t:'開幕',isTaigi:false},{t:'生意',isTaigi:false},{t:'新事業',isTaigi:false}],
+  '畢業':  [{t:'畢業',isTaigi:false},{t:'出社會',isTaigi:false},{t:'學成',isTaigi:false},{t:'新起步',isTaigi:false}],
+  '母親節':[{t:'母親節',isTaigi:false},{t:'今仔日',isTaigi:true},{t:'這個日子',isTaigi:false}],
+  '父親節':[{t:'父親節',isTaigi:false},{t:'今仔日',isTaigi:true},{t:'這個日子',isTaigi:false}],
+  '端午':  [{t:'端午',isTaigi:false},{t:'節節',isTaigi:true},{t:'過節',isTaigi:true}],
+  '中秋':  [{t:'中秋',isTaigi:false},{t:'月圓',isTaigi:false},{t:'團圓',isTaigi:false},{t:'佳節',isTaigi:false}],
+  '教師節':[{t:'教師節',isTaigi:false},{t:'今仔日',isTaigi:true},{t:'這個日子',isTaigi:false}],
+  '情人節':[{t:'情人節',isTaigi:false},{t:'今仔日',isTaigi:true},{t:'這個日子',isTaigi:false}],
+  '聖誕節':[{t:'聖誕',isTaigi:false},{t:'聖誕節',isTaigi:false},{t:'佳節',isTaigi:false},{t:'平安夜',isTaigi:false}]
+};
+
+const GREETING_WISH = {
+  '感恩':  [],
+  '生日':  [{t:'快樂',isTaigi:false},{t:'大吉',isTaigi:false},{t:'平安喜樂',isTaigi:false},{t:'福壽雙全',isTaigi:false}],
+  '壽誕':  [{t:'福壽雙全',isTaigi:false},{t:'南山不老',isTaigi:false},{t:'鶴髮童顏',isTaigi:false},{t:'百二長壽',isTaigi:true}],
+  '典禮':  [{t:'順利',isTaigi:false},{t:'興隆',isTaigi:false},{t:'圓滿',isTaigi:false},{t:'成功',isTaigi:false}],
+  '鼓勵':  [],
+  '道歉':  [],
+  '祝福':  [{t:'平安',isTaigi:false},{t:'如意',isTaigi:false},{t:'順利',isTaigi:false},{t:'快樂',isTaigi:false}],
+  '入厝':  [{t:'大吉',isTaigi:false},{t:'興旺',isTaigi:false},{t:'平安',isTaigi:false},{t:'住甲老',isTaigi:true}],
+  '升遷':  [{t:'大發',isTaigi:false},{t:'高升',isTaigi:false},{t:'順利',isTaigi:false},{t:'步步高',isTaigi:true}],
+  '結婚':  [{t:'百年好合',isTaigi:false},{t:'永結同心',isTaigi:false},{t:'白頭偕老',isTaigi:false},{t:'幸福',isTaigi:false}],
+  '新年':  [{t:'大發財',isTaigi:false},{t:'快樂',isTaigi:false},{t:'行大運',isTaigi:true},{t:'萬事如意',isTaigi:false}],
+  '開幕':  [{t:'大吉',isTaigi:false},{t:'生意興隆',isTaigi:false},{t:'財源廣進',isTaigi:false},{t:'攏趁大錢',isTaigi:true}],
+  '畢業':  [{t:'快樂',isTaigi:false},{t:'鵬程萬里',isTaigi:false},{t:'順利',isTaigi:false},{t:'前途光明',isTaigi:false}],
+  '母親節':[{t:'快樂',isTaigi:false},{t:'平安喜樂',isTaigi:false},{t:'康健百二',isTaigi:true},{t:'事事如意',isTaigi:false}],
+  '父親節':[{t:'快樂',isTaigi:false},{t:'平安喜樂',isTaigi:false},{t:'康健百二',isTaigi:true},{t:'事事如意',isTaigi:false}],
+  '端午':  [{t:'安康',isTaigi:false},{t:'平安',isTaigi:false},{t:'節節高',isTaigi:true},{t:'好粽一世人',isTaigi:true}],
+  '中秋':  [{t:'快樂',isTaigi:false},{t:'團圓',isTaigi:false},{t:'圓滿',isTaigi:false},{t:'月圓人圓',isTaigi:false}],
+  '教師節':[{t:'快樂',isTaigi:false},{t:'師恩永念',isTaigi:false},{t:'桃李滿天下',isTaigi:false},{t:'康健百二',isTaigi:true}],
+  '情人節':[{t:'快樂',isTaigi:false},{t:'甜蜜永遠',isTaigi:false},{t:'一生相疼',isTaigi:true},{t:'愛汝無變',isTaigi:true}],
+  '聖誕節':[{t:'快樂',isTaigi:false},{t:'平安喜樂',isTaigi:false},{t:'好運連連',isTaigi:false},{t:'福氣滿滿',isTaigi:true}]
+};
+
+function greetingShouldShow(occasion) {
+  const events = GREETING_EVENT[occasion] || [];
+  const wishes = GREETING_WISH[occasion] || [];
+  return events.length > 0 && wishes.length > 0;
+}
+
+// ============================================================
+// 卦象 / 台羅（略省，保留核心字）
+// ============================================================
+const HEX_MAP = {
+  '阿':'坤','母':'震','疼':'艮','惜':'巽','我':'兌','感':'艮','謝':'艮','兮':'震','共':'艮','多':'坤',
+  '愛':'坤','的':'兌','深':'離','你':'震','汝':'震','恁':'震','阮':'坤','伊':'離','他':'坤',
+  '恭':'艮','喜':'坤','大':'坤','吉':'艮','利':'坎','祝':'艮','福':'坤','祿':'兌','雙':'震','全':'兌',
+  '氣':'艮','滿':'坤','來':'坤','萬':'坤','事':'兌','祥':'離','歲':'兌','歡':'艮',
+  '各':'艮','位':'坎','兄':'艮','弟':'坎','姊':'震','妹':'坤','眾':'離','家':'艮','好':'艮',
+  '敬':'艮','諸':'離','貴':'坎','賓':'震','迎':'震','誠':'離','意':'坎','上':'艮',
+  '秀':'艮','英':'坤','志':'艮','明':'坤','仕':'艮','媽':'坤','爸':'坤','囝':'艮','兒':'震',
+  '老':'坎','師':'坎','頭':'震','親':'艮','娘':'坤','慈':'艮','心':'震','肝':'艮',
+  '寶':'坤','貝':'坤','長':'坎','官':'坤','原':'離','諒':'坎','抱':'坤','歉':'艮',
+  '永':'坤','遠':'坎','平':'震','安':'坤','真':'艮','不':'艮','輩':'坎','子':'艮','孫':'兌',
+  '們':'震','快':'艮','樂':'兌','無':'坤','限':'坎','幸':'震','乖':'艮','仁':'震',
+  '甘':'艮','苦':'艮','知':'艮','己':'艮','同':'坤','行':'艮','戰':'艮','友':'坎','給':'艮','最':'艮',
+  '美':'坤','一':'艮','起':'艮','世':'兌','小':'艮','先':'艮','進':'艮','父':'坤','鄉':'艮',
+  '伙':'坤','伴':'震','加':'艮','油':'坎','支':'艮','持':'艮','陪':'坎','打':'坤',
+  '請':'艮','啟':'艮','者':'艮','摯':'艮','謹':'艮','致':'艮','指':'艮','教':'艮','勉':'坤',
+  '證':'艮','見':'艮','此':'艮','賀':'坎','應':'坤','分':'坤','願':'坎','順':'艮','切':'艮',
+  '盡':'艮','相':'艮','信':'艮','天':'艮','使':'艮','棒':'坤','生':'艮','尊':'震','嬤':'坤',
+  '念':'震','身':'艮','體':'坎','健':'艮','康':'艮','如':'震','想':'艮','成':'離','包':'坤',
+  '涵':'坎','歹':'坎','勢':'艮','禧':'坤','報':'震','慶':'艮','攏':'坤','百':'艮','二':'震',
+  '到':'艮','連':'艮','調':'艮','雨':'坎','國':'艮','泰':'坤','民':'震','地':'坎','下':'震',
+  '保':'艮','庇':'震','代':'坎','綿':'震','煩':'離','惱':'艮','阻':'艮','礙':'艮','憨':'艮',
+  '公':'艮','勇':'艮','向':'艮','前':'震','底':'坎','定':'艮','會':'艮','總':'艮','錢':'艮',
+  '賺':'艮','臨':'艮','門':'震','興':'艮','風':'坤','海':'坎','情':'震','栽':'艮','培':'震',
+  '付':'坤','出':'艮','難':'離','忘':'坤','啊':'艮','呢':'震','哦':'坤','喔':'坤','嘿':'坤',
+  '耶':'震','啦':'坎','囉':'坎','欸':'震','呦':'坎','千':'艮','錯':'艮','入':'艮','骨':'艮',
+  '髓':'震','辛':'艮','勞':'坎','規':'艮','人':'震','仔':'艮','家':'艮','兜':'坤','後':'坎',
+  '漢':'坤','趁':'震','做':'艮','伙':'坤','鬥':'艮','陣':'艮','逐':'坎','遂':'坎','庇':'震',
+  '堅':'艮','咧':'坎','挺':'艮','老':'坎','顧':'艮','查':'艮','某':'坤'
+};
+
+const TAILO = {
+  '阿':'a','母':'bú','疼':'thiànn','惜':'sioh','我':'guá','感':'kám','謝':'siā','兮':'ê','共':'kā',
+  '多':'to','愛':'ài','的':'ê','深':'tshim','你':'lí','汝':'lí','恁':'lín','阮':'gún','伊':'i',
+  '恭':'kiong','喜':'hí','大':'tuā','吉':'kiat','利':'lī','祝':'tsiok','福':'hok','祿':'lo̍k',
+  '雙':'siang','全':'tsuân','新':'sin','年':'nî','發':'huat','財':'tsâi','氣':'khì','滿':'muá',
+  '來':'lâi','萬':'bān','事':'sū','祥':'siông','歲':'suè','歡':'huan','各':'kok','位':'uī',
+  '兄':'hiann','弟':'tī','姊':'tsí','妹':'muē','眾':'tsìng','家':'ka','好':'hó','敬':'kìng',
+  '諸':'tsu','貴':'kuì','賓':'pin','迎':'gîng','誠':'sîng','意':'ì','上':'siōng','秀':'siù',
+  '英':'ing','志':'tsì','明':'bîng','仕':'sū','媽':'ma','爸':'pa','囝':'kiánn','兒':'jî',
+  '老':'lāu','師':'su','頭':'thâu','親':'tshin','娘':'niû','慈':'tsû','心':'sim','肝':'kuann',
+  '寶':'pó','貝':'puè','長':'tiúnn','官':'kuann','原':'guân','諒':'liōng','抱':'phō','歉':'khiàm',
+  '永':'íng','遠':'uán','平':'pîng','安':'an','真':'tsin','不':'put','輩':'puè','子':'tsú',
+  '孫':'sun','們':'bûn','快':'khuài','樂':'lo̍k','無':'bô','限':'hān','幸':'hīng','乖':'kuai',
+  '仁':'jîn','甘':'kam','苦':'khóo','知':'ti','己':'kí','同':'tông','行':'hîng','戰':'tsiàn',
+  '友':'iú','給':'kā','最':'tsuè','美':'bí','一':'it','起':'khí','世':'sè','小':'sió',
+  '先':'sian','進':'tsìn','父':'hū','鄉':'hiong','伙':'hué','伴':'phuānn','加':'ka','油':'iû',
+  '支':'tsi','持':'tshî','陪':'puê','走':'tsáu','打':'phah','請':'tshiánn','啟':'khé','者':'tsiá',
+  '摯':'tsì','謹':'kín','致':'tì','指':'tsí','教':'kà','勉':'bián','證':'tsìng','見':'kiàn',
+  '此':'tshí','賀':'hō','應':'ìng','分':'hun','願':'guān','順':'sūn','切':'tshiat','盡':'tsīn',
+  '相':'siong','信':'sìn','天':'thian','使':'sú','棒':'pāng','生':'sing','尊':'tsun','嬤':'má',
+  '念':'liām','身':'sin','體':'thé','健':'kiān','康':'khong','如':'jû','想':'sióng','成':'sîng',
+  '包':'pau','涵':'hâm','歹':'pháinn','勢':'sè','禧':'hí','報':'pò','慶':'khìng','攏':'lóng',
+  '百':'pah','二':'jī','到':'kàu','連':'liân','國':'kok','泰':'thài','民':'bîn','地':'tē',
+  '下':'ē','保':'pó','庇':'pì','代':'tāi','綿':'biân','煩':'huân','惱':'ló','阻':'tsó','礙':'gāi',
+  '憨':'gōng','公':'kong','勇':'ióng','向':'hiòng','前':'tsîng','定':'tīng','會':'ē','總':'tsóng',
+  '錢':'tsînn','賺':'tsuán','臨':'lîm','門':'mn̂g','興':'hing','風':'hong','海':'hái','情':'tsîng',
+  '栽':'tsai','培':'puê','付':'hù','出':'tshut','難':'lân','忘':'bōng','啊':'ah','呢':'neh',
+  '哦':'ooh','喔':'oh','嘿':'hé','耶':'iah','啦':'lah','囉':'looh','欸':'eh','呦':'ioh',
+  '千':'tshian','錯':'tshò','入':'ji̍p','骨':'kut','髓':'tshuè','辛':'sin','勞':'lô','規':'kui',
+  '人':'lâng','仔':'á','兜':'tau','後':'hāu','漢':'hàn','趁':'thàn','做':'tsò','鬥':'tàu',
+  '陣':'tīn','逐':'ta̍k','遂':'suî','堅':'kian','咧':'leh','挺':'thíng','顧':'kòo','查':'tsa',
+  '某':'bóo','諸':'tsu','雨':'ú','調':'tiâu','尾':'bué','跟':'kin','是':'sī','於':'î','佇':'tī'
+};
+
+const STRONG_HEX = ['坤', '兌', '乾', '巽'];
+function toTailo(s) { return s.split('').map(c => TAILO[c] || c).join('-'); }
+function getHex(ch) { return HEX_MAP[ch] || '離'; }
+function isStrong(h) { return STRONG_HEX.includes(h); }
+
+function mapIntentToClasses(intent) {
+  const map = {
+    '感恩': ['thanks', 'love'], '生日': ['blessing', 'joy', 'lucky'],
+    '壽誕': ['blessing', 'respect', 'joy'],
+    '典禮': ['respect', 'blessing', 'many'], '鼓勵': ['joy', 'lucky'],
+    '道歉': ['thanks', 'respect'], '祝福': ['blessing', 'lucky', 'joy'],
+    '入厝': ['blessing', 'lucky', 'joy'], '升遷': ['lucky', 'blessing'],
+    '結婚': ['love', 'joy', 'blessing'], '新年': ['lucky', 'blessing', 'joy'],
+    '開幕': ['lucky', 'blessing'], '畢業': ['joy', 'blessing', 'lucky'],
+    '母親節': ['love', 'thanks', 'respect'],
+    '父親節': ['love', 'thanks', 'respect'],
+    '端午': ['blessing', 'lucky'],
+    '中秋': ['blessing', 'joy', 'many'],
+    '教師節': ['thanks', 'respect'],
+    '情人節': ['love', 'joy'],
+    '聖誕節': ['joy', 'blessing', 'lucky']
+  };
+  return map[intent.occasion] || ['love'];
+}
+
+function runL1(intent) {
+  const classIds = mapIntentToClasses(intent);
+  const classes = classIds.map(id => ({ id, ...SEMANTIC_CLASSES[id] }));
+  const all = [];
+  classes.forEach(cls => cls.members.forEach(m => all.push({ ...m, class: cls.core })));
+  all.sort((a, b) => b.u - a.u);
+  return { classes, top: all.slice(0, 6) };
+}
+
+function runL2(intent) {
+  const templates = ['T1 台語俗諺', 'T2 台語構詞', 'T3 七字祝福', 'T4 八字祝福', 'T5 傳統詞'];
+  return { templates, candidates: CORE_CANDIDATES[intent.occasion] || CORE_CANDIDATES['感恩'] };
+}
+
+function scoreSentence(s) {
+  if (!s || s.length === 0) return { headHex: '—', tailHex: '—', headStrong: false, tailStrong: false, purity: 0, score: 0, level: 'weak' };
+  const headHex = getHex(s[0]);
+  const tailHex = getHex(s[s.length - 1]);
+  const headStrong = isStrong(headHex);
+  const tailStrong = isStrong(tailHex);
+  const len = s.length;
+  let purity = 0.85;
+  if (len < 4 || len > 20) purity -= 0.08;
+  const lockScore = (headStrong ? 0.5 : 0.15) + (tailStrong ? 0.5 : 0.15);
+  let interference = 0.05;
+  for (let i = 1; i < s.length; i++) if (getHex(s[i-1]) === getHex(s[i])) interference += 0.02;
+  interference = Math.min(interference, 0.15);
+  let completeBonus = 0;
+  if (len >= 6 && len <= 18) completeBonus = 0.03;
+  const score = 0.3 * purity + 0.5 * lockScore + 0.2 * (1 - interference) + completeBonus;
+  let level = 'weak';
+  if (headStrong && tailStrong) level = 'strong';
+  else if (headStrong || tailStrong) level = 'mid';
+  return {
+    headHex, tailHex, headStrong, tailStrong,
+    purity: parseFloat(purity.toFixed(2)),
+    score: parseFloat(score.toFixed(2)),
+    level
+  };
+}
+
+function runL3(l2Result) {
+  const scored = l2Result.candidates.map(c => ({ ...c, ...scoreSentence(c.c), length: c.c.length }));
+  return { scored };
+}
+
+const delay = ms => new Promise(r => setTimeout(r, ms));
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+let currentCoreCandidates = [];
+let currentCoreIdx = -1;
+let greetingEnabled = true;
+let greetingSelected = { who: '', event: '', wish: '' };
+
+async function runPipeline() {
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.textContent = '演算中...';
+
+  const intent = {
+    target: document.getElementById('target').value,
+    occasion: document.getElementById('occasion').value,
+    effect: document.getElementById('effect').value,
+    style: document.getElementById('style').value
+  };
+
+  document.getElementById('create-panel').classList.remove('show');
+
+  // 直接跑 L1→L2→L3 內部運算（無動畫）
+  const l1Result = runL1(intent);
+  const l2Result = runL2(intent);
+  const l3Result = runL3(l2Result);
+  currentCoreCandidates = l3Result.scored;
+
+  const taigiCount = l3Result.scored.filter(c => c.isTaigi).length;
+
+  // 直接渲染候選卡片到 candidates-body
+  const body = document.getElementById('candidates-body');
+  let html = '<div class="core-candidates">';
+  l3Result.scored.forEach((s, i) => {
+    html += `<div class="core-card" style="animation-delay: ${100+i*80}ms" onclick="pickCore(${i})">
+      <div class="core-text">${s.c}</div>
+      <div class="core-tailo">${s.tailo}</div>
+      <div class="core-meta">
+        <span class="source">${s.source}</span>
+        <span class="length-tag">${s.length}字</span>
+        ${s.isTaigi ? '<span class="taigi-tag">台</span>' : ''}
+        <span class="hint">${s.hint}</span>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  body.innerHTML = html;
+
+  document.getElementById('candidates-count').textContent = `${l3Result.scored.length} 候選 · 台語 ${taigiCount}`;
+
+  btn.disabled = false;
+  btn.textContent = '再 · 生 成';
+}
+
+function pickCore(idx) {
+  currentCoreIdx = idx;
+  const chosen = currentCoreCandidates[idx];
+  document.querySelectorAll('.core-card').forEach((el, i) => el.classList.toggle('selected', i === idx));
+  document.getElementById('middle-input').value = chosen.c;
+
+  const intent = {
+    target: document.getElementById('target').value,
+    occasion: document.getElementById('occasion').value,
+    style: document.getElementById('style').value
+  };
+  renderAllChips(intent);
+  renderGreeting(intent);
+  renderCoreSwitcher();
+
+  document.getElementById('head-name').value = '';
+  document.getElementById('head-particle').value = '';
+  document.getElementById('tail-particle').value = '';
+  document.getElementById('tail-name').value = '';
+  document.getElementById('greeting-custom').value = '';
+  greetingSelected = { who: '', event: '', wish: '' };
+  greetingEnabled = true;
+  updateGreetingFormula();
+
+  renderPreview();
+  document.getElementById('create-panel').classList.add('show');
+  setTimeout(() => document.getElementById('create-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+}
+
+function renderChipList(containerId, items, fieldId, isParticle) {
+  const html = items.map(item => {
+    const cls = 'chip' + (isParticle ? ' particle' : '') + (item.isTaigi ? ' taigi' : '');
+    const safeText = item.t.replace(/'/g, "\\'");
+    return `<span class="${cls}" onclick="setField('${fieldId}', '${safeText}')">${item.t}</span>`;
+  }).join('');
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function renderAllChips(intent) {
+  renderChipList('head-name-chips', HEAD_NAME_REFS[intent.target] || HEAD_NAME_REFS['朋友'], 'head-name', false);
+  renderChipList('head-particle-chips', HEAD_PARTICLES[intent.style] || HEAD_PARTICLES['親切'], 'head-particle', true);
+  renderChipList('tail-particle-chips', TAIL_PARTICLE_REFS[intent.occasion] || TAIL_PARTICLE_REFS['感恩'], 'tail-particle', true);
+  renderChipList('tail-name-chips', TAIL_NAME_REFS[intent.occasion] || TAIL_NAME_REFS['感恩'], 'tail-name', false);
+}
+
+// 祝賀語
+function renderGreeting(intent) {
+  const greetingField = document.getElementById('greeting-field');
+  const shouldShow = greetingShouldShow(intent.occasion);
+  if (!shouldShow) {
+    greetingField.classList.add('hidden');
+    greetingEnabled = false;
+    return;
+  }
+  greetingField.classList.remove('hidden');
+  greetingEnabled = true;
+  document.getElementById('toggle-greeting-btn').textContent = '停用此段';
+
+  const whoList = GREETING_WHO[intent.target] || GREETING_WHO['朋友'];
+  const eventList = GREETING_EVENT[intent.occasion] || [];
+  const wishList = GREETING_WISH[intent.occasion] || [];
+
+  document.getElementById('greeting-who-chips').innerHTML = whoList.map(item => {
+    const safe = item.t.replace(/'/g, "\\'");
+    return `<span class="greeting-chip" onclick="selectGreeting('who', '${safe}')">${item.t}${item.isTaigi ? ' ·台' : ''}</span>`;
+  }).join('');
+
+  document.getElementById('greeting-event-chips').innerHTML = eventList.map(item => {
+    const safe = item.t.replace(/'/g, "\\'");
+    return `<span class="greeting-chip" onclick="selectGreeting('event', '${safe}')">${item.t}${item.isTaigi ? ' ·台' : ''}</span>`;
+  }).join('');
+
+  document.getElementById('greeting-wish-chips').innerHTML = wishList.map(item => {
+    const safe = item.t.replace(/'/g, "\\'");
+    return `<span class="greeting-chip" onclick="selectGreeting('wish', '${safe}')">${item.t}${item.isTaigi ? ' ·台' : ''}</span>`;
+  }).join('');
+}
+
+function selectGreeting(slot, text) {
+  greetingSelected[slot] = text;
+  document.getElementById('greeting-custom').value = '';
+  updateGreetingFormula();
+  renderPreview();
+}
+
+function updateGreetingFormula() {
+  ['who', 'event', 'wish'].forEach(k => {
+    const slot = document.getElementById('slot-' + k);
+    const labels = { who: '[對象]', event: '[事件]', wish: '[吉祥詞]' };
+    if (greetingSelected[k]) {
+      slot.textContent = greetingSelected[k];
+      slot.classList.add('filled');
+      slot.classList.remove('empty');
+    } else {
+      slot.textContent = labels[k];
+      slot.classList.remove('filled');
+      slot.classList.add('empty');
+    }
+  });
+  document.querySelectorAll('#greeting-who-chips .greeting-chip').forEach(el => {
+    el.classList.toggle('selected', el.textContent.replace(' ·台', '') === greetingSelected.who);
+  });
+  document.querySelectorAll('#greeting-event-chips .greeting-chip').forEach(el => {
+    el.classList.toggle('selected', el.textContent.replace(' ·台', '') === greetingSelected.event);
+  });
+  document.querySelectorAll('#greeting-wish-chips .greeting-chip').forEach(el => {
+    el.classList.toggle('selected', el.textContent.replace(' ·台', '') === greetingSelected.wish);
+  });
+}
+
+function getGreetingText() {
+  if (!greetingEnabled) return '';
+  const custom = document.getElementById('greeting-custom').value.trim();
+  if (custom) return custom;
+  if (!greetingSelected.who && !greetingSelected.event && !greetingSelected.wish) return '';
+  return '祝' + greetingSelected.who + greetingSelected.event + greetingSelected.wish;
+}
+
+function toggleGreetingEnable() {
+  greetingEnabled = !greetingEnabled;
+  document.getElementById('toggle-greeting-btn').textContent = greetingEnabled ? '停用此段' : '啟用此段';
+  renderPreview();
+}
+
+function renderCoreSwitcher() {
+  document.getElementById('core-switcher-chips').innerHTML = currentCoreCandidates.map((c, i) =>
+    `<span class="switcher-chip ${i === currentCoreIdx ? 'current' : ''}" onclick="switchCore(${i})">${c.c}${c.isTaigi ? ' · 台' : ''}</span>`
+  ).join('');
+}
+
+function switchCore(idx) {
+  currentCoreIdx = idx;
+  document.getElementById('middle-input').value = currentCoreCandidates[idx].c;
+  document.querySelectorAll('.core-card').forEach((el, i) => el.classList.toggle('selected', i === idx));
+  renderCoreSwitcher();
+  renderPreview();
+}
+
+function setField(fieldId, text) {
+  document.getElementById(fieldId).value = text;
+  renderPreview();
+}
+
+function renderPreview() {
+  const headName = (document.getElementById('head-name').value || '').trim();
+  const headParticle = (document.getElementById('head-particle').value || '').trim();
+  const core = (document.getElementById('middle-input').value || '').trim();
+  const tailParticle = (document.getElementById('tail-particle').value || '').trim();
+  const greeting = getGreetingText();
+  const tailName = (document.getElementById('tail-name').value || '').trim();
+
+  // v9 順序：① 稱謂 ② 頭助詞 ③ 核心 ④ 祝賀語 ⑤ 署名 ⑥ 尾助詞(敬詞)
+  const fullSentence = headName + headParticle + core + greeting + tailName + tailParticle;
+
+  let previewHtml = '';
+  if (headName) previewHtml += `<span class="seg-head-name">${headName}</span>`;
+  if (headParticle) previewHtml += `<span class="seg-head-particle">${headParticle}</span>`;
+  if (core) previewHtml += `<span class="seg-core">${core}</span>`;
+  if (greeting) previewHtml += `<span class="seg-greeting">${greeting}</span>`;
+  if (tailName) previewHtml += `<span class="seg-tail-name">${tailName}</span>`;
+  if (tailParticle) previewHtml += `<span class="seg-tail-particle">${tailParticle}</span>`;
+  if (!fullSentence) previewHtml = '<span style="opacity:0.4;">—</span>';
+
+  document.getElementById('preview-sentence').innerHTML = previewHtml;
+  document.getElementById('preview-tailo').textContent = fullSentence.length > 0 ? toTailo(fullSentence) : '—';
+
+  // 台語度
+  const taigi = computeTaigiScore(fullSentence);
+  const meterVal = document.getElementById('taigi-meter-val');
+  const meterFill = document.getElementById('taigi-meter-fill');
+  const meterInfo = document.getElementById('taigi-meter-info');
+  meterVal.textContent = `${taigi.score}%`;
+  meterFill.style.width = `${taigi.score}%`;
+  if (taigi.score < 40) {
+    meterVal.classList.add('warn');
+    meterFill.classList.add('warn');
+  } else {
+    meterVal.classList.remove('warn');
+    meterFill.classList.remove('warn');
+  }
+
+  let info = '';
+  if (taigi.detected.length > 0) info += `偵測台語特有字：<span class="taigi-detected">${taigi.detected.join('、')}</span>`;
+  if (taigi.hua.length > 0) {
+    if (info) info += '　';
+    info += `華語味字：<span class="hua-detected">${taigi.hua.join('、')}</span>`;
+  }
+  if (!info) info = fullSentence ? '純通用字 · 可換台語詞提升台語度' : '尚未輸入';
+  meterInfo.innerHTML = info;
+
+  // 能量
+  const energy = scoreSentence(fullSentence);
+  document.getElementById('preview-energy').innerHTML = `
+    <div class="pair"><span class="k">首字</span><span class="v ${energy.headStrong ? 'strong' : 'weak'}">${energy.headHex}${energy.headStrong ? '·強' : '·弱'}</span></div>
+    <div class="pair"><span class="k">尾字</span><span class="v ${energy.tailStrong ? 'strong' : 'weak'}">${energy.tailHex}${energy.tailStrong ? '·強' : '·弱'}</span></div>
+    <div class="pair"><span class="k">純度</span><span class="v">${energy.purity.toFixed(2)}</span></div>
+    <div class="pair"><span class="k">綜合</span><span class="v">${energy.score.toFixed(2)}</span></div>
+    <div class="pair"><span class="k">字數</span><span class="v">${fullSentence.length}</span></div>
+  `;
+
+  // 建議
+  let suggestion = '';
+  if (taigi.score >= 70) suggestion = `台語度 <span class="strong">${taigi.score}% · 夠台</span>，能量 ${energy.level === 'strong' ? '飽滿' : energy.level === 'mid' ? '中等' : '偏弱'}`;
+  else if (taigi.score >= 40) suggestion = `台語度 ${taigi.score}% · 中等 · <span class="strong">可換帶「台」標籤兮參考字提升</span>`;
+  else suggestion = `台語度偏低 · <span class="strong">建議換成台語字詞</span>（如：阮/恁/兮/攏/規世人）`;
+  document.getElementById('preview-suggestion').innerHTML = `建議：${suggestion}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  ['head-name', 'head-particle', 'middle-input', 'tail-particle', 'tail-name', 'greeting-custom'].forEach(id => {
+    document.getElementById(id).addEventListener('input', renderPreview);
+  });
+});
+
+function resetCreation() {
+  document.getElementById('head-name').value = '';
+  document.getElementById('head-particle').value = '';
+  document.getElementById('tail-particle').value = '';
+  document.getElementById('tail-name').value = '';
+  document.getElementById('greeting-custom').value = '';
+  greetingSelected = { who: '', event: '', wish: '' };
+  updateGreetingFormula();
+  renderPreview();
+  toast('↻ 已清空頭尾祝賀');
+}
+
+function backToChoices() {
+  document.getElementById('create-panel').classList.remove('show');
+  document.querySelectorAll('.core-card').forEach(el => el.classList.remove('selected'));
+  setTimeout(() => document.getElementById('candidates-section').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function restartAll() {
+  ['layer-l1', 'layer-l2', 'layer-l3'].forEach(id => {
+    document.getElementById(id).classList.remove('active', 'processing', 'done');
+  });
+  document.getElementById('l1-body').className = 'layer-body placeholder';
+  document.getElementById('l1-body').innerHTML = '按下「生成祝福詞」以啟動演算';
+  document.getElementById('l1-status').textContent = '待命';
+  document.getElementById('l2-body').className = 'layer-body placeholder';
+  document.getElementById('l2-body').innerHTML = '等待 L1 輸出候選字集';
+  document.getElementById('l2-status').textContent = '待命';
+  document.getElementById('l3-body').className = 'layer-body placeholder';
+  document.getElementById('l3-body').innerHTML = '等待 L2 輸出祝福詞';
+  document.getElementById('l3-status').textContent = '待命';
+  document.getElementById('create-panel').classList.remove('show');
+  currentCoreCandidates = [];
+  currentCoreIdx = -1;
+  greetingSelected = { who: '', event: '', wish: '' };
+  greetingEnabled = true;
+  document.getElementById('gen-btn').textContent = '生 成 祝 福 詞';
+  document.getElementById('gen-btn').disabled = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('↺ 已重新開始');
+}
+
+const LIB_KEY = 'bingyen_library_v11';
+function loadLibrary() { try { return JSON.parse(localStorage.getItem(LIB_KEY) || '[]'); } catch (e) { return []; } }
+function saveLibrary(arr) { try { localStorage.setItem(LIB_KEY, JSON.stringify(arr)); } catch (e) {} }
+
+function saveToLibrary() {
+  const headName = document.getElementById('head-name').value.trim();
+  const headParticle = document.getElementById('head-particle').value.trim();
+  const core = document.getElementById('middle-input').value.trim();
+  const tailParticle = document.getElementById('tail-particle').value.trim();
+  const greeting = getGreetingText();
+  const tailName = document.getElementById('tail-name').value.trim();
+  // v9 順序
+  const sentence = headName + headParticle + core + greeting + tailName + tailParticle;
+
+  if (sentence.length === 0 || core.length === 0) { toast('請先選一個祝福詞'); return; }
+  const energy = scoreSentence(sentence);
+  const taigi = computeTaigiScore(sentence);
+  const intent = {
+    target: document.getElementById('target').value,
+    occasion: document.getElementById('occasion').value
+  };
+  const lib = loadLibrary();
+  lib.unshift({
+    s: sentence, tailo: toTailo(sentence),
+    segments: { headName, headParticle, core, tailParticle, greeting, tailName },
+    score: energy.score, level: energy.level, taigiScore: taigi.score,
+    intent: `${intent.target}·${intent.occasion}`,
+    time: new Date().toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  });
+  saveLibrary(lib);
+  toast(`✓ 已存入 · 台語度 ${taigi.score}%`);
+  renderLibrary();
+}
+
+function deleteLibraryItem(idx) {
+  const lib = loadLibrary();
+  lib.splice(idx, 1);
+  saveLibrary(lib);
+  renderLibrary();
+  toast('已刪除');
+}
+
+function renderLibrary() {
+  const lib = loadLibrary();
+  document.getElementById('library-count').textContent = `${lib.length} 條`;
+  const listEl = document.getElementById('library-list');
+  if (lib.length === 0) {
+    listEl.innerHTML = '<div class="library-empty">尚無入庫句子 · 選祝福詞並創作頭尾後可保存到這裡</div>';
+    return;
+  }
+  listEl.innerHTML = lib.map((item, i) => `
+    <div class="library-item">
+      <div>
+        <div class="library-item-text">${item.s}</div>
+        <div class="library-item-tailo">${item.tailo}</div>
+      </div>
+      <div class="library-item-meta">${item.intent}<br>${item.time}<br>能量 ${item.score.toFixed(2)} · 台 ${item.taigiScore || 0}%</div>
+      <button class="library-item-del" onclick="deleteLibraryItem(${i})">刪除</button>
+    </div>
+  `).join('');
+}
+
+document.querySelectorAll('.stamp-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.stamp-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const p = PRESETS[btn.dataset.preset];
+    if (!p) return;
+    Object.keys(p).forEach(k => {
+      const el = document.getElementById(k);
+      if (el) el.value = p[k];
+    });
+  });
+});
+
+renderLibrary();
+
+// ============================================================
+// v10 卡片輸出系統
+// ============================================================
+let currentCardStyle = 'rice';
+const CARD_SIZE = 1080;
+const STYLE_DESC = {
+  rice:   '宣紙印章風 · 傳統、莊重，適合長輩、三節、壽誕',
+  modern: '卡片現代風 · 鮮豔、親切，適合生日、情人節、年輕族群',
+  scroll: '書法掛軸風 · 直書、正統，適合壽誕、典禮、公開場合'
+};
+
+function openCardModal() {
+  const core = (document.getElementById('middle-input').value || '').trim();
+  if (!core) { toast('請先選一個祝福詞'); return; }
+  document.getElementById('card-modal-overlay').classList.add('show');
+  renderCard();
+  updateCardContentPreview();
+}
+
+function closeCardModal() {
+  document.getElementById('card-modal-overlay').classList.remove('show');
+  document.getElementById('flex-json-box').classList.remove('show');
+}
+
+function switchCardStyle(style) {
+  currentCardStyle = style;
+  document.querySelectorAll('.card-style-tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.style === style);
+  });
+  document.getElementById('card-style-desc').textContent = STYLE_DESC[style];
+  renderCard();
+}
+
+function getCardSegments() {
+  return {
+    headName: document.getElementById('head-name').value.trim(),
+    headParticle: document.getElementById('head-particle').value.trim(),
+    core: document.getElementById('middle-input').value.trim(),
+    greeting: getGreetingText(),
+    tailName: document.getElementById('tail-name').value.trim(),
+    tailParticle: document.getElementById('tail-particle').value.trim()
+  };
+}
+
+function updateCardContentPreview() {
+  const s = getCardSegments();
+  const full = s.headName + s.headParticle + s.core + s.greeting + s.tailName + s.tailParticle;
+  const tailo = toTailo(full);
+  document.getElementById('card-content-preview').innerHTML =
+    '<div><span class="highlight">' + full + '</span></div>' +
+    '<div style="font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--stone); margin-top:6px; word-break:break-all;">' + tailo + '</div>';
+}
+
+function drawSeal(ctx, x, y, size, text) {
+  ctx.save();
+  ctx.fillStyle = '#b3322c';
+  ctx.fillRect(x - size/2, y - size/2, size, size);
+  ctx.strokeStyle = '#fcf8ef';
+  ctx.lineWidth = size * 0.035;
+  ctx.strokeRect(x - size/2 + size*0.06, y - size/2 + size*0.06, size - size*0.12, size - size*0.12);
+  ctx.fillStyle = '#fcf8ef';
+  const chars = text.split('');
+  const per = size * 0.38;
+  const fontSize = size * 0.32;
+  ctx.font = '900 ' + fontSize + "px 'Noto Serif TC', serif";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if (chars.length === 4) {
+    ctx.fillText(chars[0], x - per/2, y - per/2);
+    ctx.fillText(chars[1], x + per/2, y - per/2);
+    ctx.fillText(chars[2], x - per/2, y + per/2);
+    ctx.fillText(chars[3], x + per/2, y + per/2);
+  } else if (chars.length === 2) {
+    ctx.fillText(chars[0], x, y - per/2.2);
+    ctx.fillText(chars[1], x, y + per/2.2);
+  } else {
+    ctx.font = '900 ' + (size * 0.22) + "px 'Noto Serif TC', serif";
+    ctx.fillText(text, x, y);
+  }
+  ctx.restore();
+}
+
+function drawOccasionSeal(ctx, x, y, size, char) {
+  ctx.save();
+  ctx.fillStyle = '#1a2332';
+  ctx.fillRect(x - size/2, y - size/2, size, size);
+  ctx.fillStyle = '#d4b571';
+  ctx.font = '900 ' + (size * 0.65) + "px 'Noto Serif TC', serif";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(char, x, y);
+  ctx.restore();
+}
+
+function occasionToChar(o) {
+  const map = {
+    '母親節':'母', '父親節':'父', '新年':'春', '端午':'端', '中秋':'秋', '教師節':'師',
+    '生日':'慶', '壽誕':'壽', '結婚':'婚', '入厝':'厝', '升遷':'升', '畢業':'學',
+    '感恩':'恩', '道歉':'歉', '鼓勵':'勵', '情人節':'情', '聖誕節':'聖',
+    '開幕':'開', '典禮':'禮', '祝福':'福'
+  };
+  return map[o] || '福';
+}
+
+function renderCard() {
+  const canvas = document.getElementById('card-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = CARD_SIZE, H = CARD_SIZE;
+  const s = getCardSegments();
+  const occasion = document.getElementById('occasion').value;
+  const occChar = occasionToChar(occasion);
+  ctx.clearRect(0, 0, W, H);
+  if (currentCardStyle === 'rice') renderRiceStyle(ctx, W, H, s, occChar);
+  else if (currentCardStyle === 'modern') renderModernStyle(ctx, W, H, s, occChar);
+  else if (currentCardStyle === 'scroll') renderScrollStyle(ctx, W, H, s, occChar);
+}
+
+function renderRiceStyle(ctx, W, H, seg, occChar) {
+  const gradient = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W*0.7);
+  gradient.addColorStop(0, '#f8f0dd');
+  gradient.addColorStop(1, '#ede0c4');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(139, 104, 60, 0.04)';
+  for (let i = 0; i < 200; i++) {
+    const x = Math.random() * W;
+    const y = Math.random() * H;
+    const r = Math.random() * 2.5;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  ctx.strokeStyle = '#8b2620';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(50, 50, W - 100, H - 100);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(70, 70, W - 140, H - 140);
+
+  drawOccasionSeal(ctx, 130, 130, 90, occChar);
+
+  ctx.fillStyle = '#8b6838';
+  ctx.font = "500 28px 'Noto Serif TC', serif";
+  ctx.textAlign = 'right';
+  ctx.fillText('丙午 · 孟夏', W - 100, 130);
+
+  ctx.strokeStyle = '#b3322c';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(100, 190);
+  ctx.lineTo(W - 100, 190);
+  ctx.stroke();
+
+  const fullUpper = seg.headName + seg.headParticle;
+  ctx.fillStyle = '#1a2332';
+  ctx.font = "700 44px 'Noto Serif TC', serif";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if (fullUpper) ctx.fillText(fullUpper, W/2, 260);
+
+  ctx.fillStyle = '#8b2620';
+  ctx.font = "900 68px 'Noto Serif TC', serif";
+  ctx.fillText(seg.core, W/2, 390);
+
+  if (seg.greeting) {
+    ctx.fillStyle = '#1a2332';
+    ctx.font = "700 50px 'Noto Serif TC', serif";
+    ctx.fillText(seg.greeting, W/2, 510);
+  }
+
+  const fullSentence = fullUpper + seg.core + seg.greeting;
+  ctx.fillStyle = '#8b6838';
+  ctx.font = "400 22px 'JetBrains Mono', monospace";
+  ctx.textAlign = 'center';
+  wrapText(ctx, toTailo(fullSentence), W/2, 610, W - 200, 30);
+
+  ctx.strokeStyle = '#b3322c';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(W/2 - 200, 700);
+  ctx.lineTo(W/2 + 200, 700);
+  ctx.stroke();
+
+  const signText = seg.tailName + (seg.tailParticle ? '　' + seg.tailParticle : '');
+  ctx.fillStyle = '#1a2332';
+  ctx.font = "600 38px 'Noto Serif TC', serif";
+  ctx.textAlign = 'right';
+  if (signText) ctx.fillText(signText, W - 160, 830);
+
+  drawSeal(ctx, W - 180, 930, 110, '劍橋分析');
+
+  ctx.fillStyle = '#8b6838';
+  ctx.font = "400 16px 'Noto Serif TC', serif";
+  ctx.textAlign = 'center';
+  ctx.fillText('由 劍橋分析 · 冰焰語意演算架構生成', W/2, H - 80);
+}
+
+function renderModernStyle(ctx, W, H, seg, occChar) {
+  const colorPairs = {
+    '母':['#f5a9b8','#e56b87'], '父':['#7db3d9','#4a7ca8'],
+    '春':['#e8a87c','#d63031'], '端':['#7ac7a4','#2d7a60'],
+    '秋':['#f4c869','#c9893a'], '師':['#b89dc9','#7a5a96'],
+    '慶':['#ffc77a','#e06b26'], '壽':['#c9a961','#7a6028'],
+    '婚':['#f2a9bc','#c45e7a'], '厝':['#9dc5a8','#4a8968'],
+    '升':['#7aa3d9','#2d5a96'], '學':['#c6b899','#8b7a58'],
+    '恩':['#d4a896','#8b6b5a'], '歉':['#a8a8a8','#5a5a5a'],
+    '勵':['#f2b569','#c97a3f'], '情':['#e56b87','#a63d56'],
+    '聖':['#a8d9b4','#2d7a4a'], '開':['#f4d96b','#b38a20'],
+    '禮':['#9fa6c7','#5a628a'], '福':['#d4a55a','#8b6028']
+  };
+  const pair = colorPairs[occChar] || ['#f5a97d', '#c96b2d'];
+
+  const gradient = ctx.createLinearGradient(0, 0, W, H);
+  gradient.addColorStop(0, pair[0]);
+  gradient.addColorStop(1, pair[1]);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, W, H);
+
+  const padding = 60;
+  ctx.fillStyle = '#fcf8ef';
+  ctx.fillRect(padding, padding, W - padding*2, H - padding*2);
+
+  ctx.save();
+  ctx.fillStyle = pair[1] + '18';
+  for (let i = 0; i < 40; i++) {
+    const x = padding + Math.random() * (W - padding*2);
+    const y = padding + Math.random() * (H - padding*2);
+    const r = 3 + Math.random() * 6;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = pair[1] + '15';
+  ctx.font = "900 420px 'Noto Serif TC', serif";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(occChar, W/2, H/2);
+  ctx.restore();
+
+  const fullUpper = seg.headName + seg.headParticle;
+  ctx.fillStyle = '#1a2332';
+  ctx.font = "500 42px 'Noto Serif TC', serif";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if (fullUpper) ctx.fillText(fullUpper, W/2, 260);
+
+  ctx.fillStyle = pair[1];
+  ctx.font = "900 72px 'Noto Serif TC', serif";
+  ctx.fillText(seg.core, W/2, 420);
+
+  if (seg.greeting) {
+    ctx.fillStyle = '#1a2332';
+    ctx.font = "700 54px 'Noto Serif TC', serif";
+    ctx.fillText(seg.greeting, W/2, 560);
+  }
+
+  const fullSentence = fullUpper + seg.core + seg.greeting;
+  ctx.fillStyle = pair[1] + 'cc';
+  ctx.font = "400 20px 'JetBrains Mono', monospace";
+  wrapText(ctx, toTailo(fullSentence), W/2, 660, W - padding*2 - 60, 28);
+
+  const signText = seg.tailName + (seg.tailParticle ? '　' + seg.tailParticle : '');
+  ctx.fillStyle = '#1a2332';
+  ctx.font = "600 36px 'Noto Serif TC', serif";
+  ctx.textAlign = 'right';
+  if (signText) ctx.fillText(signText, W - padding - 40, 830);
+
+  drawSeal(ctx, W - padding - 90, 930, 100, '劍橋分析');
+
+  ctx.fillStyle = '#1a233288';
+  ctx.font = "400 15px 'Noto Serif TC', serif";
+  ctx.textAlign = 'center';
+  ctx.fillText('由 劍橋分析 · 冰焰語意演算架構生成', W/2, H - 90);
+}
+
+function renderScrollStyle(ctx, W, H, seg, occChar) {
+  const gradient = ctx.createLinearGradient(0, 0, 0, H);
+  gradient.addColorStop(0, '#2d2416');
+  gradient.addColorStop(0.5, '#3d3020');
+  gradient.addColorStop(1, '#2d2416');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#a8813a';
+  ctx.fillRect(0, 0, W, 40);
+  ctx.fillRect(0, H - 40, W, 40);
+  ctx.fillStyle = '#d4b571';
+  ctx.fillRect(0, 40, W, 4);
+  ctx.fillRect(0, H - 44, W, 4);
+
+  drawOccasionSeal(ctx, 150, H/2, 160, occChar);
+
+  ctx.save();
+  ctx.fillStyle = '#f4ede0';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const coreChars = seg.core.split('');
+  const coreX = W * 0.42;
+  const coreFontSize = 66;
+  ctx.font = "900 " + coreFontSize + "px 'Noto Serif TC', serif";
+  const coreStartY = H/2 - (coreChars.length * coreFontSize * 0.95) / 2 + coreFontSize/2;
+  coreChars.forEach((ch, i) => {
+    ctx.fillText(ch, coreX, coreStartY + i * coreFontSize * 0.95);
+  });
+
+  if (seg.greeting) {
+    ctx.fillStyle = '#d4b571';
+    const greetChars = seg.greeting.split('');
+    const greetX = W * 0.58;
+    const greetFontSize = 50;
+    ctx.font = "700 " + greetFontSize + "px 'Noto Serif TC', serif";
+    const greetStartY = H/2 - (greetChars.length * greetFontSize * 0.95) / 2 + greetFontSize/2;
+    greetChars.forEach((ch, i) => {
+      ctx.fillText(ch, greetX, greetStartY + i * greetFontSize * 0.95);
+    });
+  }
+
+  if (seg.headName) {
+    ctx.fillStyle = '#c9a961';
+    const headChars = (seg.headName + (seg.headParticle || '')).split('');
+    const headX = W * 0.72;
+    const headFontSize = 34;
+    ctx.font = "500 " + headFontSize + "px 'Noto Serif TC', serif";
+    const headStartY = H/2 - (headChars.length * headFontSize * 0.95) / 2 + headFontSize/2;
+    headChars.forEach((ch, i) => {
+      ctx.fillText(ch, headX, headStartY + i * headFontSize * 0.95);
+    });
+  }
+
+  if (seg.tailName) {
+    ctx.fillStyle = '#c9a961';
+    const tailChars = (seg.tailName + (seg.tailParticle ? ' ' + seg.tailParticle : '')).split('');
+    const tailX = W * 0.85;
+    const tailFontSize = 30;
+    ctx.font = "500 " + tailFontSize + "px 'Noto Serif TC', serif";
+    const tailStartY = H/2 - (tailChars.length * tailFontSize * 0.95) / 2 + tailFontSize/2;
+    tailChars.forEach((ch, i) => {
+      ctx.fillText(ch, tailX, tailStartY + i * tailFontSize * 0.95);
+    });
+  }
+
+  ctx.restore();
+
+  drawSeal(ctx, W - 130, H - 130, 100, '劍橋分析');
+
+  ctx.fillStyle = '#c9a961aa';
+  ctx.font = "400 14px 'Noto Serif TC', serif";
+  ctx.textAlign = 'center';
+  ctx.fillText('由 劍橋分析 · 冰焰語意演算架構生成', W/2, H - 20);
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const parts = text.split('-');
+  let line = '';
+  const lines = [];
+  for (let i = 0; i < parts.length; i++) {
+    const sep = (i < parts.length - 1) ? '-' : '';
+    const test = line + parts[i] + sep;
+    if (ctx.measureText(test).width > maxWidth && line !== '') {
+      lines.push(line);
+      line = parts[i] + sep;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  const showLines = lines.slice(0, 3);
+  showLines.forEach((l, idx) => {
+    ctx.fillText(l, x, y + idx * lineHeight);
+  });
+}
+
+function downloadCard() {
+  const canvas = document.getElementById('card-canvas');
+  const url = canvas.toDataURL('image/png');
+  const a = document.createElement('a');
+  const occ = document.getElementById('occasion').value;
+  const ts = new Date().toISOString().slice(0, 10);
+  a.download = '劍橋分析_祝福卡_' + occ + '_' + currentCardStyle + '_' + ts + '.png';
+  a.href = url;
+  a.click();
+  toast('✓ PNG 已下載');
+}
+
+async function copyCardImage() {
+  try {
+    const canvas = document.getElementById('card-canvas');
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+    toast('✓ 已複製到剪貼簿');
+  } catch (e) {
+    toast('此瀏覽器不支援，請用下載');
+  }
+}
+
+function toggleFlexJson() {
+  const box = document.getElementById('flex-json-box');
+  if (box.classList.contains('show')) {
+    box.classList.remove('show');
+    return;
+  }
+  const s = getCardSegments();
+  const occ = document.getElementById('occasion').value;
+  const full = s.headName + s.headParticle + s.core + s.greeting + s.tailName + s.tailParticle;
+  const tailo = toTailo(full);
+  const flex = {
+    type: 'flex',
+    altText: '[劍橋分析] ' + occ + '祝福卡',
+    contents: {
+      type: 'bubble',
+      size: 'mega',
+      hero: { type: 'image', url: 'https://YOUR-IMAGE-HOST/card.png', size: 'full', aspectRatio: '1:1', aspectMode: 'cover' },
+      body: {
+        type: 'box', layout: 'vertical',
+        contents: [
+          { type: 'text', text: occ + '祝福', size: 'sm', color: '#b3322c', weight: 'bold' },
+          { type: 'text', text: s.core, size: 'xl', weight: 'bold', wrap: true, margin: 'md' },
+          { type: 'text', text: s.greeting || '', size: 'md', color: '#666666', wrap: true, margin: 'sm' },
+          { type: 'separator', margin: 'lg' },
+          { type: 'text', text: tailo, size: 'xxs', color: '#999999', wrap: true, margin: 'md' },
+          { type: 'text', text: '— ' + s.tailName + ' ' + s.tailParticle, size: 'sm', align: 'end', margin: 'md' }
+        ]
+      },
+      footer: {
+        type: 'box', layout: 'vertical',
+        contents: [{ type: 'text', text: '劍橋分析 · 冰焰語意演算', size: 'xxs', color: '#aaaaaa', align: 'center' }]
+      }
+    }
+  };
+  box.textContent = JSON.stringify(flex, null, 2);
+  box.classList.add('show');
+  toast('✓ Flex JSON 已產出');
+}
+
+document.getElementById('card-modal-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'card-modal-overlay') closeCardModal();
+});
+
+</script>
+
+</body>
+</html>

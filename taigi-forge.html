@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台語好極 TaigiForge · 用台語寫文章足感心</title>
+<meta name="description" content="台語好極 TaigiForge — 袂曉台羅？拍國語嘛會使。阿母的話，囡仔的歌，予朋友的祝福，用台語寫出來。">
+<meta name="theme-color" content="#e8703c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700;900&family=Noto+Sans+TC:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   TaigiForge v2.0 雙版本 CSS
+   ============================================ */
+:root {
+  --ink: #2a2520;
+  --paper: #fffaf0;
+  --accent: #e8703c;
+  --accent-soft: #f3a97c;
+  --gold: #d4a13c;
+  --teal: #5ba99d;
+  --plum: #c97a8b;
+  --muted: #8a7e6e;
+  --border: #f5dfb8;
+  --card: #fff8eb;
+  --card-hover: #fff0d5;
+  --subtle: #faecd2;
+  --success: #5b9e6e;
+  --font-serif: 'Noto Serif TC', serif;
+  --font-sans: 'Noto Sans TC', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+body.pro {
+  --ink: #1a1a1a;
+  --paper: #f5f0e8;
+  --accent: #c84b2e;
+  --accent-soft: #d47a5e;
+  --gold: #b5922a;
+  --teal: #2e6b5e;
+  --plum: #7a3b4d;
+  --muted: #8a8070;
+  --border: #d4cfc4;
+  --card: #faf7f2;
+  --card-hover: #f0ebe0;
+  --subtle: #ede7d9;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  min-height: 100vh;
+  line-height: 2;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(ellipse at top, rgba(232, 112, 60, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at bottom left, rgba(91, 169, 157, 0.04) 0%, transparent 50%);
+}
+body.pro::before {
+  background-image:
+    radial-gradient(ellipse at top, rgba(200, 75, 46, 0.03) 0%, transparent 60%),
+    radial-gradient(ellipse at bottom left, rgba(46, 107, 94, 0.03) 0%, transparent 50%);
+}
+
+/* Header */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1.5px solid var(--border);
+  padding: 1.2rem 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1.5rem; flex-wrap: wrap;
+}
+.brand { cursor: pointer; display: flex; align-items: baseline; gap: 1rem; }
+.logo-zh { font-family: var(--font-serif); font-size: 1.65rem; font-weight: 700; color: var(--ink); letter-spacing: 0.08em; }
+.logo-en { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.2em; color: var(--accent); }
+.tagline-mini { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.1em; display: none; }
+@media (min-width: 900px) { .tagline-mini { display: inline; } }
+.header-right { display: flex; align-items: center; gap: 0.8rem; }
+.version-switch {
+  display: flex; align-items: center; gap: 0.3rem;
+  padding: 0.3rem; border: 1.5px solid var(--border);
+  border-radius: 999px; background: var(--card);
+}
+.version-switch button {
+  border: none; background: transparent; padding: 0.35rem 0.9rem;
+  border-radius: 999px; cursor: pointer; font-family: var(--font-mono);
+  font-size: 0.7rem; letter-spacing: 0.1em; color: var(--muted);
+  transition: all 0.2s;
+}
+.version-switch button.active { background: var(--accent); color: white; font-weight: 700; }
+.version-switch button:hover:not(.active) { color: var(--ink); }
+.elderly-btn {
+  padding: 0.5rem 1rem; border: 1.5px solid var(--border); background: var(--card);
+  border-radius: 8px; cursor: pointer; font-family: var(--font-serif);
+  font-size: 0.85rem; color: var(--ink); transition: all 0.2s; display: none;
+}
+@media (min-width: 1100px) { .elderly-btn { display: inline-block; } }
+.elderly-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* Nav */
+nav.layers {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 0 1rem; display: flex; gap: 0; overflow-x: auto;
+}
+.nav-btn {
+  font-family: var(--font-sans); font-size: 0.88rem; font-weight: 500;
+  padding: 1rem 1.4rem; background: transparent; border: none;
+  border-bottom: 3px solid transparent; cursor: pointer; color: var(--muted);
+  letter-spacing: 0.05em; transition: all 0.15s;
+  display: flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+}
+.nav-btn:hover { color: var(--ink); }
+.nav-btn.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 700; }
+.nav-btn .nav-num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); font-weight: 700; }
+.nav-btn .badge-soon {
+  font-family: var(--font-mono); font-size: 0.55rem;
+  padding: 2px 6px; background: var(--gold); color: white;
+  border-radius: 4px; letter-spacing: 0.1em;
+}
+
+/* Main */
+main { max-width: 1080px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
+.page { display: none; animation: fadeIn 0.4s ease; }
+.page.active { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero */
+.hero { text-align: center; padding: 4rem 1rem 3rem; position: relative; }
+.hero-ornament { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.5em; color: var(--accent); margin-bottom: 1.5rem; }
+.hero-ornament::before, .hero-ornament::after { content: '·····'; margin: 0 1rem; color: var(--border); letter-spacing: 0.1em; }
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 900; letter-spacing: 0.15em; line-height: 1.3;
+  margin-bottom: 0.8rem; color: var(--ink);
+}
+.hero-title .comma { color: var(--accent); display: inline-block; transform: translateY(-0.05em); }
+.hero-sub {
+  font-family: var(--font-serif);
+  font-size: clamp(1.15rem, 2.2vw, 1.5rem);
+  font-weight: 500; color: var(--accent);
+  letter-spacing: 0.12em; margin-bottom: 2rem;
+}
+.hero-secondary {
+  font-family: var(--font-serif);
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  color: var(--muted); letter-spacing: 0.05em;
+  margin: 0 auto 2.5rem; max-width: 520px; line-height: 2;
+}
+.hero-cta {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  padding: 0.95rem 2.2rem; background: var(--accent); color: white;
+  font-family: var(--font-serif); font-size: 1.05rem; font-weight: 700;
+  letter-spacing: 0.1em; border: none; border-radius: 2px; cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(232, 112, 60, 0.25);
+}
+.hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232, 112, 60, 0.4); }
+body.pro .hero-cta { box-shadow: 0 4px 14px rgba(200, 75, 46, 0.25); }
+body.pro .hero-cta:hover { box-shadow: 0 8px 24px rgba(200, 75, 46, 0.4); }
+.hero-cta .arrow { font-family: var(--font-mono); }
+
+/* Manifesto */
+.manifesto-strip {
+  margin: 2rem 0 3rem; padding: 2rem 1.5rem;
+  background: var(--subtle);
+  border-left: 4px solid var(--accent); border-right: 4px solid var(--accent);
+  text-align: center;
+}
+.manifesto-strip .line {
+  font-family: var(--font-serif); font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+  font-weight: 500; color: var(--ink); line-height: 2.2; letter-spacing: 0.1em;
+}
+.manifesto-strip .line-2 { color: var(--accent); font-weight: 700; margin-top: 0.5rem; }
+
+/* 3 Steps */
+.three-steps { margin: 3rem 0; }
+.steps-heading {
+  text-align: center; font-family: var(--font-serif);
+  font-size: 1rem; font-weight: 500; letter-spacing: 0.3em;
+  color: var(--muted); margin-bottom: 2rem;
+}
+.steps-heading::before, .steps-heading::after { content: '—'; margin: 0 1rem; color: var(--border); }
+.steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+@media (max-width: 720px) { .steps-grid { grid-template-columns: 1fr; } }
+.step-card {
+  background: var(--card); border: 2px solid var(--border);
+  padding: 2rem 1.5rem; cursor: pointer; text-align: center;
+  transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+  position: relative; overflow: hidden;
+}
+.step-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--accent); transform: scaleX(0); transform-origin: left;
+  transition: transform 0.3s;
+}
+.step-card:hover { background: var(--card-hover); transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
+.step-card:hover::before { transform: scaleX(1); }
+.step-num { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 1rem; }
+.step-emoji { font-size: 2.2rem; margin-bottom: 0.8rem; display: block; }
+.step-title { font-family: var(--font-serif); font-size: 1.4rem; font-weight: 700; letter-spacing: 0.1em; color: var(--ink); margin-bottom: 0.6rem; }
+.step-desc { font-size: 0.92rem; color: var(--muted); line-height: 1.9; letter-spacing: 0.03em; }
+
+/* Demo */
+.demo-section { margin: 4rem 0; }
+.section-heading { font-family: var(--font-serif); font-size: clamp(1.4rem, 2.5vw, 1.8rem); font-weight: 700; color: var(--ink); letter-spacing: 0.12em; text-align: center; margin-bottom: 0.5rem; }
+.section-heading-sub { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.3em; color: var(--accent); text-align: center; margin-bottom: 2.5rem; }
+.demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+@media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } }
+.demo-card { background: var(--card); border: 1.5px solid var(--border); padding: 1.8rem 1.6rem; position: relative; transition: all 0.3s; }
+.demo-card:hover { border-color: var(--accent); box-shadow: 0 8px 24px rgba(0,0,0,0.05); }
+.demo-scene { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent); font-weight: 700; margin-bottom: 0.6rem; }
+.demo-context { font-family: var(--font-serif); font-size: 0.88rem; color: var(--muted); line-height: 1.8; margin-bottom: 1rem; padding: 0.6rem 0.8rem; background: var(--paper); border-left: 3px solid var(--gold); font-style: italic; }
+.demo-result-zh { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--ink); letter-spacing: 0.08em; margin-bottom: 0.35rem; line-height: 1.6; }
+.demo-result-tailo { font-family: var(--font-mono); font-size: 0.78rem; color: var(--teal); letter-spacing: 0.05em; margin-bottom: 1rem; line-height: 1.7; }
+.demo-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; padding-top: 1rem; border-top: 1px dashed var(--border); font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; }
+.demo-meta .energy { padding: 2px 8px; background: var(--subtle); color: var(--accent); font-weight: 700; border-radius: 3px; }
+.demo-meta .scene-tag { padding: 2px 8px; background: var(--card-hover); color: var(--teal); border-radius: 3px; }
+.demo-share { margin-top: 1rem; font-size: 0.82rem; color: var(--accent); font-family: var(--font-serif); cursor: pointer; }
+.demo-share::before { content: '→ '; }
+
+/* Layer Cards */
+.layers-section { margin: 4rem 0; }
+.layer-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.3rem; }
+@media (max-width: 900px) { .layer-cards { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .layer-cards { grid-template-columns: 1fr; } }
+.layer-card { background: var(--card); border: 2px solid var(--ink); padding: 1.8rem 1.4rem; cursor: pointer; transition: all 0.25s; position: relative; display: flex; flex-direction: column; min-height: 260px; }
+.layer-card:hover { background: var(--card-hover); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+.layer-card.core { border-color: var(--accent); }
+.layer-card.core::before { content: '招牌'; position: absolute; top: -11px; right: 1rem; background: var(--accent); color: white; font-family: var(--font-serif); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; padding: 3px 12px; border-radius: 2px; }
+.layer-card.soon { border-color: var(--gold); opacity: 0.92; border-style: dashed; }
+.layer-card.soon::before { content: 'COMING SOON'; position: absolute; top: -11px; right: 1rem; background: var(--gold); color: white; font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; padding: 3px 10px; border-radius: 2px; }
+.layer-icon { font-size: 2rem; margin-bottom: 0.6rem; }
+.layer-num { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent); font-weight: 700; margin-bottom: 0.4rem; }
+.layer-title-zh { font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; letter-spacing: 0.08em; color: var(--ink); margin-bottom: 0.25rem; }
+.layer-title-en { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 0.9rem; }
+.layer-desc { font-size: 0.9rem; line-height: 1.85; color: var(--ink); flex: 1; letter-spacing: 0.02em; }
+.layer-meta { display: flex; justify-content: space-between; padding-top: 0.8rem; margin-top: 1rem; border-top: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--muted); }
+.layer-meta .price { color: var(--gold); font-weight: 700; }
+.layer-meta .price.paid { color: var(--accent); }
+
+/* Page Content */
+.page-header { text-align: center; padding: 3rem 1rem 2rem; border-bottom: 1px solid var(--border); margin-bottom: 3rem; }
+.page-num { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 0.8rem; }
+.page-title { font-family: var(--font-serif); font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 700; letter-spacing: 0.12em; color: var(--ink); margin-bottom: 0.5rem; }
+.page-sub { font-family: var(--font-serif); font-size: 1.05rem; color: var(--accent); letter-spacing: 0.08em; }
+.content-section { padding: 2rem 0; }
+.content-block { background: var(--card); border: 1.5px solid var(--border); padding: 2rem; margin-bottom: 1.5rem; }
+.content-block h3 { font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; letter-spacing: 0.08em; color: var(--ink); margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 2px solid var(--accent); display: inline-block; }
+.content-block p { margin-bottom: 1rem; font-size: 0.96rem; color: var(--ink); line-height: 2.1; letter-spacing: 0.02em; }
+.content-block p.muted { color: var(--muted); }
+
+/* Type Demo */
+.type-demo { background: var(--paper); border: 2px dashed var(--border); padding: 2rem; margin: 1.5rem 0; text-align: center; }
+.type-input-row { display: flex; align-items: center; justify-content: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.type-input { padding: 0.8rem 1.2rem; font-family: var(--font-mono); font-size: 1.5rem; letter-spacing: 0.2em; background: white; border: 2px solid var(--border); color: var(--teal); font-weight: 700; min-width: 200px; text-align: center; }
+.type-arrow { font-family: var(--font-mono); font-size: 1.3rem; color: var(--accent); font-weight: 700; }
+.type-candidates { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-top: 1rem; }
+.type-cand { padding: 0.5rem 1rem; background: white; border: 1.5px solid var(--border); border-radius: 2px; font-family: var(--font-serif); font-size: 1.3rem; font-weight: 500; color: var(--ink); cursor: pointer; transition: all 0.15s; }
+.type-cand:hover { border-color: var(--accent); background: var(--subtle); transform: translateY(-2px); }
+.type-cand .cand-tailo { display: block; font-family: var(--font-mono); font-size: 0.65rem; color: var(--teal); margin-top: 0.2rem; letter-spacing: 0.05em; }
+
+/* Forge Demo */
+.forge-demo { background: var(--paper); border: 2px solid var(--border); padding: 2rem; margin: 1.5rem 0; }
+.forge-input-label { font-family: var(--font-serif); font-size: 0.88rem; color: var(--muted); margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+.forge-textarea { width: 100%; min-height: 80px; padding: 1rem; font-family: var(--font-serif); font-size: 1rem; border: 2px solid var(--border); background: white; color: var(--ink); resize: vertical; line-height: 1.8; }
+.forge-textarea:focus { outline: none; border-color: var(--accent); }
+.forge-options { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1rem 0; }
+.forge-option { padding: 0.5rem 1.2rem; background: white; border: 1.5px solid var(--border); font-family: var(--font-serif); font-size: 0.88rem; color: var(--ink); cursor: pointer; border-radius: 2px; transition: all 0.15s; }
+.forge-option.selected { background: var(--accent); color: white; border-color: var(--accent); }
+.forge-option:hover:not(.selected) { border-color: var(--accent); background: var(--subtle); }
+.forge-button { padding: 0.85rem 2rem; background: var(--accent); color: white; font-family: var(--font-serif); font-size: 1rem; font-weight: 700; letter-spacing: 0.1em; border: none; cursor: pointer; border-radius: 2px; transition: all 0.2s; }
+.forge-button:hover { background: color-mix(in srgb, var(--accent), black 10%); transform: translateY(-1px); }
+.forge-result { margin-top: 1.5rem; padding: 1.5rem; background: white; border-left: 4px solid var(--gold); }
+.forge-result-zh { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; color: var(--ink); margin-bottom: 0.5rem; line-height: 1.8; }
+.forge-result-tailo { font-family: var(--font-mono); font-size: 0.82rem; color: var(--teal); letter-spacing: 0.05em; line-height: 1.7; }
+
+/* Polish Demo */
+.polish-demo { background: var(--paper); border: 2px solid var(--border); padding: 2rem; margin: 1.5rem 0; }
+.polish-sentence { font-family: var(--font-serif); font-size: 1.4rem; font-weight: 600; color: var(--ink); padding: 1rem; background: white; margin-bottom: 1.5rem; text-align: center; letter-spacing: 0.05em; }
+.polish-chars { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem; }
+.polish-char { padding: 0.6rem 0.8rem; background: white; border: 2px solid var(--border); border-radius: 2px; text-align: center; min-width: 60px; transition: all 0.2s; }
+.polish-char:hover { border-color: var(--accent); transform: translateY(-2px); }
+.polish-char-zh { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; color: var(--ink); }
+.polish-char-code { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent); font-weight: 700; letter-spacing: 0.05em; }
+.polish-char-tri { font-family: var(--font-serif); font-size: 0.75rem; color: var(--teal); }
+.polish-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.polish-stat { background: white; padding: 1rem; border: 1.5px solid var(--border); text-align: center; }
+.polish-stat-label { font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 0.15em; margin-bottom: 0.4rem; }
+.polish-stat-value { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+.polish-bars { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.polish-bar-row { display: flex; align-items: center; gap: 0.8rem; font-family: var(--font-mono); font-size: 0.75rem; }
+.polish-bar-label { min-width: 90px; color: var(--muted); letter-spacing: 0.05em; }
+.polish-bar-track { flex: 1; height: 20px; background: var(--card-hover); border-radius: 2px; overflow: hidden; }
+.polish-bar-fill { height: 100%; background: var(--accent); transition: width 0.8s ease; }
+.polish-bar-val { min-width: 40px; text-align: right; color: var(--ink); font-weight: 700; }
+
+/* Coming Soon */
+.coming-soon-hero {
+  text-align: center; padding: 4rem 2rem;
+  background: linear-gradient(135deg, var(--subtle) 0%, var(--card-hover) 100%);
+  border: 2px solid var(--gold); margin: 2rem 0; position: relative;
+}
+.coming-soon-badge { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--gold); color: white; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.2em; padding: 6px 20px; border-radius: 2px; }
+.coming-soon-emoji { font-size: 4rem; margin-bottom: 1rem; display: block; }
+.coming-soon-title { font-family: var(--font-serif); font-size: 2rem; font-weight: 700; letter-spacing: 0.15em; color: var(--ink); margin-bottom: 0.8rem; }
+.coming-soon-date { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.2em; margin-bottom: 2rem; }
+.coming-soon-desc { font-family: var(--font-serif); font-size: 1.05rem; line-height: 2; color: var(--ink); max-width: 580px; margin: 0 auto 2rem; letter-spacing: 0.04em; }
+.waitlist-form { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
+.waitlist-input { padding: 0.85rem 1.2rem; font-family: var(--font-serif); font-size: 1rem; background: white; border: 1.5px solid var(--border); min-width: 280px; color: var(--ink); border-radius: 2px; }
+.waitlist-input:focus { outline: none; border-color: var(--accent); }
+.waitlist-btn { padding: 0.85rem 1.6rem; background: var(--gold); color: white; font-family: var(--font-serif); font-size: 1rem; font-weight: 700; letter-spacing: 0.1em; border: none; cursor: pointer; border-radius: 2px; transition: all 0.2s; }
+.waitlist-btn:hover { background: color-mix(in srgb, var(--gold), black 10%); transform: translateY(-1px); }
+
+.make-char-cases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin: 2rem 0; }
+@media (max-width: 720px) { .make-char-cases { grid-template-columns: 1fr; } }
+.make-char-case { background: var(--card); border: 1.5px solid var(--border); padding: 1.5rem; text-align: center; }
+.make-char-tailo { font-family: var(--font-mono); font-size: 1.2rem; color: var(--teal); letter-spacing: 0.1em; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px dashed var(--border); font-weight: 700; }
+.make-char-old { font-family: var(--font-serif); font-size: 0.92rem; color: var(--muted); margin: 0.8rem 0; }
+.make-char-old .x { color: var(--accent); font-weight: 700; margin-right: 0.3rem; }
+.make-char-new { font-family: var(--font-mono); font-size: 0.8rem; color: var(--gold); padding: 0.5rem; background: var(--paper); border: 1px dashed var(--gold); letter-spacing: 0.05em; }
+
+/* Pricing */
+.pricing-heading { text-align: center; margin: 3rem 0 2rem; }
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.2rem; max-width: 900px; margin: 0 auto; }
+.price-card { background: var(--card); border: 2px solid var(--border); padding: 2rem 1.4rem; text-align: center; position: relative; transition: all 0.25s; }
+.price-card.featured { border-color: var(--accent); background: linear-gradient(180deg, var(--card-hover) 0%, var(--card) 100%); }
+.price-card.featured::before { content: '推薦'; position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; font-family: var(--font-serif); font-size: 0.75rem; font-weight: 700; padding: 4px 14px; letter-spacing: 0.15em; }
+.price-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+.price-name { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700; color: var(--ink); letter-spacing: 0.1em; margin-bottom: 0.8rem; }
+.price-value { font-family: var(--font-serif); font-size: 2rem; font-weight: 900; color: var(--accent); margin-bottom: 0.3rem; }
+.price-unit { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.15em; margin-bottom: 1.5rem; }
+.price-features { list-style: none; padding: 0; text-align: left; margin-bottom: 1.5rem; }
+.price-features li { font-size: 0.88rem; line-height: 1.9; padding: 0.3rem 0; color: var(--ink); border-bottom: 1px dashed var(--border); }
+.price-features li::before { content: '✓ '; color: var(--success); font-weight: 700; margin-right: 0.3rem; }
+
+/* ============ Forge Tiers (草稿/精煉/大師) ============ */
+.forge-tiers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+@media (max-width: 900px) { .forge-tiers { grid-template-columns: 1fr; } }
+
+.tier-card {
+  background: var(--card);
+  border: 2px solid var(--border);
+  padding: 2rem 1.6rem;
+  position: relative;
+  display: flex; flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.tier-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.08);
+}
+.tier-card.tier-mid {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, var(--card-hover) 0%, var(--card) 50%);
+}
+.tier-card.tier-master {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, #fff4d8 0%, var(--card) 60%);
+  position: relative;
+}
+.tier-card.tier-master::after {
+  content: '★';
+  position: absolute;
+  top: 0.8rem; right: 1rem;
+  color: var(--gold);
+  font-size: 1.4rem;
+  text-shadow: 0 2px 8px rgba(212, 161, 60, 0.4);
+}
+
+.tier-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  border-radius: 2px;
+  margin-bottom: 1.2rem;
+  align-self: flex-start;
+}
+.tier-free { background: var(--teal); color: white; }
+.tier-mid-badge { background: var(--accent); color: white; }
+.tier-master-badge { background: var(--gold); color: white; }
+
+.tier-name-zh {
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: var(--ink);
+  margin-bottom: 0.2rem;
+  line-height: 1;
+}
+.tier-name-tailo {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  color: var(--teal);
+  margin-bottom: 1.4rem;
+  font-weight: 700;
+}
+
+.tier-engine {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.7;
+  padding: 0.8rem 1rem;
+  background: var(--paper);
+  border-left: 3px solid var(--accent);
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.02em;
+}
+.tier-card.tier-master .tier-engine { border-left-color: var(--gold); }
+.tier-card:not(.tier-mid):not(.tier-master) .tier-engine { border-left-color: var(--teal); }
+
+.tier-features {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1.5rem;
+  flex: 1;
+}
+.tier-features li {
+  font-size: 0.92rem;
+  line-height: 1.85;
+  padding: 0.4rem 0;
+  color: var(--ink);
+  border-bottom: 1px dashed var(--border);
+  letter-spacing: 0.02em;
+}
+.tier-features li::before {
+  content: '✓ ';
+  color: var(--success);
+  font-weight: 700;
+  margin-right: 0.4rem;
+}
+
+.tier-suit {
+  font-family: var(--font-serif);
+  font-size: 0.82rem;
+  color: var(--accent);
+  padding: 0.8rem 0;
+  margin-bottom: 1rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+  font-style: italic;
+}
+
+.tier-price {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 1rem;
+  letter-spacing: 0.02em;
+}
+.tier-price-free { color: var(--teal); }
+.tier-unit {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  font-weight: 400;
+}
+
+.footer-patent { margin-top: 5rem; padding: 2rem; border-top: 2px solid var(--border); text-align: center; font-family: var(--font-serif); font-size: 0.88rem; color: var(--muted); line-height: 2; letter-spacing: 0.05em; }
+.footer-patent strong { color: var(--ink); font-weight: 700; }
+.footer-patent a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent); }
+.footer-patent a:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+.trust-inline { margin: 2rem auto 3rem; max-width: 620px; text-align: center; padding: 1.2rem 1.5rem; background: var(--subtle); border: 1px solid var(--border); font-family: var(--font-serif); font-size: 0.9rem; color: var(--muted); letter-spacing: 0.04em; }
+.trust-inline strong { color: var(--accent); font-weight: 700; }
+
+@media (max-width: 720px) {
+  header { padding: 0.8rem 1rem; gap: 0.8rem; }
+  .logo-zh { font-size: 1.3rem; }
+  nav.layers { padding: 0 0.5rem; }
+  .nav-btn { padding: 0.85rem 0.8rem; font-size: 0.8rem; }
+  .hero { padding: 2.5rem 1rem 2rem; }
+  .manifesto-strip { padding: 1.5rem 1rem; }
+  .step-card { padding: 1.5rem 1rem; min-height: auto; }
+  .version-switch button { padding: 0.25rem 0.6rem; font-size: 0.6rem; }
+  main { padding: 1.5rem 1rem; }
+}
+
+body.elderly { font-size: 1.3em; }
+body.elderly .hero-title { font-size: 3.2rem; line-height: 1.4; }
+body.elderly .layer-desc, body.elderly .step-desc { font-size: 1.1rem; line-height: 2.2; }
+body.elderly button { font-size: 1.1em; padding: 1rem 2rem; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--paper); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+</style>
+</head>
+<body class="pro">
+
+<header>
+  <div class="brand" onclick="goPage('home')">
+    <div class="logo-zh">台語好極</div>
+    <div class="logo-en">TAIGIFORGE</div>
+    <div class="tagline-mini">創作好記</div>
+  </div>
+  <div class="header-right">
+    <div class="version-switch" id="versionSwitch">
+      <button data-ver="friendly" onclick="setVersion('friendly')">← 親民版</button>
+      <button class="active" data-ver="pro" onclick="setVersion('pro')">專業版</button>
+    </div>
+    <button class="elderly-btn" id="elderlyBtn" onclick="toggleElderly()">字看無清楚？點這</button>
+  </div>
+</header>
+
+<nav class="layers">
+  <button class="nav-btn active" data-page="home" onclick="goPage('home')"><span>🏠</span><span>首頁</span></button>
+  <button class="nav-btn" data-page="type" onclick="goPage('type')"><span class="nav-num">①</span><span>⌨️</span><span>輸入</span></button>
+  <button class="nav-btn" data-page="forge" onclick="goPage('forge')"><span class="nav-num">②</span><span>💡</span><span>生成</span></button>
+  <button class="nav-btn" data-page="polish" onclick="goPage('polish')"><span class="nav-num">③</span><span>🖌️</span><span>批改</span></button>
+  <button class="nav-btn" data-page="gallery" onclick="goPage('gallery')"><span class="nav-num">④</span><span>📚</span><span>作品</span></button>
+  <button class="nav-btn" data-page="voice" onclick="goPage('voice')"><span class="nav-num">⑤</span><span>🎙️</span><span>語音</span><span class="badge-soon">SOON</span></button>
+  <button class="nav-btn" data-page="makechar" onclick="goPage('makechar')"><span class="nav-num">⑥</span><span>🖋️</span><span>造字</span><span class="badge-soon">SOON</span></button>
+</nav>
+
+<main>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="hero-ornament">TAIGIFORGE · MADE IN TAIWAN</div>
+    <h1 class="hero-title">台語好極<span class="comma">，</span>創作好記</h1>
+    <div class="hero-sub">用台語寫文章足感心</div>
+    <p class="hero-secondary">
+      袂曉台羅？拍國語嘛會使。<br>
+      阿母的話，囡仔的歌，予朋友的祝福——<br>
+      用台語寫出來，這就是咱台灣的文化。
+    </p>
+    <button class="hero-cta" onclick="goPage('forge')"><span>來試寫一句</span><span class="arrow">→</span></button>
+  </section>
+
+  <div class="manifesto-strip">
+    <div class="line">台語語句語料 · 集體創造 · 好用的輸出</div>
+    <div class="line line-2">用數位，予失落的古老語言找回靈魂再生</div>
+  </div>
+
+  <section class="three-steps">
+    <div class="steps-heading">免學就會曉</div>
+    <div class="steps-grid">
+      <div class="step-card" onclick="goPage('forge')">
+        <div class="step-num">STEP 01</div>
+        <span class="step-emoji">🎁</span>
+        <div class="step-title">想欲寫啥物？</div>
+        <div class="step-desc">揀一个場景（給阿母 / 予朋友 / 謝飯禱告），寫你想講的話</div>
+      </div>
+      <div class="step-card" onclick="goPage('polish')">
+        <div class="step-num">STEP 02</div>
+        <span class="step-emoji">✨</span>
+        <div class="step-title">予 AI 變媠</div>
+        <div class="step-desc">AI 翻做台語 + 能量分析，幫你揣出上有力的版本</div>
+      </div>
+      <div class="step-card" onclick="goPage('gallery')">
+        <div class="step-num">STEP 03</div>
+        <span class="step-emoji">📤</span>
+        <div class="step-title">分享出去</div>
+        <div class="step-desc">做成媠媠的卡片，送予親情隔壁佮 LINE 的朋友看</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section">
+    <h2 class="section-heading">看別人按怎寫</h2>
+    <div class="section-heading-sub">REAL EXAMPLES</div>
+    <div class="demo-grid">
+      <div class="demo-card">
+        <div class="demo-scene">予阿母生日祝福</div>
+        <div class="demo-context">「想共阿母講生日快樂，毋過欲較有感情咧」</div>
+        <div class="demo-result-zh">阿母，無你就無我。</div>
+        <div class="demo-result-tailo">Á-bú, bô lí tō bô guá.</div>
+        <div class="demo-meta">
+          <span class="energy">能量 8.7 / 10</span>
+          <span class="scene-tag">抒情 · 000-000</span>
+        </div>
+        <div class="demo-share">一鍵做成圖卡送 LINE</div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-scene">謝飯禱告</div>
+        <div class="demo-context">「想共囡仔做伙講台語謝飯禱告，欲短的」</div>
+        <div class="demo-result-zh">天父，多謝祢的飯，予阮食飽飽。</div>
+        <div class="demo-result-tailo">Thiⁿ-pē, to-siā lí ê pn̄g, hōo gún chia̍h pá-pá.</div>
+        <div class="demo-meta">
+          <span class="energy">能量 7.2 / 10</span>
+          <span class="scene-tag">禱告 · 100-000</span>
+        </div>
+        <div class="demo-share">印出來貼餐桌</div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-scene">朋友嫁查某囝</div>
+        <div class="demo-context">「想用台語寫祝福，較文藝的」</div>
+        <div class="demo-result-zh">一枝草，一點露，新人作伙好親家。</div>
+        <div class="demo-result-tailo">Tsi̍t ki tsháu, tsi̍t tiám lōo, sin-lâng tsò-hué hó tshin-ke.</div>
+        <div class="demo-meta">
+          <span class="energy">能量 9.1 / 10</span>
+          <span class="scene-tag">祝福 · 110-110</span>
+        </div>
+        <div class="demo-share">紅包袋上印</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="trust-inline">
+    ✨ 已陪 <strong>1,237</strong> 人寫出 <strong>3,841</strong> 句台語<br>
+    免費試 <strong>5 擺</strong>，免註冊
+  </div>
+
+  <section class="layers-section">
+    <h2 class="section-heading">四層工坊 + 兩項未來</h2>
+    <div class="section-heading-sub">FOUR LAYERS · TWO COMING SOON</div>
+    <div class="layer-cards">
+
+      <div class="layer-card" onclick="goPage('type')">
+        <div class="layer-icon">⌨️</div>
+        <div class="layer-num">① 輸入層 TAIGITYPE</div>
+        <div class="layer-title-zh">台語打字</div>
+        <div class="layer-title-en">TYPE</div>
+        <div class="layer-desc">拍啥物字？台語打字，免學就會曉，9 萬字予你用。會曉揤就會曉拍台語。</div>
+        <div class="layer-meta"><span>92,874 字 · MVP 已上線</span><span class="price">免費</span></div>
+      </div>
+
+      <div class="layer-card" onclick="goPage('forge')">
+        <div class="layer-icon">💡</div>
+        <div class="layer-num">② 生成層 FORGE</div>
+        <div class="layer-title-zh">文章產生</div>
+        <div class="layer-title-en">FORGE</div>
+        <div class="layer-desc">袂曉拍台語？拍國語，AI 翻予你。揀一个你佮意的（書信/詩…），3 秒生草稿。</div>
+        <div class="layer-meta"><span>台語 AI 文章產生器</span><span class="price paid">免費 / 付費</span></div>
+      </div>
+
+      <div class="layer-card core" onclick="goPage('polish')">
+        <div class="layer-icon">🖌️</div>
+        <div class="layer-num">③ 批改層 ENERGY</div>
+        <div class="layer-title-zh">能量批改</div>
+        <div class="layer-title-en">POLISH</div>
+        <div class="layer-desc">寫好矣，欲按怎予人感動？共「我愛你」變成「無你就無我」，感覺差別真大。</div>
+        <div class="layer-meta"><span>獨家三維格碼技術</span><span class="price paid">免費 + 付費</span></div>
+      </div>
+
+      <div class="layer-card" onclick="goPage('gallery')">
+        <div class="layer-icon">📚</div>
+        <div class="layer-num">④ 作品庫 GALLERY</div>
+        <div class="layer-title-zh">發表分享</div>
+        <div class="layer-title-en">GALLERY</div>
+        <div class="layer-desc">寫完矣，做成媠媠的卡片，送予親情隔壁佮 LINE 的朋友看。</div>
+        <div class="layer-meta"><span>1080×1080 分享卡</span><span class="price">免費</span></div>
+      </div>
+
+      <div class="layer-card soon" onclick="goPage('voice')">
+        <div class="layer-icon">🎙️</div>
+        <div class="layer-num">⑤ 語音層 VOICE</div>
+        <div class="layer-title-zh">語音創作</div>
+        <div class="layer-title-en">VOICE</div>
+        <div class="layer-desc">免拍字，講話就會使。即時語音翻台語，錄音檔嘛會當。</div>
+        <div class="layer-meta"><span>2026 Q3 上線</span><span class="price">加等候單</span></div>
+      </div>
+
+      <div class="layer-card soon" onclick="goPage('makechar')">
+        <div class="layer-icon">🖋️</div>
+        <div class="layer-num">⑥ 造字層 MAKE</div>
+        <div class="layer-title-zh">台語造字</div>
+        <div class="layer-title-en">MAKE</div>
+        <div class="layer-desc">有聲音無字？基於漢學六書 + 三維格碼，量身打造新字。</div>
+        <div class="layer-meta"><span>2027 Q1 上線</span><span class="price">加等候單</span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="footer-patent">
+    <strong>Made in Taiwan · 台灣出產</strong> · 發明專利 <strong>I914853</strong> · <strong>9 萬字字庫</strong><br>
+    <a href="#" onclick="goPage('about'); return false;">想欲看技術細節？遮拄踮落，牽佮專業版</a>
+  </footer>
+
+</div>
+
+<!-- TYPE -->
+<div class="page" id="page-type">
+  <header class="page-header">
+    <div class="page-num">LAYER ① · TAIGITYPE</div>
+    <h1 class="page-title">拍啥物字？</h1>
+    <div class="page-sub">台語打字，免學就會曉</div>
+  </header>
+  <section class="content-section">
+    <div class="content-block">
+      <h3>會曉揤就會曉拍台語</h3>
+      <p>拍「ㄒㄧㄚ̍ㄏ」會跳出「食」、「合」、「俠」… 愈拍愈𠢕。</p>
+      <p class="muted">三種輸入法任你揀：台羅、注音、八格碼。9 萬字候選字庫。</p>
+    </div>
+    <div class="type-demo">
+      <div class="type-input-row">
+        <div class="type-input" id="typeInput">siá</div>
+        <div class="type-arrow">→</div>
+      </div>
+      <div class="type-candidates">
+        <div class="type-cand" onclick="selectChar('寫')">寫<span class="cand-tailo">siá · 110 兌</span></div>
+        <div class="type-cand" onclick="selectChar('舍')">舍<span class="cand-tailo">sià · 110 兌</span></div>
+        <div class="type-cand" onclick="selectChar('社')">社<span class="cand-tailo">siā · 110 兌</span></div>
+        <div class="type-cand" onclick="selectChar('謝')">謝<span class="cand-tailo">siā · 110 兌</span></div>
+      </div>
+    </div>
+    <div class="content-block">
+      <h3>示範：春心天人</h3>
+      <p>形而上學概念？嘛會當拍。台語不是只有口語，嘛有深厚的漢學底蘊。</p>
+    </div>
+  </section>
+</div>
+
+<!-- FORGE -->
+<div class="page" id="page-forge">
+  <header class="page-header">
+    <div class="page-num">LAYER ② · FORGE</div>
+    <h1 class="page-title">袂曉拍台語？</h1>
+    <div class="page-sub">拍國語，AI 翻予你</div>
+  </header>
+  <section class="content-section">
+    <div class="content-block">
+      <h3>想欲予阿母一句話？</h3>
+      <p>拍國語、揀一个你佮意的（書信 / 詩 / 禱文…），就出現一篇台語文章予你，你才閣修改你佮意的，予你數念的阿母看。</p>
+    </div>
+    <div class="forge-demo">
+      <div class="forge-input-label">✏️ 你想講啥物？（拍國語嘛會使）</div>
+      <textarea class="forge-textarea" id="forgeInput">我想跟阿母說生日快樂，但要更有感情一點</textarea>
+      <div class="forge-input-label" style="margin-top:1rem">⚡ 揀一个 AI 引擎：</div>
+      <div class="forge-options">
+        <div class="forge-option selected" data-tier="free">
+          <span style="font-weight:700">草稿</span>
+          <span style="font-size:0.7em; opacity:0.7; margin-left:0.3rem">tsháu-kó · 免費</span>
+        </div>
+        <div class="forge-option" data-tier="mid">
+          <span style="font-weight:700">精煉</span>
+          <span style="font-size:0.7em; opacity:0.7; margin-left:0.3rem">tsing-liān · NT$99</span>
+        </div>
+        <div class="forge-option" data-tier="master">
+          <span style="font-weight:700">大師</span>
+          <span style="font-size:0.7em; opacity:0.7; margin-left:0.3rem">tāi-su · NT$199</span>
+        </div>
+      </div>
+
+      <div class="forge-input-label" style="margin-top:1rem">🎨 揀一个風格：</div>
+      <div class="forge-options">
+        <div class="forge-option selected">散文</div>
+        <div class="forge-option">詩</div>
+        <div class="forge-option">書信</div>
+        <div class="forge-option">日記</div>
+        <div class="forge-option">禱文</div>
+        <div class="forge-option">童謠</div>
+        <div class="forge-option">諺語</div>
+        <div class="forge-option">金句</div>
+      </div>
+      <button class="forge-button" onclick="showForgeResult()">⚡ AI 翻予我</button>
+      <div class="forge-result" id="forgeResult" style="display:none">
+        <div class="forge-result-zh">阿母，無你就無我。一生感謝祢的愛。</div>
+        <div class="forge-result-tailo">Á-bú, bô lí tō bô guá. It-seng kám-siā lí ê ài.</div>
+        <div class="demo-meta" style="margin-top:1rem; border:none; padding:0">
+          <span class="energy">能量 8.7 / 10</span>
+          <span class="scene-tag">抒情 · 000-000</span>
+        </div>
+      </div>
+    </div>
+    <div class="content-block">
+      <h3>三个等級·任你揀</h3>
+      <p>仝一句話，AI 引擎無仝，效果差袂少。免費先試手氣，重要場合用大師。</p>
+    </div>
+
+    <!-- 三個方案卡片 -->
+    <div class="forge-tiers">
+
+      <div class="tier-card">
+        <div class="tier-badge tier-free">免費</div>
+        <div class="tier-name-zh">草稿</div>
+        <div class="tier-name-tailo">tsháu-kó</div>
+        <div class="tier-engine">廖教授 BRONCI MT<br>+ 劍橋分析組合演算</div>
+        <ul class="tier-features">
+          <li>學術級台語翻譯</li>
+          <li>台羅自動標註</li>
+          <li>純台灣 AI 引擎</li>
+          <li>每日 5 擺免費</li>
+        </ul>
+        <div class="tier-suit">適合：日常練習、學台語、寫日記</div>
+        <div class="tier-price tier-price-free">NT$ 0</div>
+        <button class="forge-button" style="width:100%">免費試</button>
+      </div>
+
+      <div class="tier-card tier-mid">
+        <div class="tier-badge tier-mid-badge">中品質</div>
+        <div class="tier-name-zh">精煉</div>
+        <div class="tier-name-tailo">tsing-liān</div>
+        <div class="tier-engine">Google Gemini<br>+ 劍橋分析批改層</div>
+        <ul class="tier-features">
+          <li>翻譯速度快 3 秒</li>
+          <li>結構穩定、語感順</li>
+          <li>能量分析批改</li>
+          <li>無限次數使用</li>
+          <li>8 大文體風格</li>
+        </ul>
+        <div class="tier-suit">適合：朋友書信、社群貼文、週報</div>
+        <div class="tier-price">NT$ 99 <span class="tier-unit">/月</span></div>
+        <button class="forge-button" style="width:100%">開始訂</button>
+      </div>
+
+      <div class="tier-card tier-master">
+        <div class="tier-badge tier-master-badge">高品質</div>
+        <div class="tier-name-zh">大師</div>
+        <div class="tier-name-tailo">tāi-su</div>
+        <div class="tier-engine">Anthropic Claude<br>+ 能量優化 + 文體調校</div>
+        <ul class="tier-features">
+          <li>頂級語感、文學深度</li>
+          <li>三維格碼能量優化</li>
+          <li>三个候選版本</li>
+          <li>自動修潤建議</li>
+          <li>無限次數使用</li>
+          <li>客製樣板</li>
+        </ul>
+        <div class="tier-suit">適合：婚喪喜慶、講章、家書、重要時刻</div>
+        <div class="tier-price">NT$ 199 <span class="tier-unit">/月</span></div>
+        <button class="forge-button" style="width:100%">用大師</button>
+      </div>
+
+    </div>
+
+    <div class="trust-inline" style="margin-top:2.5rem">
+      💡 <strong>建議</strong>：日常用「草稿」練手氣，遇到重要場合升「大師」<br>
+      <span style="font-size:0.85em">（精煉、大師訂閱用戶，包含批改層全功能）</span>
+    </div>
+  </section>
+</div>
+
+<!-- POLISH -->
+<div class="page" id="page-polish">
+  <header class="page-header">
+    <div class="page-num">LAYER ③ · ENERGY POLISH</div>
+    <h1 class="page-title">寫好矣，欲按怎予人感動？</h1>
+    <div class="page-sub">台語好極 AI 幫你攢便便</div>
+  </header>
+  <section class="content-section">
+    <div class="content-block">
+      <h3>共「我愛你」變成「無你就無我」</h3>
+      <p>感覺差別真大？這就是「能量」。</p>
+      <p>阮幫你揣出逐句話上有力的版本予你。</p>
+    </div>
+    <div class="polish-demo">
+      <div class="polish-sentence">用台語寫文章足感心</div>
+      <div class="polish-chars">
+        <div class="polish-char"><div class="polish-char-zh">用</div><div class="polish-char-code">000</div><div class="polish-char-tri">坤</div></div>
+        <div class="polish-char"><div class="polish-char-zh">台</div><div class="polish-char-code">000</div><div class="polish-char-tri">坤</div></div>
+        <div class="polish-char"><div class="polish-char-zh">語</div><div class="polish-char-code">010</div><div class="polish-char-tri">坎</div></div>
+        <div class="polish-char"><div class="polish-char-zh">寫</div><div class="polish-char-code">110</div><div class="polish-char-tri">兌</div></div>
+        <div class="polish-char"><div class="polish-char-zh">文</div><div class="polish-char-code">010</div><div class="polish-char-tri">坎</div></div>
+        <div class="polish-char"><div class="polish-char-zh">章</div><div class="polish-char-code">000</div><div class="polish-char-tri">坤</div></div>
+        <div class="polish-char"><div class="polish-char-zh">足</div><div class="polish-char-code">000</div><div class="polish-char-tri">坤</div></div>
+        <div class="polish-char"><div class="polish-char-zh">感</div><div class="polish-char-code">000</div><div class="polish-char-tri">坤</div></div>
+        <div class="polish-char"><div class="polish-char-zh">心</div><div class="polish-char-code">110</div><div class="polish-char-tri">兌</div></div>
+      </div>
+      <div class="polish-stats">
+        <div class="polish-stat"><div class="polish-stat-label">能量組合</div><div class="polish-stat-value">000-110</div></div>
+        <div class="polish-stat"><div class="polish-stat-label">場域</div><div class="polish-stat-value">文化承諾</div></div>
+        <div class="polish-stat"><div class="polish-stat-label">純度</div><div class="polish-stat-value">78%</div></div>
+        <div class="polish-stat"><div class="polish-stat-label">評分</div><div class="polish-stat-value">9.2 / 10</div></div>
+      </div>
+      <div class="polish-bars">
+        <div class="polish-bar-row"><div class="polish-bar-label">000 坤</div><div class="polish-bar-track"><div class="polish-bar-fill" style="width:56%"></div></div><div class="polish-bar-val">56%</div></div>
+        <div class="polish-bar-row"><div class="polish-bar-label">110 兌</div><div class="polish-bar-track"><div class="polish-bar-fill" style="width:22%; background:var(--gold)"></div></div><div class="polish-bar-val">22%</div></div>
+        <div class="polish-bar-row"><div class="polish-bar-label">010 坎</div><div class="polish-bar-track"><div class="polish-bar-fill" style="width:22%; background:var(--teal)"></div></div><div class="polish-bar-val">22%</div></div>
+      </div>
+    </div>
+    <div class="content-block">
+      <h3>批改三階段</h3>
+      <p>① <strong>斷句分析</strong>：系統標節奏、重點、能量分布 — <em>免費</em></p>
+      <p>② <strong>詞句替換</strong>：你自己改，系統重新分析能量 — <em>免費</em></p>
+      <p>③ <strong>AI 改寫建議</strong>：系統主動給更美更有力的改寫 — <em>付費</em></p>
+    </div>
+  </section>
+</div>
+
+<!-- GALLERY -->
+<div class="page" id="page-gallery">
+  <header class="page-header">
+    <div class="page-num">LAYER ④ · GALLERY</div>
+    <h1 class="page-title">寫完矣</h1>
+    <div class="page-sub">做成媠媠的卡片，送予親情隔壁佮 LINE 的朋友看</div>
+  </header>
+  <section class="content-section">
+    <div class="content-block">
+      <h3>你的台語作品收佇遮</h3>
+      <p>每一篇攏會當做成 <strong>1080×1080</strong> 的卡片，欲落來、欲印、欲分享予親情朋友看，攏會當。</p>
+    </div>
+    <div class="pricing-heading">
+      <h2 class="section-heading">訂閱方案</h2>
+      <div class="section-heading-sub">PRICING PLANS</div>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-name">免費</div>
+        <div class="price-value">NT$ 0</div>
+        <div class="price-unit">試 5 擺</div>
+        <ul class="price-features">
+          <li>基礎台語翻譯</li>
+          <li>3 大風格</li>
+          <li>斷句能量分析</li>
+          <li>5 篇作品庫</li>
+        </ul>
+        <button class="forge-button" style="width:100%">免費試用</button>
+      </div>
+      <div class="price-card featured">
+        <div class="price-name">個人</div>
+        <div class="price-value">NT$ 99</div>
+        <div class="price-unit">每月</div>
+        <ul class="price-features">
+          <li>8 大風格全開</li>
+          <li>長篇文章</li>
+          <li>AI 改寫建議</li>
+          <li>無限作品庫</li>
+          <li>客製樣板</li>
+        </ul>
+        <button class="forge-button" style="width:100%">開始訂閱</button>
+      </div>
+      <div class="price-card">
+        <div class="price-name">家庭</div>
+        <div class="price-value">NT$ 199</div>
+        <div class="price-unit">每月 · 4 人</div>
+        <ul class="price-features">
+          <li>個人版全部功能</li>
+          <li>4 人共用帳號</li>
+          <li>家族作品合集</li>
+          <li>族譜綁定</li>
+        </ul>
+        <button class="forge-button" style="width:100%">予家庭用</button>
+      </div>
+      <div class="price-card">
+        <div class="price-name">教會</div>
+        <div class="price-value">NT$ 999</div>
+        <div class="price-unit">每月 · 無上限</div>
+        <ul class="price-features">
+          <li>整間教會共用</li>
+          <li>禱告大軍 6,827 句</li>
+          <li>台語週報範本</li>
+          <li>讀經 Bot 整合</li>
+          <li>客製教會標誌</li>
+        </ul>
+        <button class="forge-button" style="width:100%">教會聯絡</button>
+      </div>
+    </div>
+    <div class="trust-inline" style="margin-top:3rem">
+      彰化中會 71 間教會推廣中 · 長老教會網絡專屬優惠
+    </div>
+  </section>
+</div>
+
+<!-- VOICE -->
+<div class="page" id="page-voice">
+  <header class="page-header">
+    <div class="page-num">LAYER ⑤ · VOICE CREATION</div>
+    <h1 class="page-title">語音創作</h1>
+    <div class="page-sub">免拍字，講話就會使</div>
+  </header>
+  <section class="content-section">
+    <div class="coming-soon-hero">
+      <div class="coming-soon-badge">COMING SOON</div>
+      <span class="coming-soon-emoji">🎙️</span>
+      <div class="coming-soon-title">2026 Q3 上線</div>
+      <div class="coming-soon-date">INTERNAL TESTING</div>
+      <p class="coming-soon-desc">
+        予長輩、予視障者、予無閒拍字的你：<br>
+        講國語，AI 翻台語；上傳錄音檔，自動變台語文。<br>
+        予阿公阿媽的口述故事變成台語書。
+      </p>
+      <form class="waitlist-form" onsubmit="event.preventDefault(); alert('多謝！等上線會寄予你');">
+        <input type="email" class="waitlist-input" placeholder="你的 Email（搶先名單）" required>
+        <button type="submit" class="waitlist-btn">加入等候單</button>
+      </form>
+    </div>
+    <div class="content-block">
+      <h3>兩個功能</h3>
+      <p><strong>即時語音翻台語</strong>：點麥克風 → 講國語 → 即時字幕 → 3 秒翻台語 + 台羅 + 語音朗讀</p>
+      <p><strong>錄音檔翻台語</strong>：上傳 mp3/m4a/wav → 後端 ASR → 翻台語 → 批改 + 作品庫存檔</p>
+    </div>
+    <div class="content-block">
+      <h3>應用場景</h3>
+      <p>☎️ 長輩把手機 LINE 語音轉台語字</p>
+      <p>⛪ 傳道人把國語講道轉台語稿</p>
+      <p>📰 記者訪問錄音 → 台語字幕 + 漢字</p>
+      <p>👴 家族長輩口述歷史 → 永久保存</p>
+    </div>
+  </section>
+</div>
+
+<!-- MAKE CHAR -->
+<div class="page" id="page-makechar">
+  <header class="page-header">
+    <div class="page-num">LAYER ⑥ · MAKE CHAR</div>
+    <h1 class="page-title">台語造字</h1>
+    <div class="page-sub">有聲音無字？為伊量身打造一个新字</div>
+  </header>
+  <section class="content-section">
+    <div class="coming-soon-hero">
+      <div class="coming-soon-badge">COMING SOON</div>
+      <span class="coming-soon-emoji">🖋️</span>
+      <div class="coming-soon-title">2027 Q1 上線</div>
+      <div class="coming-soon-date">PATENT APPLICATION IN PROGRESS</div>
+      <p class="coming-soon-desc">
+        台語有真濟聲音，無漢字通寫。<br>
+        阮基於漢學六書原理 + 劍橋分析三維格碼，<br>
+        為每一个無字的台語音節，量身打造新字。<br>
+        <em>有音、有形、有義，三合一。</em>
+      </p>
+      <form class="waitlist-form" onsubmit="event.preventDefault(); alert('多謝！2027 上線會寄予你');">
+        <input type="email" class="waitlist-input" placeholder="你的 Email（搶先試用）" required>
+        <button type="submit" class="waitlist-btn">加入等候單</button>
+      </form>
+    </div>
+    <div class="content-block">
+      <h3>造字原理</h3>
+      <p>過去，有人用「歹」「囥」「遐」等古字拼湊；有人用羅馬字代替；有人造新字，卻無系統。</p>
+      <p>TaigiForge 造字系統，基於漢學「<strong>六書</strong>」原理 + 劍橋分析<strong>三維格碼</strong>，為每個無字的台語音節，量身打造新字。</p>
+    </div>
+    <div class="content-block">
+      <h3>三個示範案例</h3>
+      <div class="make-char-cases">
+        <div class="make-char-case">
+          <div class="make-char-tailo">gông</div>
+          <div class="make-char-old"><span class="x">過去</span>昂 / 戇 / 悾</div>
+          <div class="make-char-new">新字待 Patent 3 公開</div>
+        </div>
+        <div class="make-char-case">
+          <div class="make-char-tailo">khiáp</div>
+          <div class="make-char-old"><span class="x">過去</span>洽 / 歉 / 缺</div>
+          <div class="make-char-new">新字待 Patent 3 公開</div>
+        </div>
+        <div class="make-char-case">
+          <div class="make-char-tailo">hann</div>
+          <div class="make-char-old"><span class="x">過去</span>啥 / 惜</div>
+          <div class="make-char-new">新字待 Patent 3 公開</div>
+        </div>
+      </div>
+    </div>
+    <div class="content-block">
+      <h3>上線時程</h3>
+      <p>🔬 <strong>2026 Q2-Q3</strong>：內部測試 + Patent 3 申請</p>
+      <p>🔬 <strong>2026 Q4</strong>：Alpha 封閉測試</p>
+      <p>🎉 <strong>2027 Q1</strong>：正式上線</p>
+    </div>
+  </section>
+</div>
+
+<!-- ABOUT -->
+<div class="page" id="page-about">
+  <header class="page-header">
+    <div class="page-num">ABOUT</div>
+    <h1 class="page-title">技術細節</h1>
+    <div class="page-sub">Made in Taiwan · 台灣出產</div>
+  </header>
+  <section class="content-section">
+    <div class="content-block">
+      <h3>劍橋分析股份有限公司</h3>
+      <p>專注於台語漢字 AI、語意主權系統、文化保存技術。</p>
+    </div>
+    <div class="content-block">
+      <h3>發明專利 I914853</h3>
+      <p><strong>「基於漢學理論之人工智慧台語漢字查詢系統及其使用方法」</strong></p>
+      <p class="muted">有效期 2026/2/11 — 2044/6/30</p>
+      <p>進階方法專利申請中 · 獨家三維格碼技術</p>
+    </div>
+    <div class="content-block">
+      <h3>核心技術</h3>
+      <p><strong>🟢 92,874 字</strong>台語漢字字典（100% 標完 phoneme_code）</p>
+      <p><strong>🟢 8 卦 3 維</strong>能量格碼系統</p>
+      <p><strong>🟢 130,610 筆</strong>綠燈語料（可商用）</p>
+      <p><strong>🟢 真實鐵律</strong>驗證：20 萬筆樣本證明結構穩定</p>
+    </div>
+    <div class="content-block">
+      <h3>核心哲學</h3>
+      <p><em>「AI 做草稿，用戶做能量。」</em></p>
+      <p>AI 快速產出華語草稿（打破空白頁恐懼），真實台語使用者修潤（結構回到鐵律），系統學習修正（文化保存循環）。</p>
+    </div>
+  </section>
+</div>
+
+</main>
+
+<script>
+function goPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.page === page);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setVersion(ver) {
+  if (ver === 'friendly') {
+    // 親民版 = 跳回主站（TaigiForgeCard.html）
+    window.location.href = 'TaigiForgeCard.html';
+    return;
+  }
+  // 專業版 = 當前頁
+  document.body.classList.add('pro');
+  document.querySelectorAll('#versionSwitch button').forEach(b => {
+    b.classList.toggle('active', b.dataset.ver === ver);
+  });
+  try { localStorage.setItem('tf_ver', ver); } catch(e) {}
+}
+
+function toggleElderly() {
+  document.body.classList.toggle('elderly');
+  const btn = document.getElementById('elderlyBtn');
+  btn.textContent = document.body.classList.contains('elderly') ? '返原本大細' : '字看無清楚？點這';
+}
+
+function selectChar(ch) { alert('你揀的字：「' + ch + '」已加到文章中（示範）'); }
+
+function showForgeResult() {
+  const el = document.getElementById('forgeResult');
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// forge option 分組切換（風格 + 引擎）
+document.addEventListener('click', e => {
+  const opt = e.target.closest('.forge-option');
+  if (!opt) return;
+  const isTier = opt.hasAttribute('data-tier');
+  const siblings = isTier
+    ? document.querySelectorAll('.forge-option[data-tier]')
+    : document.querySelectorAll('.forge-option:not([data-tier])');
+  siblings.forEach(s => s.classList.remove('selected'));
+  opt.classList.add('selected');
+});
+
+// v2: 這頁永遠是專業版，不讀 localStorage（避免跳頁迴圈）
+// body 的 pro class 已在 HTML 上直接設定
+</script>
+
+</body>
+</html>
