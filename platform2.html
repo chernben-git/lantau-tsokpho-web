@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>台羅合成工作室 v3 · 劍橋分析內部</title>
+<title>台羅合成工作室 v4 · 劍橋分析內部</title>
 <style>
   * { box-sizing: border-box; }
   body { 
@@ -157,18 +157,13 @@
   }
   .voice-mini.active { background: #ffd700; color: #0a0a1e; border-color: #ffd700; }
   
-  .rate-slider { display: flex; align-items: center; gap: 10px; }
-  .rate-slider input[type="range"] { flex: 1; }
-  .rate-value { 
-    background: #ffd700; 
-    color: #0a0a1e; 
-    padding: 4px 8px; 
-    border-radius: 3px; 
-    font-weight: bold;
-    min-width: 45px;
-    text-align: center;
-    font-size: 13px;
+  .pause-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 6px;
   }
+  .pause-row input { font-family: 'Noto Sans TC', sans-serif; font-size: 13px; }
   
   .result-card {
     background: #0a0a1e;
@@ -234,7 +229,7 @@
     font-weight: bold;
     margin-left: 8px;
   }
-  .mode-badge.tailo { background: #0f3460; color: #ffd700; }
+  .mode-badge.roma { background: #ff4757; color: white; }
   .mode-badge.hanzi { background: #ffd700; color: #0a0a1e; }
 </style>
 </head>
@@ -243,25 +238,24 @@
 <div class="container">
 
 <header>
-  <h1>🔬 台羅合成工作室 v3<span class="internal">INTERNAL</span></h1>
+  <h1>🔬 台羅合成工作室 v4<span class="internal">INTERNAL</span></h1>
   <div class="meta">劍橋分析股份有限公司 · 9 萬字台羅 → 有聲化引擎</div>
   <div class="spec">
-    📘 <b>架構</b>：Netlify → i5 中繼 (asr.bitfull.tw) → 廖教授 TTS · 
-    <b>台羅 → plain_text</b> · <b>漢字 → characters</b>
+    📘 <b>架構</b>：Netlify → i5 (asr.bitfull.tw v2.11) → 廖教授 TTS · 
+    <b>台羅 → roma</b> · <b>漢字 → characters</b>
   </div>
 </header>
 
 <div class="layout">
 
-  <!-- 左側：主工作區 -->
   <div>
 
     <div class="section">
       <h3>📝 輸入模式</h3>
       <div class="texttype-tabs">
-        <div class="texttype-tab active" data-type="plain_text">
+        <div class="texttype-tab active" data-type="roma">
           <span class="big">🔤 台羅拼音</span>
-          <span class="small">textType = plain_text · 廖教授數字調格式</span>
+          <span class="small">textType = roma · 廖教授數字調格式</span>
         </div>
         <div class="texttype-tab" data-type="characters">
           <span class="big">🈁 台語漢字</span>
@@ -363,7 +357,6 @@
     </div>
   </div>
 
-  <!-- 右側：參數 -->
   <div>
     <div class="section">
       <h3>🎙️ 台語語者</h3>
@@ -373,21 +366,25 @@
         <div class="voice-mini" data-voice="nan-TW-vs2-F01">女 F01</div>
         <div class="voice-mini" data-voice="nan-TW-vs2-F02">女 F02</div>
       </div>
-      <div style="color:#888;font-size:11px;margin-top:6px">
-        ⚠️ i5 中繼目前僅 male/female 兩種（server.js v2.10）
-      </div>
     </div>
     
     <div class="section">
-      <h3>⏱️ 語速</h3>
-      <div class="rate-slider">
-        <span style="color:#888;font-size:11px">慢</span>
-        <input type="range" id="rateSlider" min="0.5" max="1.5" step="0.05" value="1.0">
-        <span style="color:#888;font-size:11px">快</span>
-        <div class="rate-value" id="rateValue">1.00x</div>
+      <h3>⏸️ 停頓控制</h3>
+      <div style="color:#888;font-size:11px;margin-bottom:6px">
+        留空 = 用廖教授後端預設（150 / 300 ms）
+      </div>
+      <div class="pause-row">
+        <div>
+          <label style="margin:0">短停頓 ms</label>
+          <input type="number" id="shortPause" placeholder="150" min="0" max="2000">
+        </div>
+        <div>
+          <label style="margin:0">長停頓 ms</label>
+          <input type="number" id="longPause" placeholder="300" min="0" max="3000">
+        </div>
       </div>
       <div style="color:#888;font-size:11px;margin-top:6px">
-        ⚠️ i5 中繼目前固定 1.0x（server.js v2.10 未開放 speakingRate）
+        💡 古文建議 200/500，連續念建議 100/200
       </div>
     </div>
     
@@ -403,8 +400,8 @@
           <div class="label-stat">總秒數</div>
         </div>
         <div class="stat">
-          <div class="value" id="totalKB">0</div>
-          <div class="label-stat">歷史筆數</div>
+          <div class="value" id="successRate">—</div>
+          <div class="label-stat">成功率</div>
         </div>
       </div>
     </div>
@@ -417,11 +414,10 @@
 <script>
 const API_URL = window.location.origin + '/.netlify/functions/tailo-tts';
 
-let currentTextType = 'plain_text';
+let currentTextType = 'roma';
 let currentVoice    = 'nan-TW-vs2-M02';
-let stats = { count: 0, seconds: 0 };
+let stats = { count: 0, seconds: 0, fail: 0 };
 
-// textType 切換
 document.querySelectorAll('.texttype-tab').forEach(tab => {
   tab.onclick = () => {
     document.querySelectorAll('.texttype-tab').forEach(t => t.classList.remove('active'));
@@ -429,8 +425,8 @@ document.querySelectorAll('.texttype-tab').forEach(tab => {
     currentTextType = tab.dataset.type;
     
     const input = document.getElementById('mainInput');
-    if (currentTextType === 'plain_text') {
-      input.placeholder = '輸入廖教授台羅數字調（例：kin1 a2 jit8 thinn1 khi3 m7 si7 kai3 ho2）';
+    if (currentTextType === 'roma') {
+      input.placeholder = '輸入廖教授台羅數字調（例：kin1 a2 jit8 thinn1 khi3）';
       input.value = 'kin1 a2 jit8 thinn1 khi3 m7 si7 kai3 ho2, li2 koh4 beh4 khi3 tshit4-tho5.';
       document.getElementById('tailoPresets').style.display = 'block';
       document.getElementById('hanziPresets').style.display = 'none';
@@ -458,15 +454,12 @@ document.querySelectorAll('.voice-mini').forEach(btn => {
     currentVoice = btn.dataset.voice;
   };
 });
-document.getElementById('rateSlider').addEventListener('input', (e) => {
-  document.getElementById('rateValue').textContent = parseFloat(e.target.value).toFixed(2) + 'x';
-});
 
 function updateStats() {
   const text = document.getElementById('mainInput').value;
   const chars = text.length;
   let units;
-  if (currentTextType === 'plain_text') {
+  if (currentTextType === 'roma') {
     units = (text.match(/[a-zA-Z]+\d?/g) || []).length;
   } else {
     units = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
@@ -484,22 +477,28 @@ async function synthesize() {
   if (!text) { alert('請輸入文字'); return; }
   
   const voice = currentVoice;
-  const rate = parseFloat(document.getElementById('rateSlider').value);
   const textType = currentTextType;
   const status = document.getElementById('status');
   const btn = document.getElementById('synthBtn');
   
+  const shortP = parseInt(document.getElementById('shortPause').value);
+  const longP  = parseInt(document.getElementById('longPause').value);
+  
   btn.disabled = true;
-  status.textContent = '⏳ 合成中...（走 i5 中繼）';
+  status.textContent = '⏳ 合成中...';
   status.className = 'status-inline loading';
   
   const startTime = Date.now();
   
   try {
+    const payload = { text, textType, voice, returnMode: 'url' };
+    if (!isNaN(shortP)) payload.shortPause = shortP;
+    if (!isNaN(longP))  payload.longPause  = longP;
+    
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, textType, voice, rate, returnMode: 'url' })
+      body: JSON.stringify(payload)
     });
     
     const data = await response.json();
@@ -511,7 +510,7 @@ async function synthesize() {
     status.textContent = `✅ ${elapsed}s`;
     status.className = 'status-inline';
     
-    addResult(text, textType, data.audioUrl, { elapsed, voice, rate });
+    addResult(text, textType, data.audioUrl, { elapsed, voice, shortP, longP });
     
     stats.count++;
     stats.seconds += parseFloat(elapsed);
@@ -520,6 +519,8 @@ async function synthesize() {
   } catch (err) {
     status.textContent = `❌ ${err.message}`;
     status.className = 'status-inline error';
+    stats.fail++;
+    updateGlobalStats();
     console.error(err);
   } finally {
     btn.disabled = false;
@@ -530,15 +531,17 @@ function addResult(text, textType, audioUrl, meta) {
   const container = document.getElementById('results');
   if (stats.count === 0) container.innerHTML = '';
   
-  const badgeClass = textType === 'plain_text' ? 'tailo' : 'hanzi';
-  const badgeText = textType === 'plain_text' ? '台羅 plain_text' : '漢字 characters';
-  const contentClass = textType === 'plain_text' ? '' : 'characters';
+  const badgeClass = textType === 'roma' ? 'roma' : 'hanzi';
+  const badgeText = textType === 'roma' ? '台羅 roma' : '漢字 characters';
+  const contentClass = textType === 'roma' ? '' : 'characters';
+  const pauseTxt = (!isNaN(meta.shortP) || !isNaN(meta.longP))
+    ? ` · pause=${meta.shortP||'-'}/${meta.longP||'-'}` : '';
   
   const card = document.createElement('div');
   card.className = 'result-card';
   card.innerHTML = `
     <div class="label-row">
-      <span>🎙️ ${meta.voice} · ${meta.rate}x · ${meta.elapsed}s <span class="mode-badge ${badgeClass}">${badgeText}</span></span>
+      <span>🎙️ ${meta.voice} · ${meta.elapsed}s${pauseTxt} <span class="mode-badge ${badgeClass}">${badgeText}</span></span>
       <span>${new Date().toLocaleTimeString()}</span>
     </div>
     <div class="content ${contentClass}">${escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}</div>
@@ -559,7 +562,10 @@ function escapeHtml(s) {
 function updateGlobalStats() {
   document.getElementById('totalCount').textContent = stats.count;
   document.getElementById('totalSeconds').textContent = Math.round(stats.seconds);
-  document.getElementById('totalKB').textContent = stats.count;
+  const total = stats.count + stats.fail;
+  document.getElementById('successRate').textContent = total > 0 
+    ? Math.round(stats.count / total * 100) + '%' 
+    : '—';
 }
 
 function clearAll() {
