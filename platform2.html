@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>台羅合成工作室 · 劍橋分析內部</title>
+<title>台羅合成工作室 v2 · 劍橋分析內部</title>
 <style>
   * { box-sizing: border-box; }
   body { 
@@ -30,12 +30,17 @@
     font-size: 11px;
     margin-left: 8px;
   }
-  
-  .layout { 
-    display: grid; 
-    grid-template-columns: 1fr 350px; 
-    gap: 20px; 
+  header .spec {
+    background: #0f3460;
+    color: #ffd700;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 10px;
+    font-size: 12px;
+    border-left: 3px solid #ffd700;
   }
+  
+  .layout { display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
   @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
   
   .section {
@@ -73,7 +78,7 @@
     font-size: 14px;
   }
   textarea { min-height: 100px; resize: vertical; }
-  textarea.tailo-input { 
+  textarea.main-input { 
     font-size: 16px; 
     line-height: 1.8;
     border-left: 3px solid #ffd700;
@@ -93,11 +98,34 @@
   button:hover { opacity: 0.85; }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   
+  /* 雙模式 textType 切換 */
+  .texttype-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .texttype-tab {
+    background: #0f3460;
+    border: 2px solid #1e3a5f;
+    color: #aaa;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .texttype-tab.active {
+    background: #16213e;
+    border-color: #ffd700;
+    color: #ffd700;
+  }
+  .texttype-tab .big { font-size: 16px; font-weight: bold; display: block; }
+  .texttype-tab .small { font-size: 11px; margin-top: 4px; opacity: 0.8; }
+  
   .preset-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 6px;
-    margin-top: 8px;
   }
   .preset-btn {
     background: #0f3460;
@@ -110,31 +138,27 @@
     text-align: left;
   }
   .preset-btn:hover { border-color: #ffd700; }
-  .preset-btn .preset-title { color: #ffd700; font-weight: bold; display: block; }
-  .preset-btn .preset-preview { color: #aaa; font-size: 11px; margin-top: 2px; }
+  .preset-btn .t { color: #ffd700; font-weight: bold; display: block; }
+  .preset-btn .p { color: #aaa; font-size: 11px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   
   .voice-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 4px;
   }
   .voice-mini {
     background: #0f3460;
     border: 1px solid #1e3a5f;
     color: #e6e6e6;
-    padding: 6px 4px;
+    padding: 8px;
     border-radius: 3px;
     cursor: pointer;
-    font-size: 11px;
+    font-size: 12px;
     text-align: center;
   }
   .voice-mini.active { background: #ffd700; color: #0a0a1e; border-color: #ffd700; }
   
-  .rate-slider {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+  .rate-slider { display: flex; align-items: center; gap: 10px; }
   .rate-slider input[type="range"] { flex: 1; }
   .rate-value { 
     background: #ffd700; 
@@ -162,7 +186,7 @@
     color: #aaa;
     margin-bottom: 5px;
   }
-  .result-card .tailo-content {
+  .result-card .content {
     font-family: 'Courier New', monospace;
     font-size: 13px;
     color: #ffd700;
@@ -170,7 +194,12 @@
     line-height: 1.6;
     word-break: break-word;
   }
-  .result-card .debug-info {
+  .result-card .content.characters {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    color: #ffed4e;
+  }
+  .result-card .meta-row {
     font-size: 10px;
     color: #888;
     margin: 4px 0;
@@ -193,40 +222,20 @@
   .stat .value { color: #ffd700; font-weight: bold; font-size: 16px; }
   .stat .label-stat { color: #aaa; font-size: 10px; }
   
-  .batch-mode {
-    border-left: 3px solid #4caf50;
-    padding-left: 10px;
-    margin-top: 10px;
-  }
-  
   .status-inline { color: #4caf50; font-size: 12px; }
   .status-inline.error { color: #f44336; }
   .status-inline.loading { color: #ffd700; }
   
-  .note {
-    background: rgba(255, 215, 0, 0.1);
-    border-left: 3px solid #ffd700;
-    padding: 8px 12px;
-    font-size: 12px;
-    color: #ffd700;
-    margin: 10px 0;
-  }
-  .format-selector {
-    display: flex;
-    gap: 6px;
-    margin-top: 5px;
-  }
-  .format-selector .format-btn {
-    flex: 1;
-    padding: 5px;
-    font-size: 11px;
-    background: #0f3460;
-    border: 1px solid #1e3a5f;
-    color: #aaa;
+  .mode-badge {
+    display: inline-block;
+    padding: 2px 8px;
     border-radius: 3px;
-    cursor: pointer;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 8px;
   }
-  .format-selector .format-btn.active { background: #ffd700; color: #0a0a1e; border-color: #ffd700; }
+  .mode-badge.tailo { background: #0f3460; color: #ffd700; }
+  .mode-badge.hanzi { background: #ffd700; color: #0a0a1e; }
 </style>
 </head>
 <body>
@@ -234,25 +243,33 @@
 <div class="container">
 
 <header>
-  <h1>🔬 台羅合成工作室<span class="internal">INTERNAL</span></h1>
-  <div class="meta">劍橋分析股份有限公司 · 冰焰系統 · 9 萬字台羅 → 有聲化引擎</div>
+  <h1>🔬 台羅合成工作室 v2<span class="internal">INTERNAL</span></h1>
+  <div class="meta">劍橋分析股份有限公司 · 9 萬字台羅 → 有聲化引擎</div>
+  <div class="spec">
+    📘 依廖教授 BRONCI TTS 規格書：<b>台羅 → plain_text</b> · <b>台語漢字 → characters</b> · 零轉換直送
+  </div>
 </header>
 
 <div class="layout">
 
   <!-- 左側：主工作區 -->
   <div>
-    <!-- 台羅輸入 -->
+
+    <!-- 輸入模式切換 -->
     <div class="section">
-      <h3>📝 台羅輸入</h3>
-      <textarea id="tailoInput" class="tailo-input" placeholder="貼台羅拼音（聲調可用符號 á 或數字 a2）...">thài-iông tsi-uî-pīng, me̍k-hû, thâu-hāng kiông-thiànn jî ònn-hân.</textarea>
-      
-      <label>輸入格式偵測模式</label>
-      <div class="format-selector">
-        <div class="format-btn active" data-format="auto">🤖 自動偵測</div>
-        <div class="format-btn" data-format="symbol">符號調 á â ō</div>
-        <div class="format-btn" data-format="number">數字調 a2 a5 o7</div>
+      <h3>📝 輸入模式</h3>
+      <div class="texttype-tabs">
+        <div class="texttype-tab active" data-type="plain_text">
+          <span class="big">🔤 台羅拼音</span>
+          <span class="small">textType = plain_text · 廖教授數字調格式</span>
+        </div>
+        <div class="texttype-tab" data-type="characters">
+          <span class="big">🈁 台語漢字</span>
+          <span class="small">textType = characters · 直接念漢字</span>
+        </div>
       </div>
+      
+      <textarea id="mainInput" class="main-input" placeholder="輸入廖教授台羅數字調（例：kin1 a2 jit8 thinn1 khi3 m7 si7 kai3 ho2）">kin1 a2 jit8 thinn1 khi3 m7 si7 kai3 ho2, li2 koh4 beh4 khi3 tshit4-tho5.</textarea>
       
       <div class="stats" style="margin-top: 10px">
         <div class="stat">
@@ -261,7 +278,7 @@
         </div>
         <div class="stat">
           <div class="value" id="sylCount">0</div>
-          <div class="label-stat">音節</div>
+          <div class="label-stat">音節/字</div>
         </div>
         <div class="stat">
           <div class="value" id="estDuration">0</div>
@@ -269,52 +286,71 @@
         </div>
       </div>
       
-      <div style="margin-top: 12px; display: flex; gap: 8px;">
-        <button onclick="synthesize()">🚀 合成語音</button>
+      <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+        <button id="synthBtn" onclick="synthesize()">🚀 合成語音</button>
         <button class="secondary" onclick="clearAll()">清空</button>
         <span id="status" class="status-inline"></span>
       </div>
     </div>
     
-    <!-- 快速預設 -->
-    <div class="section">
-      <h3>📚 預設台羅範本</h3>
+    <!-- 台羅預設 -->
+    <div class="section" id="tailoPresets">
+      <h3>📚 台羅預設範本（廖教授數字調格式）</h3>
       <div class="preset-grid">
-        <div class="preset-btn" onclick="loadPreset('001')">
-          <span class="preset-title">傷寒 001 太陽</span>
-          <span class="preset-preview">thài-iông tsi-uî-pīng...</span>
+        <div class="preset-btn" data-tailo="kin1 a2 jit8 thinn1 khi3 m7 si7 kai3 ho2, li2 koh4 beh4 khi3 tshit4-tho5.">
+          <span class="t">🌤 規格書範例</span>
+          <span class="p">今天天氣不是很好...</span>
         </div>
-        <div class="preset-btn" onclick="loadPreset('180')">
-          <span class="preset-title">傷寒 180 陽明</span>
-          <span class="preset-preview">iông-bîng tsi-uî-pīng...</span>
+        <div class="preset-btn" data-tailo="thai3-iong5 tsi1 ui5 ping7, meh8-hu5, thau5-hang7 kiong5-thiann3 ji5 oo3-han5.">
+          <span class="t">🩺 傷寒 001 太陽</span>
+          <span class="p">thai3-iong5 tsi1 ui5...</span>
         </div>
-        <div class="preset-btn" onclick="loadPreset('263')">
-          <span class="preset-title">傷寒 263 少陽</span>
-          <span class="preset-preview">kháu-khóo, ian-kan...</span>
+        <div class="preset-btn" data-tailo="iong5-bing5 tsi1 ui5 ping7, ui7-ka1 sit8 si7 ia2.">
+          <span class="t">🩺 傷寒 180 陽明</span>
+          <span class="p">iong5-bing5 tsi1 ui5...</span>
         </div>
-        <div class="preset-btn" onclick="loadPreset('273')">
-          <span class="preset-title">傷寒 273 太陰</span>
-          <span class="preset-preview">thài-im tsi-uî-pīng...</span>
+        <div class="preset-btn" data-tailo="siau3-iong5 tsi1 ui5 ping7, khau2-khoo2, ian1-kan1, bok8-hian7 ia2.">
+          <span class="t">🩺 傷寒 263 少陽</span>
+          <span class="p">khau2-khoo2, ian1-kan1...</span>
         </div>
-        <div class="preset-btn" onclick="loadPreset('281')">
-          <span class="preset-title">傷寒 281 少陰</span>
-          <span class="preset-preview">siàu-im tsi-uî-pīng...</span>
+        <div class="preset-btn" data-tailo="sip8-ji7 king1 kai1 iu2 tong7-meh8, tok8 tshu2 tshun3-khau2, i2 kuat4 ngoo2-tsong7 liok8-hu2 su2-sing1 kiat4-hiong1 tsi1 huat4, ho5 ui7 ia2?">
+          <span class="t">📖 難經 一難</span>
+          <span class="p">sip8-ji7 king1 kai1...</span>
         </div>
-        <div class="preset-btn" onclick="loadPreset('326')">
-          <span class="preset-title">傷寒 326 厥陰</span>
-          <span class="preset-preview">kuat-im tsi-uî-pīng...</span>
+        <div class="preset-btn" data-tailo="hoo7 gua2 e5 sim1-kuann1 ti7 li2 lai7-te2 an1-un2.">
+          <span class="t">🙏 禱告詞範例</span>
+          <span class="p">讓我的心在祢裡面安穩</span>
         </div>
-        <div class="preset-btn" onclick="loadPreset('nan01')">
-          <span class="preset-title">難經 一難</span>
-          <span class="preset-preview">sip-jī king kai iú...</span>
+      </div>
+    </div>
+
+    <!-- 漢字預設 -->
+    <div class="section" id="hanziPresets" style="display:none">
+      <h3>📚 台語漢字預設範本</h3>
+      <div class="preset-grid">
+        <div class="preset-btn" data-hanzi="太陽之為病，脈浮、頭項強痛而惡寒。">
+          <span class="t">🩺 傷寒 001 太陽</span>
+          <span class="p">太陽之為病...</span>
         </div>
-        <div class="preset-btn" onclick="loadPreset('all6')">
-          <span class="preset-title">🔥 傷寒六條全文</span>
-          <span class="preset-preview">六經提綱連讀</span>
+        <div class="preset-btn" data-hanzi="陽明之為病，胃家實是也。">
+          <span class="t">🩺 傷寒 180 陽明</span>
+          <span class="p">陽明之為病...</span>
         </div>
-        <div class="preset-btn" onclick="loadPreset('number_test')">
-          <span class="preset-title">🧪 數字調測試</span>
-          <span class="preset-preview">thai3-iong5 tsi1-ui5...</span>
+        <div class="preset-btn" data-hanzi="少陽之為病，口苦，咽乾，目眩也。">
+          <span class="t">🩺 傷寒 263 少陽</span>
+          <span class="p">少陽之為病...</span>
+        </div>
+        <div class="preset-btn" data-hanzi="十二經皆有動脈，獨取寸口，以決五藏六府死生吉凶之法，何謂也？">
+          <span class="t">📖 難經 一難</span>
+          <span class="p">十二經皆有動脈...</span>
+        </div>
+        <div class="preset-btn" data-hanzi="予我的心肝佇祢內底安穩。">
+          <span class="t">🙏 禱告詞範例</span>
+          <span class="p">予我的心肝佇祢內底安穩</span>
+        </div>
+        <div class="preset-btn" data-hanzi="今仔日天氣毋是蓋好，你閣欲去𨑨迌。">
+          <span class="t">🌤 日常台語</span>
+          <span class="p">今仔日天氣毋是蓋好...</span>
         </div>
       </div>
     </div>
@@ -330,10 +366,10 @@
     </div>
   </div>
 
-  <!-- 右側：參數控制 -->
+  <!-- 右側：參數 -->
   <div>
     <div class="section">
-      <h3>🎙️ 語者</h3>
+      <h3>🎙️ 台語語者</h3>
       <div class="voice-grid">
         <div class="voice-mini active" data-voice="nan-TW-vs2-M02">男 M02</div>
         <div class="voice-mini" data-voice="nan-TW-vs2-M01">男 M01</div>
@@ -346,31 +382,24 @@
       <h3>⏱️ 語速</h3>
       <div class="rate-slider">
         <span style="color:#888;font-size:11px">慢</span>
-        <input type="range" id="rateSlider" min="0.5" max="1.5" step="0.05" value="0.9">
+        <input type="range" id="rateSlider" min="0.5" max="1.5" step="0.05" value="1.0">
         <span style="color:#888;font-size:11px">快</span>
-        <div class="rate-value" id="rateValue">0.90x</div>
-      </div>
-      <div class="note">
-        中醫古文建議 0.80-0.90 · 現代文字 1.0 · 快速複習 1.15
+        <div class="rate-value" id="rateValue">1.00x</div>
       </div>
     </div>
     
     <div class="section">
       <h3>🔄 批次測試</h3>
-      <div class="batch-mode">
-        <label>一次跑多種語者</label>
-        <button onclick="batchVoiceTest()" style="width:100%;margin-top:5px">
-          🎤 4 語者各跑一次
-        </button>
-        <label style="margin-top:12px">一次跑多種速度</label>
-        <button onclick="batchSpeedTest()" style="width:100%;margin-top:5px">
-          ⚡ 0.80 / 1.00 / 1.20 各跑
-        </button>
-      </div>
+      <button onclick="batchVoiceTest()" style="width:100%;margin-bottom:8px">
+        🎤 4 語者各跑一次
+      </button>
+      <button onclick="batchSpeedTest()" style="width:100%">
+        ⚡ 0.80 / 1.00 / 1.20 各跑
+      </button>
     </div>
     
     <div class="section">
-      <h3>📊 今日統計</h3>
+      <h3>📊 本次統計</h3>
       <div class="stats">
         <div class="stat">
           <div class="value" id="totalCount">0</div>
@@ -393,49 +422,50 @@
 </div>
 
 <script>
-// API endpoint 自動用當前網域
 const API_URL = window.location.origin + '/.netlify/functions/tailo-tts';
 
-let currentVoice = 'nan-TW-vs2-M02';
-let inputFormat = 'auto';
+let currentTextType = 'plain_text';
+let currentVoice    = 'nan-TW-vs2-M02';
 let stats = { count: 0, seconds: 0, kb: 0 };
 
-const presets = {
-  '001': 'thài-iông tsi-uî-pīng, me̍k-hû, thâu-hāng kiông-thiànn jî ònn-hân.',
-  '180': 'iông-bîng tsi-uî-pīng, uī-ka si̍t sī iá.',
-  '263': 'siàu-iông tsi-uî-pīng, kháu-khóo, ian-kan, bo̍k-hiān iá.',
-  '273': 'thài-im tsi-uî-pīng, pak-buán jî thòo, si̍t put-hā, tsū-lī ik-sīm.',
-  '281': 'siàu-im tsi-uî-pīng, me̍k bî-sè, tān io̍k-bī iá.',
-  '326': 'kuat-im tsi-uî-pīng, siau-khat, khì-siōng-tōng-sim, sim-tiong thiànn-jua̍h, iau jî put-io̍k-si̍t, si̍t tsik thòo-huê.',
-  'nan01': 'sip-jī king kai iú tōng-me̍k, to̍k tshú tshùn-kháu, í kuat ngóo-tsōng lio̍k-hú sú-sing kiat-hiong tsi huat, hô uī iá?',
-  'all6': `thài-iông tsi-uî-pīng, me̍k-hû, thâu-hāng kiông-thiànn jî ònn-hân.
-iông-bîng tsi-uî-pīng, uī-ka si̍t sī iá.
-siàu-iông tsi-uî-pīng, kháu-khóo, ian-kan, bo̍k-hiān iá.
-thài-im tsi-uî-pīng, pak-buán jî thòo.
-siàu-im tsi-uî-pīng, me̍k bî-sè, tān io̍k-bī iá.
-kuat-im tsi-uî-pīng, siau-khat, khì-siōng-tōng-sim, sim-tiong thiànn-jua̍h.`,
-  'number_test': 'thai3-iong5 tsi1-ui5-ping7, mek8-hu5, thau5-hang7 kiong5-thiann3 ji5 onn3-han5.'
-};
+// ─── textType 切換 ──────────────────────────────────
+document.querySelectorAll('.texttype-tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.texttype-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTextType = tab.dataset.type;
+    
+    const input = document.getElementById('mainInput');
+    if (currentTextType === 'plain_text') {
+      input.placeholder = '輸入廖教授台羅數字調（例：kin1 a2 jit8 thinn1 khi3 m7 si7 kai3 ho2）';
+      input.value = 'kin1 a2 jit8 thinn1 khi3 m7 si7 kai3 ho2, li2 koh4 beh4 khi3 tshit4-tho5.';
+      document.getElementById('tailoPresets').style.display = 'block';
+      document.getElementById('hanziPresets').style.display = 'none';
+    } else {
+      input.placeholder = '輸入台語漢字（例：今仔日天氣毋是蓋好，你閣欲去𨑨迌。）';
+      input.value = '今仔日天氣毋是蓋好，你閣欲去𨑨迌。';
+      document.getElementById('tailoPresets').style.display = 'none';
+      document.getElementById('hanziPresets').style.display = 'block';
+    }
+    updateStats();
+  };
+});
 
-function loadPreset(key) {
-  document.getElementById('tailoInput').value = presets[key];
-  updateStats();
-}
+// ─── 預設範本 ──────────────────────────────────────
+document.querySelectorAll('#tailoPresets .preset-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.getElementById('mainInput').value = btn.dataset.tailo;
+    updateStats();
+  };
+});
+document.querySelectorAll('#hanziPresets .preset-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.getElementById('mainInput').value = btn.dataset.hanzi;
+    updateStats();
+  };
+});
 
-function updateStats() {
-  const text = document.getElementById('tailoInput').value;
-  const chars = text.length;
-  const syllables = (text.match(/[a-zA-Z]+/g) || []).length;
-  const duration = Math.round(syllables * 0.4);
-  
-  document.getElementById('charCount').textContent = chars;
-  document.getElementById('sylCount').textContent = syllables;
-  document.getElementById('estDuration').textContent = duration + 's';
-}
-
-document.getElementById('tailoInput').addEventListener('input', updateStats);
-updateStats();
-
+// ─── 語者/語速 ──────────────────────────────────────
 document.querySelectorAll('.voice-mini').forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll('.voice-mini').forEach(b => b.classList.remove('active'));
@@ -443,25 +473,36 @@ document.querySelectorAll('.voice-mini').forEach(btn => {
     currentVoice = btn.dataset.voice;
   };
 });
-
-document.querySelectorAll('.format-btn').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    inputFormat = btn.dataset.format;
-  };
-});
-
 document.getElementById('rateSlider').addEventListener('input', (e) => {
   document.getElementById('rateValue').textContent = parseFloat(e.target.value).toFixed(2) + 'x';
 });
 
+// ─── 統計更新 ──────────────────────────────────────
+function updateStats() {
+  const text = document.getElementById('mainInput').value;
+  const chars = text.length;
+  let units;
+  if (currentTextType === 'plain_text') {
+    units = (text.match(/[a-zA-Z]+\d?/g) || []).length;
+  } else {
+    units = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
+  }
+  const duration = Math.round(units * 0.4);
+  document.getElementById('charCount').textContent = chars;
+  document.getElementById('sylCount').textContent = units;
+  document.getElementById('estDuration').textContent = duration + 's';
+}
+document.getElementById('mainInput').addEventListener('input', updateStats);
+updateStats();
+
+// ─── 合成主流程 ────────────────────────────────────
 async function synthesize(customOptions = {}) {
-  const text = document.getElementById('tailoInput').value.trim();
-  if (!text) { alert('請輸入台羅'); return; }
+  const text = document.getElementById('mainInput').value.trim();
+  if (!text) { alert('請輸入文字'); return; }
   
   const voice = customOptions.voice || currentVoice;
   const rate = customOptions.rate || parseFloat(document.getElementById('rateSlider').value);
+  const textType = currentTextType;
   const status = document.getElementById('status');
   
   status.textContent = '⏳ 合成中...';
@@ -473,12 +514,7 @@ async function synthesize(customOptions = {}) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        tailo: text, 
-        voice, 
-        rate,
-        inputFormat
-      })
+      body: JSON.stringify({ text, textType, voice, rate })
     });
     
     const data = await response.json();
@@ -491,7 +527,7 @@ async function synthesize(customOptions = {}) {
     status.textContent = `✅ ${elapsed}s · ${sizeKb} KB`;
     status.className = 'status-inline';
     
-    addResult(text, data, { elapsed, sizeKb, voice, rate });
+    addResult(text, textType, data, { elapsed, sizeKb, voice, rate });
     
     stats.count++;
     stats.seconds += parseFloat(elapsed);
@@ -506,22 +542,22 @@ async function synthesize(customOptions = {}) {
   }
 }
 
-function addResult(text, data, meta) {
+function addResult(text, textType, data, meta) {
   const container = document.getElementById('results');
   if (stats.count === 0) container.innerHTML = '';
   
-  const debug = data.meta ? 
-    `偵測=${data.meta.detectedFormat || '?'} · 轉換後=${(data.meta.convertedInput || '').substring(0, 50)}...` : '';
+  const badgeClass = textType === 'plain_text' ? 'tailo' : 'hanzi';
+  const badgeText = textType === 'plain_text' ? '台羅 plain_text' : '漢字 characters';
+  const contentClass = textType === 'plain_text' ? '' : 'characters';
   
   const card = document.createElement('div');
   card.className = 'result-card';
   card.innerHTML = `
     <div class="label-row">
-      <span>🎙️ ${meta.voice} · ${meta.rate}x · ${meta.elapsed}s · ${meta.sizeKb} KB</span>
+      <span>🎙️ ${meta.voice} · ${meta.rate}x · ${meta.elapsed}s · ${meta.sizeKb} KB <span class="mode-badge ${badgeClass}">${badgeText}</span></span>
       <span>${new Date().toLocaleTimeString()}</span>
     </div>
-    <div class="tailo-content">${escapeHtml(text.substring(0, 120))}${text.length > 120 ? '...' : ''}</div>
-    ${debug ? `<div class="debug-info">🔍 ${escapeHtml(debug)}</div>` : ''}
+    <div class="content ${contentClass}">${escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}</div>
     <audio controls src="data:${data.mimeType || 'audio/mp4'};base64,${data.audioBase64}"></audio>
   `;
   container.insertBefore(card, container.firstChild);
@@ -548,7 +584,6 @@ async function batchVoiceTest() {
     await new Promise(r => setTimeout(r, 500));
   }
 }
-
 async function batchSpeedTest() {
   const rates = [0.80, 1.00, 1.20];
   for (const rate of rates) {
@@ -556,9 +591,8 @@ async function batchSpeedTest() {
     await new Promise(r => setTimeout(r, 500));
   }
 }
-
 function clearAll() {
-  document.getElementById('tailoInput').value = '';
+  document.getElementById('mainInput').value = '';
   updateStats();
 }
 </script>

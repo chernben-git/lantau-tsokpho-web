@@ -1,12 +1,21 @@
 /**
- * netlify/functions/tailo-tts.js
- * 台羅直接念語音合成 v1.1
- * 2026/4/24 修正版
+ * netlify/functions/tailo-tts.js  v2.0
+ * 2026/4/24
  * 
- * v1.1 修正：
- *   - 符號調 → 數字調改為「以音節為單位」的轉換
- *   - 例：thài-iông → thai3-iong5 (正確)
- *   - 之前錯誤是 thà i → tha3i (數字塞在字母中間)
+ * 按廖教授 BRONCI TTS 規格書，零轉換。
+ *   台羅拼音（數字調） → textType: 'plain_text'
+ *   台語漢字           → textType: 'characters'
+ * 
+ * 依據：
+ *   - BRONCI TTS API 規格書（廖教授提供）
+ *   - server.js v2.10 線上穩定版（2026-04-06）
+ * 
+ * 參數：
+ *   text      必填  要合成的文字
+ *   textType  選填  'plain_text' (台羅, 預設) | 'characters' (台語漢字)
+ *   voice     選填  預設 nan-TW-vs2-M02
+ *   rate      選填  預設 1.0
+ *   format    選填  m4a | wav，預設 m4a
  */
 
 const https = require('https');
@@ -15,123 +24,37 @@ const fs   = require('fs');
 const os   = require('os');
 const path = require('path');
 
+// ═══════════════════════════════════════════════════
+// 端點（依規格書）
+// ═══════════════════════════════════════════════════
 const TTS_HOST = 'syn.ivoice.tw';
 const TTS_PORT = 8461;
 const USERNAME = 'chernben';
 const PASSWORD = 'SRGER#342sd';
 
+// 語者白名單（依 /api/v1/tts/models 實際回傳）
+const VOICE_LANG_MAP = {
+  'nan-TW-vs2-M01':    'nan-TW',
+  'nan-TW-vs2-M02':    'nan-TW',
+  'nan-TW-vs2-F01':    'nan-TW',
+  'nan-TW-vs2-F02':    'nan-TW',
+  'cmn-TW-vs2-M01':    'cmn-TW',
+  'cmn-TW-vs2-F01':    'cmn-TW',
+  'hak-xi-TW-vs2-M01': 'hak-xi-TW',
+  'hak-xi-TW-vs2-F01': 'hak-xi-TW',
+  'hak-hoi-TW-vs2-M01':'hak-hoi-TW',
+  'hak-hoi-TW-vs2-F01':'hak-hoi-TW',
+};
+
+// Token 快取（8 小時 TTL，規格書 expiration=28800）
 let _cachedToken = null;
 let _cachedTime  = 0;
-
-// ═══════════════════════════════════════════════════════════
-// 聲調符號對應表
-// key: 變音字元 → value: [基本字元, 聲調數字]
-// ═══════════════════════════════════════════════════════════
-const TONE_MAP = {
-  // 2 聲
-  'á':['a',2], 'é':['e',2], 'í':['i',2], 'ó':['o',2], 'ú':['u',2], 'ḿ':['m',2], 'ń':['n',2],
-  'Á':['A',2], 'É':['E',2], 'Í':['I',2], 'Ó':['O',2], 'Ú':['U',2], 'Ḿ':['M',2], 'Ń':['N',2],
-  // 3 聲
-  'à':['a',3], 'è':['e',3], 'ì':['i',3], 'ò':['o',3], 'ù':['u',3], 'ǹ':['n',3],
-  'À':['A',3], 'È':['E',3], 'Ì':['I',3], 'Ò':['O',3], 'Ù':['U',3], 'Ǹ':['N',3],
-  // 5 聲
-  'â':['a',5], 'ê':['e',5], 'î':['i',5], 'ô':['o',5], 'û':['u',5], 'm̂':['m',5], 'n̂':['n',5],
-  'Â':['A',5], 'Ê':['E',5], 'Î':['I',5], 'Ô':['O',5], 'Û':['U',5],
-  // 7 聲
-  'ā':['a',7], 'ē':['e',7], 'ī':['i',7], 'ō':['o',7], 'ū':['u',7], 'm̄':['m',7], 'n̄':['n',7],
-  'Ā':['A',7], 'Ē':['E',7], 'Ī':['I',7], 'Ō':['O',7], 'Ū':['U',7],
-};
-
-// 組合字元（U+030D）需要特殊處理：a+◌̍ = 8 聲
-const COMBINING_MAP = {
-  'a':8, 'e':8, 'i':8, 'o':8, 'u':8, 'm':8, 'n':8,
-  'A':8, 'E':8, 'I':8, 'O':8, 'U':8, 'M':8, 'N':8,
-};
-
-/**
- * 偵測輸入格式
- */
-function detectFormat(text) {
-  // 有組合字元 \u030D 或變音字元 → 符號調
-  if (/[áàâāéèêēíìîīóòôōúùûūǹ]/i.test(text)) return 'symbol';
-  if (/\u030D/.test(text)) return 'symbol';
-  // 有「字母後面接數字」→ 數字調
-  if (/[a-zA-Z]+[1-9]/.test(text)) return 'number';
-  return 'unknown';
-}
-
-/**
- * 符號調 → 數字調（以音節為單位）
- * 
- * 演算法：
- * 1. 逐字掃描，記錄「當前音節的字母」和「當前音節的聲調」
- * 2. 遇到非字母（空格、連字號、標點）→ 結算當前音節，加上聲調數字
- * 3. 1 聲和 4 聲沒符號，要用規則判定（有入聲尾 ptkh → 4 聲，否則 1 聲）
- */
-function symbolToNumber(text) {
-  let result = '';
-  let syllable = '';      // 當前音節累積的基本字母
-  let tone = 0;           // 當前音節的聲調（0 = 未定）
-  
-  function flushSyllable() {
-    if (syllable.length === 0) return;
-    
-    let finalTone = tone;
-    if (finalTone === 0) {
-      // 未標聲調 → 判斷 1 聲或 4 聲
-      // 4 聲規則：音節尾是 p/t/k/h（入聲）
-      if (/[ptkhPTKH]$/.test(syllable)) {
-        finalTone = 4;
-      } else {
-        finalTone = 1;
-      }
-    }
-    
-    result += syllable + finalTone;
-    syllable = '';
-    tone = 0;
-  }
-  
-  const chars = [...text];  // 用 spread 避免 surrogate pair 問題
-  
-  for (let i = 0; i < chars.length; i++) {
-    const ch = chars[i];
-    const next = chars[i + 1];
-    
-    // ─── 處理組合字元：字母 + U+030D = 8 聲 ─────────
-    if (next === '\u030D' && COMBINING_MAP[ch]) {
-      syllable += ch;
-      tone = 8;
-      i++;  // 跳過 U+030D
-      continue;
-    }
-    
-    // ─── 處理變音字元（2/3/5/7 聲）────────────────
-    if (TONE_MAP[ch]) {
-      const [base, t] = TONE_MAP[ch];
-      syllable += base;
-      tone = t;
-      continue;
-    }
-    
-    // ─── 普通字母 ──────────────────────────────────
-    if (/[a-zA-Z]/.test(ch)) {
-      syllable += ch;
-      continue;
-    }
-    
-    // ─── 非字母（分隔符）→ 結算音節 ────────────────
-    flushSyllable();
-    result += ch;
-  }
-  
-  // 最後一個音節
-  flushSyllable();
-  
-  return result;
-}
+const TOKEN_TTL  = 28800 * 1000;
 
 
+// ═══════════════════════════════════════════════════
+// Handler
+// ═══════════════════════════════════════════════════
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin':  '*',
@@ -150,44 +73,43 @@ exports.handler = async (event) => {
   catch(e) { return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
   const {
-    tailo,
-    voice = 'nan-TW-vs2-M02',
-    rate  = 0.9,
-    inputFormat = 'auto',
-    format = 'm4a'
+    text,
+    textType = 'plain_text',       // ⭐ 預設台羅（plain_text）
+    voice    = 'nan-TW-vs2-M02',
+    rate     = 1.0,
+    format   = 'm4a'
   } = body;
 
-  if (!tailo || typeof tailo !== 'string') {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'tailo required' }) };
+  if (!text || typeof text !== 'string') {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'text required' }) };
   }
-  if (tailo.length > 1000) {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'tailo 最多 1000 字元' }) };
+  if (text.length > 1000) {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'text 最多 1000 字元' }) };
+  }
+  if (!['plain_text', 'characters'].includes(textType)) {
+    return { statusCode: 400, headers, body: JSON.stringify({
+      error: 'textType 只能 plain_text (台羅) 或 characters (台語漢字)'
+    })};
+  }
+  const languageCode = VOICE_LANG_MAP[voice];
+  if (!languageCode) {
+    return { statusCode: 400, headers, body: JSON.stringify({
+      error: 'voice 不在規格書語者清單',
+      validVoices: Object.keys(VOICE_LANG_MAP)
+    })};
   }
 
   try {
-    // ─── 決定要送什麼給 TTS ─────────────────────────────
-    let detectedFormat = inputFormat;
-    let convertedInput = tailo;
-
-    if (inputFormat === 'auto') {
-      detectedFormat = detectFormat(tailo);
-    }
-
-    if (detectedFormat === 'symbol') {
-      convertedInput = symbolToNumber(tailo);
-    }
-
-    // ─── 取 Token & 合成 ────────────────────────────────
     const token = await getToken();
     if (!token) return { statusCode: 401, headers, body: JSON.stringify({ error: 'TTS login failed' }) };
 
-    const wavBytes = await synthesizeTailo(token, convertedInput, voice, rate);
+    // 零轉換，直送廖教授 TTS
+    const wavBytes = await synthesize(token, text, textType, voice, languageCode, rate);
     if (!wavBytes) {
       _cachedToken = null;
       return { statusCode: 500, headers, body: JSON.stringify({ error: 'TTS synthesis failed' }) };
     }
 
-    // ─── 格式轉換 ───────────────────────────────────────
     let outputBuffer = wavBytes;
     let mimeType = 'audio/wav';
 
@@ -203,13 +125,14 @@ exports.handler = async (event) => {
         audioBase64: Buffer.from(outputBuffer).toString('base64'),
         mimeType,
         meta: {
-          originalInput: tailo,
-          detectedFormat,
-          convertedInput,
+          sentText:    text,
+          textType,
           voice,
+          languageCode,
           rate,
-          sizeKB: Math.round(outputBuffer.length / 1024),
-          elapsedMs: Date.now() - startTime
+          format,
+          sizeKB:      Math.round(outputBuffer.length / 1024),
+          elapsedMs:   Date.now() - startTime
         }
       })
     };
@@ -221,12 +144,15 @@ exports.handler = async (event) => {
 };
 
 
-function synthesizeTailo(token, tailoText, voice, rate) {
+// ═══════════════════════════════════════════════════
+// 廖教授 TTS 合成（規格書範例）
+// ═══════════════════════════════════════════════════
+function synthesize(token, text, textType, voice, languageCode, rate) {
   return new Promise((resolve) => {
     const payload = JSON.stringify({
-      input: { text: tailoText, textType: 'plain_text' },
-      voice: { model: 'broncitts', languageCode: 'nan-TW', name: voice },
-      audioConfig: { speakingRate: rate },
+      input:        { text, textType },
+      voice:        { model: 'broncitts', languageCode, name: voice },
+      audioConfig:  { speakingRate: rate },
       outputConfig: { streamMode: 0 }
     });
 
@@ -238,6 +164,7 @@ function synthesizeTailo(token, tailoText, voice, rate) {
       headers:  {
         'Content-Type':   'application/json',
         'Authorization':  'Bearer ' + token,
+        'Accept':         'audio/wav',
         'Content-Length': Buffer.byteLength(payload),
       },
       rejectUnauthorized: false,
@@ -246,26 +173,33 @@ function synthesizeTailo(token, tailoText, voice, rate) {
       res.on('data', c => chunks.push(c));
       res.on('end', () => {
         if (res.statusCode !== 200) {
-          console.error('TTS synthesize HTTP', res.statusCode);
+          console.error('TTS synthesize HTTP', res.statusCode, 'body=', Buffer.concat(chunks).toString('utf8').slice(0,200));
           resolve(null);
         } else {
           resolve(Buffer.concat(chunks));
         }
       });
     });
-    req.on('error', () => resolve(null));
+    req.on('error', (e) => { console.error('TTS req error:', e.message); resolve(null); });
     req.write(payload);
     req.end();
   });
 }
 
 
+// ═══════════════════════════════════════════════════
+// Token 登入
+// ═══════════════════════════════════════════════════
 async function getToken() {
   const now = Date.now();
-  if (_cachedToken && (now - _cachedTime) < 28800 * 1000) return _cachedToken;
+  if (_cachedToken && (now - _cachedTime) < TOKEN_TTL) return _cachedToken;
 
   return new Promise((resolve) => {
-    const payload = JSON.stringify({ username: USERNAME, password: PASSWORD });
+    const payload = JSON.stringify({
+      username:   USERNAME,
+      password:   PASSWORD,
+      rememberMe: true
+    });
     const req = https.request({
       hostname: TTS_HOST,
       port:     TTS_PORT,
@@ -282,7 +216,7 @@ async function getToken() {
       res.on('end', () => {
         try {
           const json  = JSON.parse(data);
-          const token = json.token || json.access_token || json.accessToken;
+          const token = json.access_token || json.token;
           if (token) {
             _cachedToken = token;
             _cachedTime  = Date.now();
@@ -298,6 +232,9 @@ async function getToken() {
 }
 
 
+// ═══════════════════════════════════════════════════
+// WAV → M4A
+// ═══════════════════════════════════════════════════
 function convertWavToM4a(wavBuffer) {
   const tmpDir  = os.tmpdir();
   const inFile  = path.join(tmpDir, `tailo_in_${Date.now()}.wav`);
