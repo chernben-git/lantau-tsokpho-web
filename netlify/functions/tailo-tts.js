@@ -1,55 +1,54 @@
 /**
- * netlify/functions/tailo-tts.js  v2.0
+ * netlify/functions/tailo-tts.js  v3.0
  * 2026/4/24
  * 
- * 按廖教授 BRONCI TTS 規格書，零轉換。
- *   台羅拼音（數字調） → textType: 'plain_text'
- *   台語漢字           → textType: 'characters'
+ * 架構對齊 TTS.gs v1.8 + server.js v2.10：
+ *   Netlify Function → i5 中繼 (asr.bitfull.tw) → 廖教授 TTS
  * 
- * 依據：
- *   - BRONCI TTS API 規格書（廖教授提供）
- *   - server.js v2.10 線上穩定版（2026-04-06）
+ * 為什麼走 i5 不直連廖教授：
+ *   - i5 有 TTS token 快取 + AppCache 60 分鐘
+ *   - i5 ffmpeg 比 Netlify ffmpeg-static 穩
+ *   - i5 有 /store-audio 發直播 URL（省 base64 傳輸）
+ *   - Netlify Function 10 秒超時，直連廖教授常逾時
+ *   - 省 Netlify 流量費
  * 
  * 參數：
  *   text      必填  要合成的文字
  *   textType  選填  'plain_text' (台羅, 預設) | 'characters' (台語漢字)
  *   voice     選填  預設 nan-TW-vs2-M02
  *   rate      選填  預設 1.0
- *   format    選填  m4a | wav，預設 m4a
+ *   returnMode 選填 'url' (預設, 回 i5 直播 URL) | 'base64' (回完整音檔)
+ * 
+ * 回傳：
+ *   returnMode='url':
+ *     { success: true, audioUrl, textType, voice, rate, elapsedMs }
+ *   returnMode='base64':
+ *     { success: true, audioBase64, mimeType, textType, voice, rate, sizeKB, elapsedMs }
  */
 
 const https = require('https');
-const { execSync } = require('child_process');
-const fs   = require('fs');
-const os   = require('os');
-const path = require('path');
 
 // ═══════════════════════════════════════════════════
-// 端點（依規格書）
+// i5 中繼端點（與 TTS.gs v1.8 一致）
 // ═══════════════════════════════════════════════════
-const TTS_HOST = 'syn.ivoice.tw';
-const TTS_PORT = 8461;
-const USERNAME = 'chernben';
-const PASSWORD = 'SRGER#342sd';
+const I5_BASE   = 'asr.bitfull.tw';
+const I5_PORT   = 443;
 
-// 語者白名單（依 /api/v1/tts/models 實際回傳）
-const VOICE_LANG_MAP = {
-  'nan-TW-vs2-M01':    'nan-TW',
-  'nan-TW-vs2-M02':    'nan-TW',
-  'nan-TW-vs2-F01':    'nan-TW',
-  'nan-TW-vs2-F02':    'nan-TW',
-  'cmn-TW-vs2-M01':    'cmn-TW',
-  'cmn-TW-vs2-F01':    'cmn-TW',
-  'hak-xi-TW-vs2-M01': 'hak-xi-TW',
-  'hak-xi-TW-vs2-F01': 'hak-xi-TW',
-  'hak-hoi-TW-vs2-M01':'hak-hoi-TW',
-  'hak-hoi-TW-vs2-F01':'hak-hoi-TW',
-};
+// 語者白名單
+const VALID_VOICES = [
+  'nan-TW-vs2-M01','nan-TW-vs2-M02','nan-TW-vs2-F01','nan-TW-vs2-F02',
+  'cmn-TW-vs2-M01','cmn-TW-vs2-F01',
+  'hak-xi-TW-vs2-M01','hak-xi-TW-vs2-F01',
+  'hak-hoi-TW-vs2-M01','hak-hoi-TW-vs2-F01',
+];
 
-// Token 快取（8 小時 TTL，規格書 expiration=28800）
-let _cachedToken = null;
-let _cachedTime  = 0;
-const TOKEN_TTL  = 28800 * 1000;
+// speaker 別名（i5 server.js 用 male/female 簡稱）
+function voiceToSpeaker(voice) {
+  // M01/M02 → 'male'，F01/F02 → 'female'（i5 會轉回完整語者名）
+  if (voice.includes('-M0')) return 'male';
+  if (voice.includes('-F0')) return 'female';
+  return 'male';
+}
 
 
 // ═══════════════════════════════════════════════════
@@ -74,10 +73,10 @@ exports.handler = async (event) => {
 
   const {
     text,
-    textType = 'plain_text',       // ⭐ 預設台羅（plain_text）
-    voice    = 'nan-TW-vs2-M02',
-    rate     = 1.0,
-    format   = 'm4a'
+    textType   = 'plain_text',
+    voice      = 'nan-TW-vs2-M02',
+    rate       = 1.0,
+    returnMode = 'url'
   } = body;
 
   if (!text || typeof text !== 'string') {
@@ -91,49 +90,63 @@ exports.handler = async (event) => {
       error: 'textType 只能 plain_text (台羅) 或 characters (台語漢字)'
     })};
   }
-  const languageCode = VOICE_LANG_MAP[voice];
-  if (!languageCode) {
+  if (!VALID_VOICES.includes(voice)) {
     return { statusCode: 400, headers, body: JSON.stringify({
-      error: 'voice 不在規格書語者清單',
-      validVoices: Object.keys(VOICE_LANG_MAP)
+      error: 'voice 不在語者清單',
+      validVoices: VALID_VOICES
     })};
+  }
+  if (!['url', 'base64'].includes(returnMode)) {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'returnMode 只能 url 或 base64' }) };
   }
 
   try {
-    const token = await getToken();
-    if (!token) return { statusCode: 401, headers, body: JSON.stringify({ error: 'TTS login failed' }) };
-
-    // 零轉換，直送廖教授 TTS
-    const wavBytes = await synthesize(token, text, textType, voice, languageCode, rate);
-    if (!wavBytes) {
-      _cachedToken = null;
-      return { statusCode: 500, headers, body: JSON.stringify({ error: 'TTS synthesis failed' }) };
+    // ─── Step 1: 呼叫 i5 /tts 取得 WAV base64 ──────
+    const speaker = voiceToSpeaker(voice);
+    const ttsResult = await callI5Tts(text, speaker, textType);
+    if (!ttsResult || !ttsResult.audioBase64) {
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'i5 /tts 失敗' }) };
     }
 
-    let outputBuffer = wavBytes;
-    let mimeType = 'audio/wav';
+    // ─── returnMode='base64'：直接回 WAV base64 ────
+    if (returnMode === 'base64') {
+      const sizeKB = Math.round(Buffer.from(ttsResult.audioBase64, 'base64').length / 1024);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          audioBase64: ttsResult.audioBase64,
+          mimeType: 'audio/wav',
+          textType, voice, rate,
+          sizeKB,
+          elapsedMs: Date.now() - startTime
+        })
+      };
+    }
 
-    if (format === 'm4a') {
-      const m4a = convertWavToM4a(wavBytes);
-      if (m4a) { outputBuffer = m4a; mimeType = 'audio/mp4'; }
+    // ─── returnMode='url'：轉 M4A + 存 i5 → 回 URL ──
+    const wavBase64 = ttsResult.audioBase64;
+    
+    const m4aResult = await callI5ConvertAudio(wavBase64);
+    if (!m4aResult || !m4aResult.m4aBase64) {
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'i5 convert-audio 失敗' }) };
+    }
+
+    const contentId = 'TAILOTTS_' + Date.now();
+    const storeResult = await callI5StoreAudio(m4aResult.m4aBase64, contentId);
+    if (!storeResult || !storeResult.url) {
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'i5 store-audio 失敗' }) };
     }
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        audioBase64: Buffer.from(outputBuffer).toString('base64'),
-        mimeType,
-        meta: {
-          sentText:    text,
-          textType,
-          voice,
-          languageCode,
-          rate,
-          format,
-          sizeKB:      Math.round(outputBuffer.length / 1024),
-          elapsedMs:   Date.now() - startTime
-        }
+        success: true,
+        audioUrl: storeResult.url,
+        textType, voice, rate,
+        elapsedMs: Date.now() - startTime
       })
     };
 
@@ -145,114 +158,61 @@ exports.handler = async (event) => {
 
 
 // ═══════════════════════════════════════════════════
-// 廖教授 TTS 合成（規格書範例）
+// 呼叫 i5 /tts（與 TTS.gs synthesizeTtsToUrl 同款）
 // ═══════════════════════════════════════════════════
-function synthesize(token, text, textType, voice, languageCode, rate) {
-  return new Promise((resolve) => {
-    const payload = JSON.stringify({
-      input:        { text, textType },
-      voice:        { model: 'broncitts', languageCode, name: voice },
-      audioConfig:  { speakingRate: rate },
-      outputConfig: { streamMode: 0 }
-    });
+function callI5Tts(text, speaker, textType) {
+  return postJson('/tts', { text, speaker, textType });
+}
 
+// ═══════════════════════════════════════════════════
+// 呼叫 i5 /convert-audio（WAV→M4A）
+// ═══════════════════════════════════════════════════
+function callI5ConvertAudio(wavBase64) {
+  return postJson('/convert-audio', { wavBase64 });
+}
+
+// ═══════════════════════════════════════════════════
+// 呼叫 i5 /store-audio（存檔 → 直播 URL）
+// ═══════════════════════════════════════════════════
+function callI5StoreAudio(m4aBase64, contentId) {
+  const fileName = contentId + '.m4a';
+  return postJson('/store-audio', { m4aBase64, fileName });
+}
+
+
+// ═══════════════════════════════════════════════════
+// HTTPS POST JSON（共用）
+// ═══════════════════════════════════════════════════
+function postJson(path, payload) {
+  return new Promise((resolve) => {
+    const body = JSON.stringify(payload);
     const req = https.request({
-      hostname: TTS_HOST,
-      port:     TTS_PORT,
-      path:     '/api/v1/tts/synthesize',
+      hostname: I5_BASE,
+      port:     I5_PORT,
+      path,
       method:   'POST',
       headers:  {
         'Content-Type':   'application/json',
-        'Authorization':  'Bearer ' + token,
-        'Accept':         'audio/wav',
-        'Content-Length': Buffer.byteLength(payload),
+        'Content-Length': Buffer.byteLength(body),
       },
-      rejectUnauthorized: false,
+      timeout: 25000,    // 25 秒（Netlify free plan 10 秒, pro 26 秒上限）
     }, (res) => {
       const chunks = [];
       res.on('data', c => chunks.push(c));
       res.on('end', () => {
+        const text = Buffer.concat(chunks).toString('utf8');
         if (res.statusCode !== 200) {
-          console.error('TTS synthesize HTTP', res.statusCode, 'body=', Buffer.concat(chunks).toString('utf8').slice(0,200));
+          console.error('i5', path, 'HTTP', res.statusCode, text.slice(0,200));
           resolve(null);
-        } else {
-          resolve(Buffer.concat(chunks));
+          return;
         }
+        try { resolve(JSON.parse(text)); }
+        catch(e) { console.error('i5', path, 'JSON parse error'); resolve(null); }
       });
     });
-    req.on('error', (e) => { console.error('TTS req error:', e.message); resolve(null); });
-    req.write(payload);
+    req.on('error', (e) => { console.error('i5', path, 'req error:', e.message); resolve(null); });
+    req.on('timeout', () => { console.error('i5', path, 'timeout'); req.destroy(); resolve(null); });
+    req.write(body);
     req.end();
   });
-}
-
-
-// ═══════════════════════════════════════════════════
-// Token 登入
-// ═══════════════════════════════════════════════════
-async function getToken() {
-  const now = Date.now();
-  if (_cachedToken && (now - _cachedTime) < TOKEN_TTL) return _cachedToken;
-
-  return new Promise((resolve) => {
-    const payload = JSON.stringify({
-      username:   USERNAME,
-      password:   PASSWORD,
-      rememberMe: true
-    });
-    const req = https.request({
-      hostname: TTS_HOST,
-      port:     TTS_PORT,
-      path:     '/api/v1/tts/login',
-      method:   'POST',
-      headers:  {
-        'Content-Type':   'application/json',
-        'Content-Length': Buffer.byteLength(payload),
-      },
-      rejectUnauthorized: false,
-    }, (res) => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        try {
-          const json  = JSON.parse(data);
-          const token = json.access_token || json.token;
-          if (token) {
-            _cachedToken = token;
-            _cachedTime  = Date.now();
-          }
-          resolve(token || null);
-        } catch(e) { resolve(null); }
-      });
-    });
-    req.on('error', () => resolve(null));
-    req.write(payload);
-    req.end();
-  });
-}
-
-
-// ═══════════════════════════════════════════════════
-// WAV → M4A
-// ═══════════════════════════════════════════════════
-function convertWavToM4a(wavBuffer) {
-  const tmpDir  = os.tmpdir();
-  const inFile  = path.join(tmpDir, `tailo_in_${Date.now()}.wav`);
-  const outFile = path.join(tmpDir, `tailo_out_${Date.now()}.m4a`);
-
-  try {
-    fs.writeFileSync(inFile, wavBuffer);
-    const ffmpegPath = require('ffmpeg-static');
-    execSync(
-      `"${ffmpegPath}" -y -i "${inFile}" -c:a aac -b:a 64k "${outFile}"`,
-      { stdio: 'pipe' }
-    );
-    return fs.readFileSync(outFile);
-  } catch(e) {
-    console.error('ffmpeg error:', e.message);
-    return null;
-  } finally {
-    try { fs.unlinkSync(inFile);  } catch(e) {}
-    try { fs.unlinkSync(outFile); } catch(e) {}
-  }
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>台羅合成工作室 v2 · 劍橋分析內部</title>
+<title>台羅合成工作室 v3 · 劍橋分析內部</title>
 <style>
   * { box-sizing: border-box; }
   body { 
@@ -98,7 +98,6 @@
   button:hover { opacity: 0.85; }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   
-  /* 雙模式 textType 切換 */
   .texttype-tabs {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -199,10 +198,11 @@
     font-size: 15px;
     color: #ffed4e;
   }
-  .result-card .meta-row {
+  .result-card .audio-url {
     font-size: 10px;
-    color: #888;
+    color: #6495ed;
     margin: 4px 0;
+    word-break: break-all;
     font-family: 'Courier New', monospace;
   }
   .result-card audio { width: 100%; margin-top: 5px; }
@@ -243,10 +243,11 @@
 <div class="container">
 
 <header>
-  <h1>🔬 台羅合成工作室 v2<span class="internal">INTERNAL</span></h1>
+  <h1>🔬 台羅合成工作室 v3<span class="internal">INTERNAL</span></h1>
   <div class="meta">劍橋分析股份有限公司 · 9 萬字台羅 → 有聲化引擎</div>
   <div class="spec">
-    📘 依廖教授 BRONCI TTS 規格書：<b>台羅 → plain_text</b> · <b>台語漢字 → characters</b> · 零轉換直送
+    📘 <b>架構</b>：Netlify → i5 中繼 (asr.bitfull.tw) → 廖教授 TTS · 
+    <b>台羅 → plain_text</b> · <b>漢字 → characters</b>
   </div>
 </header>
 
@@ -255,7 +256,6 @@
   <!-- 左側：主工作區 -->
   <div>
 
-    <!-- 輸入模式切換 -->
     <div class="section">
       <h3>📝 輸入模式</h3>
       <div class="texttype-tabs">
@@ -293,7 +293,6 @@
       </div>
     </div>
     
-    <!-- 台羅預設 -->
     <div class="section" id="tailoPresets">
       <h3>📚 台羅預設範本（廖教授數字調格式）</h3>
       <div class="preset-grid">
@@ -324,7 +323,6 @@
       </div>
     </div>
 
-    <!-- 漢字預設 -->
     <div class="section" id="hanziPresets" style="display:none">
       <h3>📚 台語漢字預設範本</h3>
       <div class="preset-grid">
@@ -348,14 +346,13 @@
           <span class="t">🙏 禱告詞範例</span>
           <span class="p">予我的心肝佇祢內底安穩</span>
         </div>
-        <div class="preset-btn" data-hanzi="今仔日天氣毋是蓋好，你閣欲去𨑨迌。">
-          <span class="t">🌤 日常台語</span>
-          <span class="p">今仔日天氣毋是蓋好...</span>
+        <div class="preset-btn" data-hanzi="臺灣大聯盟比賽加油">
+          <span class="t">⚾ 日常台語</span>
+          <span class="p">臺灣大聯盟比賽加油</span>
         </div>
       </div>
     </div>
 
-    <!-- 結果區 -->
     <div class="section">
       <h3>🔊 合成歷史</h3>
       <div id="results">
@@ -376,6 +373,9 @@
         <div class="voice-mini" data-voice="nan-TW-vs2-F01">女 F01</div>
         <div class="voice-mini" data-voice="nan-TW-vs2-F02">女 F02</div>
       </div>
+      <div style="color:#888;font-size:11px;margin-top:6px">
+        ⚠️ i5 中繼目前僅 male/female 兩種（server.js v2.10）
+      </div>
     </div>
     
     <div class="section">
@@ -386,16 +386,9 @@
         <span style="color:#888;font-size:11px">快</span>
         <div class="rate-value" id="rateValue">1.00x</div>
       </div>
-    </div>
-    
-    <div class="section">
-      <h3>🔄 批次測試</h3>
-      <button onclick="batchVoiceTest()" style="width:100%;margin-bottom:8px">
-        🎤 4 語者各跑一次
-      </button>
-      <button onclick="batchSpeedTest()" style="width:100%">
-        ⚡ 0.80 / 1.00 / 1.20 各跑
-      </button>
+      <div style="color:#888;font-size:11px;margin-top:6px">
+        ⚠️ i5 中繼目前固定 1.0x（server.js v2.10 未開放 speakingRate）
+      </div>
     </div>
     
     <div class="section">
@@ -411,7 +404,7 @@
         </div>
         <div class="stat">
           <div class="value" id="totalKB">0</div>
-          <div class="label-stat">總 KB</div>
+          <div class="label-stat">歷史筆數</div>
         </div>
       </div>
     </div>
@@ -426,9 +419,9 @@ const API_URL = window.location.origin + '/.netlify/functions/tailo-tts';
 
 let currentTextType = 'plain_text';
 let currentVoice    = 'nan-TW-vs2-M02';
-let stats = { count: 0, seconds: 0, kb: 0 };
+let stats = { count: 0, seconds: 0 };
 
-// ─── textType 切換 ──────────────────────────────────
+// textType 切換
 document.querySelectorAll('.texttype-tab').forEach(tab => {
   tab.onclick = () => {
     document.querySelectorAll('.texttype-tab').forEach(t => t.classList.remove('active'));
@@ -442,8 +435,8 @@ document.querySelectorAll('.texttype-tab').forEach(tab => {
       document.getElementById('tailoPresets').style.display = 'block';
       document.getElementById('hanziPresets').style.display = 'none';
     } else {
-      input.placeholder = '輸入台語漢字（例：今仔日天氣毋是蓋好，你閣欲去𨑨迌。）';
-      input.value = '今仔日天氣毋是蓋好，你閣欲去𨑨迌。';
+      input.placeholder = '輸入台語漢字（例：臺灣大聯盟比賽加油）';
+      input.value = '臺灣大聯盟比賽加油';
       document.getElementById('tailoPresets').style.display = 'none';
       document.getElementById('hanziPresets').style.display = 'block';
     }
@@ -451,21 +444,13 @@ document.querySelectorAll('.texttype-tab').forEach(tab => {
   };
 });
 
-// ─── 預設範本 ──────────────────────────────────────
 document.querySelectorAll('#tailoPresets .preset-btn').forEach(btn => {
-  btn.onclick = () => {
-    document.getElementById('mainInput').value = btn.dataset.tailo;
-    updateStats();
-  };
+  btn.onclick = () => { document.getElementById('mainInput').value = btn.dataset.tailo; updateStats(); };
 });
 document.querySelectorAll('#hanziPresets .preset-btn').forEach(btn => {
-  btn.onclick = () => {
-    document.getElementById('mainInput').value = btn.dataset.hanzi;
-    updateStats();
-  };
+  btn.onclick = () => { document.getElementById('mainInput').value = btn.dataset.hanzi; updateStats(); };
 });
 
-// ─── 語者/語速 ──────────────────────────────────────
 document.querySelectorAll('.voice-mini').forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll('.voice-mini').forEach(b => b.classList.remove('active'));
@@ -477,7 +462,6 @@ document.getElementById('rateSlider').addEventListener('input', (e) => {
   document.getElementById('rateValue').textContent = parseFloat(e.target.value).toFixed(2) + 'x';
 });
 
-// ─── 統計更新 ──────────────────────────────────────
 function updateStats() {
   const text = document.getElementById('mainInput').value;
   const chars = text.length;
@@ -495,17 +479,18 @@ function updateStats() {
 document.getElementById('mainInput').addEventListener('input', updateStats);
 updateStats();
 
-// ─── 合成主流程 ────────────────────────────────────
-async function synthesize(customOptions = {}) {
+async function synthesize() {
   const text = document.getElementById('mainInput').value.trim();
   if (!text) { alert('請輸入文字'); return; }
   
-  const voice = customOptions.voice || currentVoice;
-  const rate = customOptions.rate || parseFloat(document.getElementById('rateSlider').value);
+  const voice = currentVoice;
+  const rate = parseFloat(document.getElementById('rateSlider').value);
   const textType = currentTextType;
   const status = document.getElementById('status');
+  const btn = document.getElementById('synthBtn');
   
-  status.textContent = '⏳ 合成中...';
+  btn.disabled = true;
+  status.textContent = '⏳ 合成中...（走 i5 中繼）';
   status.className = 'status-inline loading';
   
   const startTime = Date.now();
@@ -514,35 +499,34 @@ async function synthesize(customOptions = {}) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, textType, voice, rate })
+      body: JSON.stringify({ text, textType, voice, rate, returnMode: 'url' })
     });
     
     const data = await response.json();
-    if (data.error) throw new Error(data.error);
-    if (!data.audioBase64) throw new Error('無音檔');
+    if (!data.success) throw new Error(data.error || '未知錯誤');
+    if (!data.audioUrl) throw new Error('無 audioUrl');
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    const sizeKb = (data.audioBase64.length * 0.75 / 1024).toFixed(1);
     
-    status.textContent = `✅ ${elapsed}s · ${sizeKb} KB`;
+    status.textContent = `✅ ${elapsed}s`;
     status.className = 'status-inline';
     
-    addResult(text, textType, data, { elapsed, sizeKb, voice, rate });
+    addResult(text, textType, data.audioUrl, { elapsed, voice, rate });
     
     stats.count++;
     stats.seconds += parseFloat(elapsed);
-    stats.kb += parseFloat(sizeKb);
     updateGlobalStats();
     
-    return data;
   } catch (err) {
     status.textContent = `❌ ${err.message}`;
     status.className = 'status-inline error';
     console.error(err);
+  } finally {
+    btn.disabled = false;
   }
 }
 
-function addResult(text, textType, data, meta) {
+function addResult(text, textType, audioUrl, meta) {
   const container = document.getElementById('results');
   if (stats.count === 0) container.innerHTML = '';
   
@@ -554,11 +538,12 @@ function addResult(text, textType, data, meta) {
   card.className = 'result-card';
   card.innerHTML = `
     <div class="label-row">
-      <span>🎙️ ${meta.voice} · ${meta.rate}x · ${meta.elapsed}s · ${meta.sizeKb} KB <span class="mode-badge ${badgeClass}">${badgeText}</span></span>
+      <span>🎙️ ${meta.voice} · ${meta.rate}x · ${meta.elapsed}s <span class="mode-badge ${badgeClass}">${badgeText}</span></span>
       <span>${new Date().toLocaleTimeString()}</span>
     </div>
     <div class="content ${contentClass}">${escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}</div>
-    <audio controls src="data:${data.mimeType || 'audio/mp4'};base64,${data.audioBase64}"></audio>
+    <div class="audio-url">🔗 ${escapeHtml(audioUrl)}</div>
+    <audio controls src="${audioUrl}"></audio>
   `;
   container.insertBefore(card, container.firstChild);
   
@@ -574,23 +559,9 @@ function escapeHtml(s) {
 function updateGlobalStats() {
   document.getElementById('totalCount').textContent = stats.count;
   document.getElementById('totalSeconds').textContent = Math.round(stats.seconds);
-  document.getElementById('totalKB').textContent = Math.round(stats.kb);
+  document.getElementById('totalKB').textContent = stats.count;
 }
 
-async function batchVoiceTest() {
-  const voices = ['nan-TW-vs2-M02', 'nan-TW-vs2-M01', 'nan-TW-vs2-F01', 'nan-TW-vs2-F02'];
-  for (const voice of voices) {
-    await synthesize({ voice });
-    await new Promise(r => setTimeout(r, 500));
-  }
-}
-async function batchSpeedTest() {
-  const rates = [0.80, 1.00, 1.20];
-  for (const rate of rates) {
-    await synthesize({ rate });
-    await new Promise(r => setTimeout(r, 500));
-  }
-}
 function clearAll() {
   document.getElementById('mainInput').value = '';
   updateStats();
