@@ -884,7 +884,59 @@ select.dim-select:focus { outline: none; border-color: var(--accent); }
   background: transparent; color: var(--ink); border: 1.5px solid var(--border);
 }
 .card-dl-btn.ghost:hover { background: var(--ink); color: white; border-color: var(--ink); }
+.card-dl-btn.share {
+  background: #06c755; color: white;
+  box-shadow: 0 3px 10px rgba(6, 199, 85, 0.25);
+}
+.card-dl-btn.share:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(6, 199, 85, 0.4); }
 .card-dl-btn .dl-icon { font-size: 1.05rem; }
+
+.photo-save-box {
+  display: none;
+  background: #fcf8ef;
+  border: 2px dashed var(--accent);
+  padding: 1rem;
+  margin-top: 0.8rem;
+  text-align: center;
+  position: relative;
+}
+.photo-save-box.show { display: block; }
+.photo-save-tip {
+  font-family: var(--font-serif);
+  font-size: 0.92rem;
+  color: var(--ink);
+  margin-bottom: 0.8rem;
+  line-height: 1.6;
+}
+.photo-save-tip-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-style: italic;
+}
+#photo-save-img {
+  max-width: 100%;
+  max-height: 380px;
+  height: auto;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: block;
+  margin: 0 auto;
+  -webkit-touch-callout: default;
+  -webkit-user-select: auto;
+  user-select: auto;
+  pointer-events: auto;
+}
+.photo-save-close {
+  margin-top: 0.8rem;
+  padding: 0.4rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.photo-save-close:hover { background: var(--ink); color: white; }
 
 .flex-json-box {
   background: #1e1e1e; color: #d4d4d4; padding: 0.9rem;
@@ -1566,13 +1618,27 @@ footer.site-footer {
               <button class="card-dl-btn primary" onclick="downloadCard()">
                 <span>下載 PNG</span><span class="dl-icon">↓</span>
               </button>
-              <button class="card-dl-btn secondary" onclick="toggleFlexJson()">
-                <span>LINE Flex Message</span><span class="dl-icon">{ }</span>
+              <button class="card-dl-btn share" onclick="shareCard()">
+                <span>分享給親友 · LINE / AirDrop</span><span class="dl-icon">↗</span>
+              </button>
+              <button class="card-dl-btn ghost" onclick="openPhotoSave()">
+                <span>存到相簿 · 長按圖片加入照片</span><span class="dl-icon">⬇</span>
               </button>
               <button class="card-dl-btn ghost" onclick="copyCardImage()">
                 <span>複製圖片到剪貼簿</span><span class="dl-icon">⧉</span>
               </button>
+              <button class="card-dl-btn secondary" onclick="toggleFlexJson()">
+                <span>LINE Flex Message · 工程師用</span><span class="dl-icon">{ }</span>
+              </button>
             </div>
+          </div>
+          <div class="photo-save-box" id="photo-save-box">
+            <div class="photo-save-tip">
+              👇 <strong>長按下方圖片</strong> → 選「加入照片圖庫」<br>
+              <span class="photo-save-tip-sub">iPhone / Android 皆可 · 存到相簿後可任意分享</span>
+            </div>
+            <img id="photo-save-img" alt="祝福卡片" />
+            <button class="photo-save-close" onclick="closePhotoSave()">× 收起</button>
           </div>
           <div class="flex-json-box" id="flex-json-box">—</div>
         </div>
@@ -3263,24 +3329,136 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 
 function downloadCard() {
   const canvas = document.getElementById('card-canvas');
-  const url = canvas.toDataURL('image/png');
-  const a = document.createElement('a');
   const occ = document.getElementById('occasion').value;
   const ts = new Date().toISOString().slice(0, 10);
-  a.download = '劍橋分析_祝福卡_' + occ + '_' + currentCardStyle + '_' + ts + '.png';
-  a.href = url;
-  a.click();
-  toast('✓ PNG 已下載');
+  const filename = '劍橋分析_祝福卡_' + occ + '_' + currentCardStyle + '_' + ts + '.png';
+
+  canvas.toBlob(function(blob) {
+    if (!blob) {
+      toast('⚠ 圖片產生失敗，請重試');
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = url;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    // 偵測手機 → 提示使用者
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      toast('✓ 已下載 · 請到「下載」或「檔案」App 查看');
+    } else {
+      toast('✓ PNG 已下載');
+    }
+  }, 'image/png');
+}
+
+async function shareCard() {
+  const canvas = document.getElementById('card-canvas');
+  const occ = document.getElementById('occasion').value;
+  const ts = new Date().toISOString().slice(0, 10);
+  const filename = '劍橋分析_' + occ + '祝福卡_' + ts + '.png';
+
+  try {
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    if (!blob) {
+      toast('⚠ 圖片產生失敗');
+      return;
+    }
+    const file = new File([blob], filename, { type: 'image/png' });
+
+    // 檢查 Web Share API + 檔案分享支援
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: occ + '祝福卡',
+        text: '來自 劍橋分析 · 冰焰語意演算架構'
+      });
+      toast('✓ 分享成功');
+    } else if (navigator.share) {
+      // 不能分享檔案，退而分享文字
+      const s = getCardSegments();
+      const full = s.headName + s.headParticle + s.core + s.greeting;
+      await navigator.share({
+        title: occ + '祝福卡',
+        text: full + '\n\n—— 劍橋分析 · 台語好極'
+      });
+      toast('✓ 已分享文字 · 圖片請用「下載」或「複製」');
+    } else {
+      // Desktop 沒 Web Share → fallback 複製圖片到剪貼簿
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        toast('💻 Desktop 不支援原生分享 · 已複製圖片，請貼到聊天室');
+      } catch (err) {
+        toast('此瀏覽器不支援分享，請用「下載 PNG」');
+      }
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      toast('分享失敗：' + (e.message || '請用其他方式'));
+    }
+  }
+}
+
+function openPhotoSave() {
+  const canvas = document.getElementById('card-canvas');
+  const box = document.getElementById('photo-save-box');
+  const img = document.getElementById('photo-save-img');
+
+  try {
+    const dataUrl = canvas.toDataURL('image/png');
+    img.src = dataUrl;
+    box.classList.add('show');
+    // 滾動到預覽區
+    setTimeout(() => {
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isIOS) {
+      toast('👇 長按下方圖片 → 加入照片圖庫');
+    } else {
+      toast('👇 長按下方圖片 → 下載圖片 / 儲存圖片');
+    }
+  } catch (e) {
+    toast('圖片產生失敗，請重試');
+  }
+}
+
+function closePhotoSave() {
+  const box = document.getElementById('photo-save-box');
+  const img = document.getElementById('photo-save-img');
+  box.classList.remove('show');
+  img.src = '';
 }
 
 async function copyCardImage() {
   try {
     const canvas = document.getElementById('card-canvas');
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    if (!blob) {
+      toast('⚠ 圖片產生失敗');
+      return;
+    }
+    if (!navigator.clipboard || !navigator.clipboard.write) {
+      toast('此瀏覽器不支援 · 請改用「存到相簿」或「下載」');
+      return;
+    }
     await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-    toast('✓ 已複製到剪貼簿');
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      toast('✓ 已複製 · 去 LINE 聊天室長按輸入框→貼上');
+    } else {
+      toast('✓ 已複製到剪貼簿');
+    }
   } catch (e) {
-    toast('此瀏覽器不支援，請用下載');
+    toast('複製失敗，請改用「存到相簿」或「下載」');
   }
 }
 
@@ -3318,9 +3496,25 @@ function toggleFlexJson() {
       }
     }
   };
-  box.textContent = JSON.stringify(flex, null, 2);
+  const jsonStr = JSON.stringify(flex, null, 2);
+  box.textContent = jsonStr;
   box.classList.add('show');
-  toast('✓ Flex JSON 已產出');
+
+  // 複製 JSON 到剪貼簿（若支援）
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(jsonStr).then(() => {
+      toast('✓ Flex JSON 已展開並複製到剪貼簿');
+    }).catch(() => {
+      toast('✓ Flex JSON 已產出（手動複製）');
+    });
+  } else {
+    toast('✓ Flex JSON 已產出（手動複製）');
+  }
+
+  // 滾動到 JSON 區
+  setTimeout(() => {
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
 }
 
 document.getElementById('card-modal-overlay').addEventListener('click', (e) => {
