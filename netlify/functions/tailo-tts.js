@@ -1,33 +1,12 @@
 /**
  * netlify/functions/tailo-tts.js
- * 台羅直接念語音合成
- * 2026/4/24
+ * 台羅直接念語音合成 v1.1
+ * 2026/4/24 修正版
  * 
- * 設計要點：
- *   1. 廖教授 TTS 是「漢字→MT→台羅→合成」的 pipeline
- *   2. 她的內部格式是「數字調」(kin1 a2 jit8)
- *   3. 我們冰焰系統用「符號調」(thài-iông, me̍k-hû)
- *   4. 所以這個 Function 要：
- *      a. 自動判斷輸入是「符號調」還是「數字調」
- *      b. 如果是符號調 → 自動轉數字調
- *      c. 送給廖教授 TTS（走 textType='tailo' 或 'phoneme'）
- * 
- * 參數：
- *   tailo     必填 台羅拼音（符號調或數字調都可）
- *   voice     可選 預設 nan-TW-vs2-M02
- *   rate      可選 預設 0.9（古文建議慢一點）
- *   inputFormat  可選 auto / symbol / number （預設 auto）
- * 
- * 回傳：
- *   {
- *     audioBase64, mimeType,
- *     meta: {
- *       originalInput:   輸入的台羅原始字串,
- *       detectedFormat:  符號調 or 數字調,
- *       convertedInput:  送給 TTS 的最終字串,
- *       voice, rate, sizeKB, elapsedMs
- *     }
- *   }
+ * v1.1 修正：
+ *   - 符號調 → 數字調改為「以音節為單位」的轉換
+ *   - 例：thài-iông → thai3-iong5 (正確)
+ *   - 之前錯誤是 thà i → tha3i (數字塞在字母中間)
  */
 
 const https = require('https');
@@ -44,89 +23,114 @@ const PASSWORD = 'SRGER#342sd';
 let _cachedToken = null;
 let _cachedTime  = 0;
 
-// ═══════════════════════════════════════════════════════
-// 符號調 → 數字調 對照表
-// ═══════════════════════════════════════════════════════
-// 台羅聲調系統：
-//   1 = 陰平 (a)        無符號
-//   2 = 陰上 (á)        ́
-//   3 = 陰去 (à)        ̀
-//   4 = 陰入 (ah)       無符號 + 入聲尾 (-h/-p/-t/-k)
-//   5 = 陽平 (â)        ̂
-//   7 = 陽去 (ā)        ̄
-//   8 = 陽入 (a̍h)       ̍  + 入聲尾
-//   9 = 高升 (a̋)        (極少用)
-//
-// 常見母音對照：
-//   ā ē ī ō ū = 7 聲
-//   á é í ó ú = 2 聲
-//   à è ì ò ù = 3 聲
-//   â ê î ô û = 5 聲
-//   a̍ e̍ i̍ o̍ u̍ = 8 聲 (上方加點)
-// ═══════════════════════════════════════════════════════
-
-const TONE_MARKS = {
+// ═══════════════════════════════════════════════════════════
+// 聲調符號對應表
+// key: 變音字元 → value: [基本字元, 聲調數字]
+// ═══════════════════════════════════════════════════════════
+const TONE_MAP = {
   // 2 聲
-  'á':'a2','é':'e2','í':'i2','ó':'o2','ú':'u2',
-  'Á':'A2','É':'E2','Í':'I2','Ó':'O2','Ú':'U2',
+  'á':['a',2], 'é':['e',2], 'í':['i',2], 'ó':['o',2], 'ú':['u',2], 'ḿ':['m',2], 'ń':['n',2],
+  'Á':['A',2], 'É':['E',2], 'Í':['I',2], 'Ó':['O',2], 'Ú':['U',2], 'Ḿ':['M',2], 'Ń':['N',2],
   // 3 聲
-  'à':'a3','è':'e3','ì':'i3','ò':'o3','ù':'u3',
-  'À':'A3','È':'E3','Ì':'I3','Ò':'O3','Ù':'U3',
+  'à':['a',3], 'è':['e',3], 'ì':['i',3], 'ò':['o',3], 'ù':['u',3], 'ǹ':['n',3],
+  'À':['A',3], 'È':['E',3], 'Ì':['I',3], 'Ò':['O',3], 'Ù':['U',3], 'Ǹ':['N',3],
   // 5 聲
-  'â':'a5','ê':'e5','î':'i5','ô':'o5','û':'u5',
-  'Â':'A5','Ê':'E5','Î':'I5','Ô':'O5','Û':'U5',
+  'â':['a',5], 'ê':['e',5], 'î':['i',5], 'ô':['o',5], 'û':['u',5], 'm̂':['m',5], 'n̂':['n',5],
+  'Â':['A',5], 'Ê':['E',5], 'Î':['I',5], 'Ô':['O',5], 'Û':['U',5],
   // 7 聲
-  'ā':'a7','ē':'e7','ī':'i7','ō':'o7','ū':'u7',
-  'Ā':'A7','Ē':'E7','Ī':'I7','Ō':'O7','Ū':'U7',
-  // 8 聲（上方加點的變音，Unicode 組合字元）
-  'a̍':'a8','e̍':'e8','i̍':'i8','o̍':'o8','u̍':'u8',
-  // nn 音（鼻化）通常不變音，這裡略
+  'ā':['a',7], 'ē':['e',7], 'ī':['i',7], 'ō':['o',7], 'ū':['u',7], 'm̄':['m',7], 'n̄':['n',7],
+  'Ā':['A',7], 'Ē':['E',7], 'Ī':['I',7], 'Ō':['O',7], 'Ū':['U',7],
 };
 
-// 偵測輸入是符號調還是數字調
-function detectFormat(tailo) {
-  // 有任何聲調符號 → 符號調
-  const hasSymbol = /[áéíóúàèìòùâêîôûāēīōū]|[aeiou]\u030D/.test(tailo);
-  // 有 syllable 結尾數字（1-9）且無聲調符號 → 數字調
-  const hasNumberTone = /[a-zA-Z]+[1-9](-|$|,|\s|\.)/.test(tailo);
-  
-  if (hasSymbol) return 'symbol';
-  if (hasNumberTone) return 'number';
-  return 'unknown';  // 可能是無調的純羅馬字
+// 組合字元（U+030D）需要特殊處理：a+◌̍ = 8 聲
+const COMBINING_MAP = {
+  'a':8, 'e':8, 'i':8, 'o':8, 'u':8, 'm':8, 'n':8,
+  'A':8, 'E':8, 'I':8, 'O':8, 'U':8, 'M':8, 'N':8,
+};
+
+/**
+ * 偵測輸入格式
+ */
+function detectFormat(text) {
+  // 有組合字元 \u030D 或變音字元 → 符號調
+  if (/[áàâāéèêēíìîīóòôōúùûūǹ]/i.test(text)) return 'symbol';
+  if (/\u030D/.test(text)) return 'symbol';
+  // 有「字母後面接數字」→ 數字調
+  if (/[a-zA-Z]+[1-9]/.test(text)) return 'number';
+  return 'unknown';
 }
 
-// 符號調 → 數字調
-function symbolToNumber(tailo) {
-  // Step 1: 先處理組合字元 a̍ e̍ i̍ o̍ u̍（8 聲，上方加點）
-  // Unicode 中這些是兩個字元：a + U+030D（Combining Vertical Line Above）
-  let result = tailo
-    .replace(/a\u030D/g, 'a8')
-    .replace(/e\u030D/g, 'e8')
-    .replace(/i\u030D/g, 'i8')
-    .replace(/o\u030D/g, 'o8')
-    .replace(/u\u030D/g, 'u8')
-    .replace(/m\u030D/g, 'm8')
-    .replace(/n\u030D/g, 'n8')
-    .replace(/A\u030D/g, 'A8')
-    .replace(/E\u030D/g, 'E8')
-    .replace(/I\u030D/g, 'I8')
-    .replace(/O\u030D/g, 'O8')
-    .replace(/U\u030D/g, 'U8');
+/**
+ * 符號調 → 數字調（以音節為單位）
+ * 
+ * 演算法：
+ * 1. 逐字掃描，記錄「當前音節的字母」和「當前音節的聲調」
+ * 2. 遇到非字母（空格、連字號、標點）→ 結算當前音節，加上聲調數字
+ * 3. 1 聲和 4 聲沒符號，要用規則判定（有入聲尾 ptkh → 4 聲，否則 1 聲）
+ */
+function symbolToNumber(text) {
+  let result = '';
+  let syllable = '';      // 當前音節累積的基本字母
+  let tone = 0;           // 當前音節的聲調（0 = 未定）
   
-  // Step 2: 其他單字元變音符號
-  for (const [symbol, number] of Object.entries(TONE_MARKS)) {
-    if (symbol.length === 1) {
-      result = result.split(symbol).join(number);
+  function flushSyllable() {
+    if (syllable.length === 0) return;
+    
+    let finalTone = tone;
+    if (finalTone === 0) {
+      // 未標聲調 → 判斷 1 聲或 4 聲
+      // 4 聲規則：音節尾是 p/t/k/h（入聲）
+      if (/[ptkhPTKH]$/.test(syllable)) {
+        finalTone = 4;
+      } else {
+        finalTone = 1;
+      }
     }
+    
+    result += syllable + finalTone;
+    syllable = '';
+    tone = 0;
   }
   
-  // Step 3: 把「數字」從字母後面移到 syllable 結尾
-  // 例如 "tha2i-io5ng" → "thai2-iong5"（數字應該在音節最後）
-  // 這一步比較複雜，暫時假設輸入是「音節中間」而不是「音節結尾」
-  // TODO: 更嚴謹的 syllable 邊界偵測
+  const chars = [...text];  // 用 spread 避免 surrogate pair 問題
+  
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    const next = chars[i + 1];
+    
+    // ─── 處理組合字元：字母 + U+030D = 8 聲 ─────────
+    if (next === '\u030D' && COMBINING_MAP[ch]) {
+      syllable += ch;
+      tone = 8;
+      i++;  // 跳過 U+030D
+      continue;
+    }
+    
+    // ─── 處理變音字元（2/3/5/7 聲）────────────────
+    if (TONE_MAP[ch]) {
+      const [base, t] = TONE_MAP[ch];
+      syllable += base;
+      tone = t;
+      continue;
+    }
+    
+    // ─── 普通字母 ──────────────────────────────────
+    if (/[a-zA-Z]/.test(ch)) {
+      syllable += ch;
+      continue;
+    }
+    
+    // ─── 非字母（分隔符）→ 結算音節 ────────────────
+    flushSyllable();
+    result += ch;
+  }
+  
+  // 最後一個音節
+  flushSyllable();
   
   return result;
 }
+
 
 exports.handler = async (event) => {
   const headers = {
@@ -148,8 +152,8 @@ exports.handler = async (event) => {
   const {
     tailo,
     voice = 'nan-TW-vs2-M02',
-    rate  = 0.9,           // 古文預設慢一點
-    inputFormat = 'auto',  // auto / symbol / number
+    rate  = 0.9,
+    inputFormat = 'auto',
     format = 'm4a'
   } = body;
 
@@ -172,7 +176,6 @@ exports.handler = async (event) => {
     if (detectedFormat === 'symbol') {
       convertedInput = symbolToNumber(tailo);
     }
-    // 如果是 number 或 unknown，直接送原文
 
     // ─── 取 Token & 合成 ────────────────────────────────
     const token = await getToken();
@@ -218,41 +221,11 @@ exports.handler = async (event) => {
 };
 
 
-// ═══════════════════════════════════════════════════════════
-// ⚠️ 關鍵實驗：廖教授 TTS 到底怎麼吃台羅
-// ═══════════════════════════════════════════════════════════
-// 
-// 有兩種可能的 API 送法，我們可能都要試：
-//   
-// 【方案 α】送純 text（希望 TTS 內部能辨識）
-//   {
-//     input: { text: "thai3-iong5 tsi-ui5-ping7", textType: 'plain_text' },
-//     voice: { languageCode: 'nan-TW' }
-//   }
-//   
-// 【方案 β】可能有 textType: 'tailo' 或 'pinyin'（廖教授文件沒明說，要試）
-//   {
-//     input: { text: "thai3-iong5", textType: 'tailo' },  // ← 可能要這樣
-//     voice: { languageCode: 'nan-TW' }
-//   }
-// 
-// 目前先用方案 α（plain_text）試試看
-// ═══════════════════════════════════════════════════════════
-
 function synthesizeTailo(token, tailoText, voice, rate) {
   return new Promise((resolve) => {
-    const languageCode = 'nan-TW';  // 台羅一定是台語
-    
     const payload = JSON.stringify({
-      input: {
-        text: tailoText,
-        textType: 'plain_text'  // TODO: 如果 TTS 支援 textType:'tailo' 改這裡
-      },
-      voice: { 
-        model: 'broncitts', 
-        languageCode, 
-        name: voice 
-      },
+      input: { text: tailoText, textType: 'plain_text' },
+      voice: { model: 'broncitts', languageCode: 'nan-TW', name: voice },
       audioConfig: { speakingRate: rate },
       outputConfig: { streamMode: 0 }
     });
@@ -287,7 +260,6 @@ function synthesizeTailo(token, tailoText, voice, rate) {
 }
 
 
-// ── Token（與 tts-speak.js 相同）────────────────────────
 async function getToken() {
   const now = Date.now();
   if (_cachedToken && (now - _cachedTime) < 28800 * 1000) return _cachedToken;
@@ -326,7 +298,6 @@ async function getToken() {
 }
 
 
-// ── WAV → M4A ────────────────────────────────────────────
 function convertWavToM4a(wavBuffer) {
   const tmpDir  = os.tmpdir();
   const inFile  = path.join(tmpDir, `tailo_in_${Date.now()}.wav`);
