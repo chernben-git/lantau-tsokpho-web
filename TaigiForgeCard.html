@@ -829,10 +829,12 @@ select.dim-select:focus { outline: none; border-color: var(--accent); }
   background: white; border: 1px solid var(--border); padding: 0.8rem;
   display: flex; justify-content: center; align-items: center;
   aspect-ratio: 1; position: relative; overflow: hidden;
+  width: 100%;
 }
 #card-canvas {
   max-width: 100%; max-height: 100%;
-  width: auto; height: auto; display: block;
+  width: 100%; height: auto; display: block;
+  aspect-ratio: 1;
   box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 .card-info-panel {
@@ -846,10 +848,18 @@ select.dim-select:focus { outline: none; border-color: var(--accent); }
   letter-spacing: 0.2em; margin-bottom: 0.35rem;
 }
 .card-info-content {
-  font-family: var(--font-serif); font-size: 0.88rem; color: var(--ink);
+  font-family: 'Noto Serif TC', 'Source Han Serif TC', 'PingFang TC', 'Heiti TC', serif;
+  font-size: 0.88rem; color: var(--ink);
   line-height: 1.5; letter-spacing: 0.03em;
+  font-variant-emoji: text;
+  -webkit-font-feature-settings: "liga" 0;
+  text-rendering: optimizeLegibility;
 }
-.card-info-content .highlight { color: var(--accent); font-weight: 700; }
+.card-info-content .highlight {
+  color: var(--accent); font-weight: 700;
+  font-family: 'Noto Serif TC', 'Source Han Serif TC', 'PingFang TC', 'Heiti TC', serif;
+  font-variant-emoji: text;
+}
 .card-size-info { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
 .card-style-desc { font-size: 0.78rem; color: var(--muted); font-family: var(--font-serif); line-height: 1.5; font-style: italic; }
 .card-download-row { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -2363,7 +2373,8 @@ const TAILO = {
   '千':'tshian','錯':'tshò','入':'ji̍p','骨':'kut','髓':'tshuè','辛':'sin','勞':'lô','規':'kui',
   '人':'lâng','仔':'á','兜':'tau','後':'hāu','漢':'hàn','趁':'thàn','做':'tsò','鬥':'tàu',
   '陣':'tīn','逐':'ta̍k','遂':'suî','堅':'kian','咧':'leh','挺':'thíng','顧':'kòo','查':'tsa',
-  '某':'bóo','諸':'tsu','雨':'ú','調':'tiâu','尾':'bué','跟':'kin','是':'sī','於':'î','佇':'tī'
+  '某':'bóo','諸':'tsu','雨':'ú','調':'tiâu','尾':'bué','跟':'kin','是':'sī','於':'î','佇':'tī',
+  '為':'uī','拖':'thua','磨':'buâ','節':'tseh','母':'bú','親':'tshin','快':'khuài','樂':'lo̍k'
 };
 
 const STRONG_HEX = ['坤', '兌', '乾', '巽'];
@@ -2877,9 +2888,11 @@ function updateCardContentPreview() {
   const s = getCardSegments();
   const full = s.headName + s.headParticle + s.core + s.greeting + s.tailName + s.tailParticle;
   const tailo = toTailo(full);
+  // 強制文字變體（U+FE0E）防止 iOS 把漢字誤判為 emoji
+  const fullSafe = full.split('').map(c => c + '\uFE0E').join('');
   document.getElementById('card-content-preview').innerHTML =
-    '<div><span class="highlight">' + full + '</span></div>' +
-    '<div style="font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--stone); margin-top:6px; word-break:break-all;">' + tailo + '</div>';
+    '<div style="font-family:\'Noto Serif TC\',serif; font-variant-emoji:text;"><span class="highlight" style="font-family:\'Noto Serif TC\',serif;">' + fullSafe + '</span></div>' +
+    '<div style="font-family:\'JetBrains Mono\',monospace; font-size:11px; color:var(--muted); margin-top:6px; word-break:break-all;">' + tailo + '</div>';
 }
 
 function drawSeal(ctx, x, y, size, text) {
@@ -3006,7 +3019,7 @@ function renderRiceStyle(ctx, W, H, seg, occChar) {
   ctx.fillStyle = '#8b6838';
   ctx.font = "400 22px 'JetBrains Mono', monospace";
   ctx.textAlign = 'center';
-  wrapText(ctx, toTailo(fullSentence), W/2, 610, W - 200, 30);
+  wrapText(ctx, toTailo(fullSentence), W/2, 610, W - 220, 30);
 
   ctx.strokeStyle = '#b3322c';
   ctx.lineWidth = 1;
@@ -3015,18 +3028,28 @@ function renderRiceStyle(ctx, W, H, seg, occChar) {
   ctx.lineTo(W/2 + 200, 700);
   ctx.stroke();
 
+  // ===== 底部：署名 + 印章 + 水印（三層分隔）=====
+  const R_INNER = W - 110;  // 內容右邊界
+
+  // 署名（右對齊到印章左側，y=830）
   const signText = seg.tailName + (seg.tailParticle ? '　' + seg.tailParticle : '');
-  ctx.fillStyle = '#1a2332';
-  ctx.font = "600 38px 'Noto Serif TC', serif";
-  ctx.textAlign = 'right';
-  if (signText) ctx.fillText(signText, W - 160, 830);
+  if (signText) {
+    ctx.fillStyle = '#1a2332';
+    ctx.font = "600 34px 'Noto Serif TC', serif";
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(signText, R_INNER - 100, 845);
+  }
 
-  drawSeal(ctx, W - 180, 930, 110, '劍橋分析');
+  // 印章（印章中心 y=870, size=75）
+  drawSeal(ctx, R_INNER - 35, 880, 75, '劍橋分析');
 
+  // 水印（離印章夠遠，y=955）
   ctx.fillStyle = '#8b6838';
-  ctx.font = "400 16px 'Noto Serif TC', serif";
+  ctx.font = "400 14px 'Noto Serif TC', serif";
   ctx.textAlign = 'center';
-  ctx.fillText('由 劍橋分析 · 冰焰語意演算架構生成', W/2, H - 80);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('由 劍橋分析 · 冰焰語意演算架構生成', W/2, 960);
 }
 
 function renderModernStyle(ctx, W, H, seg, occChar) {
@@ -3044,21 +3067,29 @@ function renderModernStyle(ctx, W, H, seg, occChar) {
   };
   const pair = colorPairs[occChar] || ['#f5a97d', '#c96b2d'];
 
+  // 底色漸層
   const gradient = ctx.createLinearGradient(0, 0, W, H);
   gradient.addColorStop(0, pair[0]);
   gradient.addColorStop(1, pair[1]);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, W, H);
 
-  const padding = 60;
+  // 外框 padding 80（從 60 加大）
+  const PAD = 80;
   ctx.fillStyle = '#fcf8ef';
-  ctx.fillRect(padding, padding, W - padding*2, H - padding*2);
+  ctx.fillRect(PAD, PAD, W - PAD*2, H - PAD*2);
 
+  // 內容安全區 inner（離白卡邊 30px）
+  const INNER_L = PAD + 30;   // 110
+  const INNER_R = W - PAD - 30; // 970
+  const INNER_W = INNER_R - INNER_L; // 860
+
+  // 裝飾小圓點
   ctx.save();
   ctx.fillStyle = pair[1] + '18';
   for (let i = 0; i < 40; i++) {
-    const x = padding + Math.random() * (W - padding*2);
-    const y = padding + Math.random() * (H - padding*2);
+    const x = PAD + Math.random() * (W - PAD*2);
+    const y = PAD + Math.random() * (H - PAD*2);
     const r = 3 + Math.random() * 6;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -3066,6 +3097,7 @@ function renderModernStyle(ctx, W, H, seg, occChar) {
   }
   ctx.restore();
 
+  // 情境大字（淡色背景）
   ctx.save();
   ctx.fillStyle = pair[1] + '15';
   ctx.font = "900 420px 'Noto Serif TC', serif";
@@ -3074,40 +3106,60 @@ function renderModernStyle(ctx, W, H, seg, occChar) {
   ctx.fillText(occChar, W/2, H/2);
   ctx.restore();
 
+  // ===== Y 座標分配 =====
+  // 100-180   : (保留)
+  // 210-280   : 稱謂
+  // 330-470   : 核心句（大紅字）
+  // 520-600   : 祝賀語
+  // 640-760   : 台羅（最多 3 行）
+  // 800-870   : 署名行（右對齊 + 敬詞）
+  // 880-970   : 印章 + 水印
+
+  // 稱謂
   const fullUpper = seg.headName + seg.headParticle;
   ctx.fillStyle = '#1a2332';
-  ctx.font = "500 42px 'Noto Serif TC', serif";
+  ctx.font = "500 40px 'Noto Serif TC', serif";
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  if (fullUpper) ctx.fillText(fullUpper, W/2, 260);
+  if (fullUpper) ctx.fillText(fullUpper, W/2, 240);
 
+  // 核心句
   ctx.fillStyle = pair[1];
-  ctx.font = "900 72px 'Noto Serif TC', serif";
-  ctx.fillText(seg.core, W/2, 420);
+  ctx.font = "900 70px 'Noto Serif TC', serif";
+  ctx.fillText(seg.core, W/2, 390);
 
+  // 祝賀語
   if (seg.greeting) {
     ctx.fillStyle = '#1a2332';
-    ctx.font = "700 54px 'Noto Serif TC', serif";
-    ctx.fillText(seg.greeting, W/2, 560);
+    ctx.font = "700 50px 'Noto Serif TC', serif";
+    ctx.fillText(seg.greeting, W/2, 540);
   }
 
+  // 台羅拼音（限制寬度 = INNER_W）
   const fullSentence = fullUpper + seg.core + seg.greeting;
   ctx.fillStyle = pair[1] + 'cc';
-  ctx.font = "400 20px 'JetBrains Mono', monospace";
-  wrapText(ctx, toTailo(fullSentence), W/2, 660, W - padding*2 - 60, 28);
+  ctx.font = "400 19px 'JetBrains Mono', monospace";
+  wrapText(ctx, toTailo(fullSentence), W/2, 650, INNER_W, 26);
 
+  // ===== 底部：署名 + 印章 + 水印（三層分隔）=====
+
+  // 署名（y=820，右對齊到 INNER_R - 120，留印章空間）
   const signText = seg.tailName + (seg.tailParticle ? '　' + seg.tailParticle : '');
   ctx.fillStyle = '#1a2332';
-  ctx.font = "600 36px 'Noto Serif TC', serif";
+  ctx.font = "600 34px 'Noto Serif TC', serif";
   ctx.textAlign = 'right';
-  if (signText) ctx.fillText(signText, W - padding - 40, 830);
+  ctx.textBaseline = 'alphabetic';
+  if (signText) ctx.fillText(signText, INNER_R - 110, 830);
 
-  drawSeal(ctx, W - padding - 90, 930, 100, '劍橋分析');
+  // 印章（印章中心 y=860, x=INNER_R - 50, size=80）
+  drawSeal(ctx, INNER_R - 50, 870, 75, '劍橋分析');
 
+  // 水印（y=940，底部中央，離印章夠遠）
   ctx.fillStyle = '#1a233288';
-  ctx.font = "400 15px 'Noto Serif TC', serif";
+  ctx.font = "400 14px 'Noto Serif TC', serif";
   ctx.textAlign = 'center';
-  ctx.fillText('由 劍橋分析 · 冰焰語意演算架構生成', W/2, H - 90);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('由 劍橋分析 · 冰焰語意演算架構生成', W/2, 950);
 }
 
 function renderScrollStyle(ctx, W, H, seg, occChar) {
@@ -3179,12 +3231,13 @@ function renderScrollStyle(ctx, W, H, seg, occChar) {
 
   ctx.restore();
 
-  drawSeal(ctx, W - 130, H - 130, 100, '劍橋分析');
+  drawSeal(ctx, W - 130, H - 180, 85, '劍橋分析');
 
   ctx.fillStyle = '#c9a961aa';
   ctx.font = "400 14px 'Noto Serif TC', serif";
   ctx.textAlign = 'center';
-  ctx.fillText('由 劍橋分析 · 冰焰語意演算架構生成', W/2, H - 20);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('由 劍橋分析 · 冰焰語意演算架構生成', W/2, H - 75);
 }
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
