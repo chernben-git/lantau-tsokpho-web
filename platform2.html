@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台羅合成工作室 · 劍橋分析內部</title>
+<style>
+  * { box-sizing: border-box; }
+  body { 
+    font-family: 'Noto Sans TC', sans-serif; 
+    margin: 0;
+    background: #0a0a1e;
+    color: #e6e6e6;
+    min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  
+  header {
+    padding: 20px 0;
+    border-bottom: 2px solid #ff4757;
+    margin-bottom: 20px;
+  }
+  header h1 { color: #ff4757; margin: 0 0 5px; }
+  header .meta { color: #888; font-size: 13px; }
+  header .internal {
+    background: #ff4757;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-left: 8px;
+  }
+  
+  .layout { 
+    display: grid; 
+    grid-template-columns: 1fr 350px; 
+    gap: 20px; 
+  }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  
+  .section {
+    background: #16213e;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #1e3a5f;
+  }
+  .section h3 { 
+    color: #ffd700; 
+    margin: 0 0 12px; 
+    font-size: 15px;
+    border-bottom: 1px solid #1e3a5f;
+    padding-bottom: 8px;
+  }
+  
+  label { 
+    display: block; 
+    color: #ffd700; 
+    font-size: 12px; 
+    margin: 8px 0 4px; 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  textarea, input {
+    width: 100%;
+    background: #0a0a1e;
+    color: #e6e6e6;
+    border: 1px solid #1e3a5f;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+  }
+  textarea { min-height: 100px; resize: vertical; }
+  textarea.tailo-input { 
+    font-size: 16px; 
+    line-height: 1.8;
+    border-left: 3px solid #ffd700;
+  }
+  
+  button {
+    background: #ffd700;
+    color: #0a0a1e;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+  }
+  button.secondary { background: #0f3460; color: #e6e6e6; }
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .preset-btn {
+    background: #0f3460;
+    color: #e6e6e6;
+    border: 1px solid #1e3a5f;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    text-align: left;
+  }
+  .preset-btn:hover { border-color: #ffd700; }
+  .preset-btn .preset-title { color: #ffd700; font-weight: bold; display: block; }
+  .preset-btn .preset-preview { color: #aaa; font-size: 11px; margin-top: 2px; }
+  
+  .voice-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .voice-mini {
+    background: #0f3460;
+    border: 1px solid #1e3a5f;
+    color: #e6e6e6;
+    padding: 6px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    text-align: center;
+  }
+  .voice-mini.active { background: #ffd700; color: #0a0a1e; border-color: #ffd700; }
+  
+  .rate-slider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rate-slider input[type="range"] { flex: 1; }
+  .rate-value { 
+    background: #ffd700; 
+    color: #0a0a1e; 
+    padding: 4px 8px; 
+    border-radius: 3px; 
+    font-weight: bold;
+    min-width: 45px;
+    text-align: center;
+    font-size: 13px;
+  }
+  
+  .result-card {
+    background: #0a0a1e;
+    border: 1px solid #1e3a5f;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .result-card .label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 5px;
+  }
+  .result-card .tailo-content {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #ffd700;
+    margin-bottom: 8px;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+  .result-card .debug-info {
+    font-size: 10px;
+    color: #888;
+    margin: 4px 0;
+    font-family: 'Courier New', monospace;
+  }
+  .result-card audio { width: 100%; margin-top: 5px; }
+  
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    font-size: 12px;
+  }
+  .stat {
+    background: #0a0a1e;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+  }
+  .stat .value { color: #ffd700; font-weight: bold; font-size: 16px; }
+  .stat .label-stat { color: #aaa; font-size: 10px; }
+  
+  .batch-mode {
+    border-left: 3px solid #4caf50;
+    padding-left: 10px;
+    margin-top: 10px;
+  }
+  
+  .status-inline { color: #4caf50; font-size: 12px; }
+  .status-inline.error { color: #f44336; }
+  .status-inline.loading { color: #ffd700; }
+  
+  .note {
+    background: rgba(255, 215, 0, 0.1);
+    border-left: 3px solid #ffd700;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #ffd700;
+    margin: 10px 0;
+  }
+  .format-selector {
+    display: flex;
+    gap: 6px;
+    margin-top: 5px;
+  }
+  .format-selector .format-btn {
+    flex: 1;
+    padding: 5px;
+    font-size: 11px;
+    background: #0f3460;
+    border: 1px solid #1e3a5f;
+    color: #aaa;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .format-selector .format-btn.active { background: #ffd700; color: #0a0a1e; border-color: #ffd700; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+  <h1>🔬 台羅合成工作室<span class="internal">INTERNAL</span></h1>
+  <div class="meta">劍橋分析股份有限公司 · 冰焰系統 · 9 萬字台羅 → 有聲化引擎</div>
+</header>
+
+<div class="layout">
+
+  <!-- 左側：主工作區 -->
+  <div>
+    <!-- 台羅輸入 -->
+    <div class="section">
+      <h3>📝 台羅輸入</h3>
+      <textarea id="tailoInput" class="tailo-input" placeholder="貼台羅拼音（聲調可用符號 á 或數字 a2）...">thài-iông tsi-uî-pīng, me̍k-hû, thâu-hāng kiông-thiànn jî ònn-hân.</textarea>
+      
+      <label>輸入格式偵測模式</label>
+      <div class="format-selector">
+        <div class="format-btn active" data-format="auto">🤖 自動偵測</div>
+        <div class="format-btn" data-format="symbol">符號調 á â ō</div>
+        <div class="format-btn" data-format="number">數字調 a2 a5 o7</div>
+      </div>
+      
+      <div class="stats" style="margin-top: 10px">
+        <div class="stat">
+          <div class="value" id="charCount">0</div>
+          <div class="label-stat">字元</div>
+        </div>
+        <div class="stat">
+          <div class="value" id="sylCount">0</div>
+          <div class="label-stat">音節</div>
+        </div>
+        <div class="stat">
+          <div class="value" id="estDuration">0</div>
+          <div class="label-stat">估計秒數</div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 12px; display: flex; gap: 8px;">
+        <button onclick="synthesize()">🚀 合成語音</button>
+        <button class="secondary" onclick="clearAll()">清空</button>
+        <span id="status" class="status-inline"></span>
+      </div>
+    </div>
+    
+    <!-- 快速預設 -->
+    <div class="section">
+      <h3>📚 預設台羅範本</h3>
+      <div class="preset-grid">
+        <div class="preset-btn" onclick="loadPreset('001')">
+          <span class="preset-title">傷寒 001 太陽</span>
+          <span class="preset-preview">thài-iông tsi-uî-pīng...</span>
+        </div>
+        <div class="preset-btn" onclick="loadPreset('180')">
+          <span class="preset-title">傷寒 180 陽明</span>
+          <span class="preset-preview">iông-bîng tsi-uî-pīng...</span>
+        </div>
+        <div class="preset-btn" onclick="loadPreset('263')">
+          <span class="preset-title">傷寒 263 少陽</span>
+          <span class="preset-preview">kháu-khóo, ian-kan...</span>
+        </div>
+        <div class="preset-btn" onclick="loadPreset('273')">
+          <span class="preset-title">傷寒 273 太陰</span>
+          <span class="preset-preview">thài-im tsi-uî-pīng...</span>
+        </div>
+        <div class="preset-btn" onclick="loadPreset('281')">
+          <span class="preset-title">傷寒 281 少陰</span>
+          <span class="preset-preview">siàu-im tsi-uî-pīng...</span>
+        </div>
+        <div class="preset-btn" onclick="loadPreset('326')">
+          <span class="preset-title">傷寒 326 厥陰</span>
+          <span class="preset-preview">kuat-im tsi-uî-pīng...</span>
+        </div>
+        <div class="preset-btn" onclick="loadPreset('nan01')">
+          <span class="preset-title">難經 一難</span>
+          <span class="preset-preview">sip-jī king kai iú...</span>
+        </div>
+        <div class="preset-btn" onclick="loadPreset('all6')">
+          <span class="preset-title">🔥 傷寒六條全文</span>
+          <span class="preset-preview">六經提綱連讀</span>
+        </div>
+        <div class="preset-btn" onclick="loadPreset('number_test')">
+          <span class="preset-title">🧪 數字調測試</span>
+          <span class="preset-preview">thai3-iong5 tsi1-ui5...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 結果區 -->
+    <div class="section">
+      <h3>🔊 合成歷史</h3>
+      <div id="results">
+        <div style="color: #666; font-size: 13px; text-align: center; padding: 20px">
+          尚未合成任何音檔
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右側：參數控制 -->
+  <div>
+    <div class="section">
+      <h3>🎙️ 語者</h3>
+      <div class="voice-grid">
+        <div class="voice-mini active" data-voice="nan-TW-vs2-M02">男 M02</div>
+        <div class="voice-mini" data-voice="nan-TW-vs2-M01">男 M01</div>
+        <div class="voice-mini" data-voice="nan-TW-vs2-F01">女 F01</div>
+        <div class="voice-mini" data-voice="nan-TW-vs2-F02">女 F02</div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h3>⏱️ 語速</h3>
+      <div class="rate-slider">
+        <span style="color:#888;font-size:11px">慢</span>
+        <input type="range" id="rateSlider" min="0.5" max="1.5" step="0.05" value="0.9">
+        <span style="color:#888;font-size:11px">快</span>
+        <div class="rate-value" id="rateValue">0.90x</div>
+      </div>
+      <div class="note">
+        中醫古文建議 0.80-0.90 · 現代文字 1.0 · 快速複習 1.15
+      </div>
+    </div>
+    
+    <div class="section">
+      <h3>🔄 批次測試</h3>
+      <div class="batch-mode">
+        <label>一次跑多種語者</label>
+        <button onclick="batchVoiceTest()" style="width:100%;margin-top:5px">
+          🎤 4 語者各跑一次
+        </button>
+        <label style="margin-top:12px">一次跑多種速度</label>
+        <button onclick="batchSpeedTest()" style="width:100%;margin-top:5px">
+          ⚡ 0.80 / 1.00 / 1.20 各跑
+        </button>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h3>📊 今日統計</h3>
+      <div class="stats">
+        <div class="stat">
+          <div class="value" id="totalCount">0</div>
+          <div class="label-stat">合成次數</div>
+        </div>
+        <div class="stat">
+          <div class="value" id="totalSeconds">0</div>
+          <div class="label-stat">總秒數</div>
+        </div>
+        <div class="stat">
+          <div class="value" id="totalKB">0</div>
+          <div class="label-stat">總 KB</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+<script>
+// API endpoint 自動用當前網域
+const API_URL = window.location.origin + '/.netlify/functions/tailo-tts';
+
+let currentVoice = 'nan-TW-vs2-M02';
+let inputFormat = 'auto';
+let stats = { count: 0, seconds: 0, kb: 0 };
+
+const presets = {
+  '001': 'thài-iông tsi-uî-pīng, me̍k-hû, thâu-hāng kiông-thiànn jî ònn-hân.',
+  '180': 'iông-bîng tsi-uî-pīng, uī-ka si̍t sī iá.',
+  '263': 'siàu-iông tsi-uî-pīng, kháu-khóo, ian-kan, bo̍k-hiān iá.',
+  '273': 'thài-im tsi-uî-pīng, pak-buán jî thòo, si̍t put-hā, tsū-lī ik-sīm.',
+  '281': 'siàu-im tsi-uî-pīng, me̍k bî-sè, tān io̍k-bī iá.',
+  '326': 'kuat-im tsi-uî-pīng, siau-khat, khì-siōng-tōng-sim, sim-tiong thiànn-jua̍h, iau jî put-io̍k-si̍t, si̍t tsik thòo-huê.',
+  'nan01': 'sip-jī king kai iú tōng-me̍k, to̍k tshú tshùn-kháu, í kuat ngóo-tsōng lio̍k-hú sú-sing kiat-hiong tsi huat, hô uī iá?',
+  'all6': `thài-iông tsi-uî-pīng, me̍k-hû, thâu-hāng kiông-thiànn jî ònn-hân.
+iông-bîng tsi-uî-pīng, uī-ka si̍t sī iá.
+siàu-iông tsi-uî-pīng, kháu-khóo, ian-kan, bo̍k-hiān iá.
+thài-im tsi-uî-pīng, pak-buán jî thòo.
+siàu-im tsi-uî-pīng, me̍k bî-sè, tān io̍k-bī iá.
+kuat-im tsi-uî-pīng, siau-khat, khì-siōng-tōng-sim, sim-tiong thiànn-jua̍h.`,
+  'number_test': 'thai3-iong5 tsi1-ui5-ping7, mek8-hu5, thau5-hang7 kiong5-thiann3 ji5 onn3-han5.'
+};
+
+function loadPreset(key) {
+  document.getElementById('tailoInput').value = presets[key];
+  updateStats();
+}
+
+function updateStats() {
+  const text = document.getElementById('tailoInput').value;
+  const chars = text.length;
+  const syllables = (text.match(/[a-zA-Z]+/g) || []).length;
+  const duration = Math.round(syllables * 0.4);
+  
+  document.getElementById('charCount').textContent = chars;
+  document.getElementById('sylCount').textContent = syllables;
+  document.getElementById('estDuration').textContent = duration + 's';
+}
+
+document.getElementById('tailoInput').addEventListener('input', updateStats);
+updateStats();
+
+document.querySelectorAll('.voice-mini').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.voice-mini').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentVoice = btn.dataset.voice;
+  };
+});
+
+document.querySelectorAll('.format-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    inputFormat = btn.dataset.format;
+  };
+});
+
+document.getElementById('rateSlider').addEventListener('input', (e) => {
+  document.getElementById('rateValue').textContent = parseFloat(e.target.value).toFixed(2) + 'x';
+});
+
+async function synthesize(customOptions = {}) {
+  const text = document.getElementById('tailoInput').value.trim();
+  if (!text) { alert('請輸入台羅'); return; }
+  
+  const voice = customOptions.voice || currentVoice;
+  const rate = customOptions.rate || parseFloat(document.getElementById('rateSlider').value);
+  const status = document.getElementById('status');
+  
+  status.textContent = '⏳ 合成中...';
+  status.className = 'status-inline loading';
+  
+  const startTime = Date.now();
+  
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        tailo: text, 
+        voice, 
+        rate,
+        inputFormat
+      })
+    });
+    
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.audioBase64) throw new Error('無音檔');
+    
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const sizeKb = (data.audioBase64.length * 0.75 / 1024).toFixed(1);
+    
+    status.textContent = `✅ ${elapsed}s · ${sizeKb} KB`;
+    status.className = 'status-inline';
+    
+    addResult(text, data, { elapsed, sizeKb, voice, rate });
+    
+    stats.count++;
+    stats.seconds += parseFloat(elapsed);
+    stats.kb += parseFloat(sizeKb);
+    updateGlobalStats();
+    
+    return data;
+  } catch (err) {
+    status.textContent = `❌ ${err.message}`;
+    status.className = 'status-inline error';
+    console.error(err);
+  }
+}
+
+function addResult(text, data, meta) {
+  const container = document.getElementById('results');
+  if (stats.count === 0) container.innerHTML = '';
+  
+  const debug = data.meta ? 
+    `偵測=${data.meta.detectedFormat || '?'} · 轉換後=${(data.meta.convertedInput || '').substring(0, 50)}...` : '';
+  
+  const card = document.createElement('div');
+  card.className = 'result-card';
+  card.innerHTML = `
+    <div class="label-row">
+      <span>🎙️ ${meta.voice} · ${meta.rate}x · ${meta.elapsed}s · ${meta.sizeKb} KB</span>
+      <span>${new Date().toLocaleTimeString()}</span>
+    </div>
+    <div class="tailo-content">${escapeHtml(text.substring(0, 120))}${text.length > 120 ? '...' : ''}</div>
+    ${debug ? `<div class="debug-info">🔍 ${escapeHtml(debug)}</div>` : ''}
+    <audio controls src="data:${data.mimeType || 'audio/mp4'};base64,${data.audioBase64}"></audio>
+  `;
+  container.insertBefore(card, container.firstChild);
+  
+  setTimeout(() => card.querySelector('audio').play().catch(() => {}), 200);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function updateGlobalStats() {
+  document.getElementById('totalCount').textContent = stats.count;
+  document.getElementById('totalSeconds').textContent = Math.round(stats.seconds);
+  document.getElementById('totalKB').textContent = Math.round(stats.kb);
+}
+
+async function batchVoiceTest() {
+  const voices = ['nan-TW-vs2-M02', 'nan-TW-vs2-M01', 'nan-TW-vs2-F01', 'nan-TW-vs2-F02'];
+  for (const voice of voices) {
+    await synthesize({ voice });
+    await new Promise(r => setTimeout(r, 500));
+  }
+}
+
+async function batchSpeedTest() {
+  const rates = [0.80, 1.00, 1.20];
+  for (const rate of rates) {
+    await synthesize({ rate });
+    await new Promise(r => setTimeout(r, 500));
+  }
+}
+
+function clearAll() {
+  document.getElementById('tailoInput').value = '';
+  updateStats();
+}
+</script>
+
+</body>
+</html>

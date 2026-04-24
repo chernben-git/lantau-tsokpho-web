@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台語 AI 合成 · NYCU BRONCI × 劍橋分析</title>
+<style>
+  * { box-sizing: border-box; }
+  body { 
+    font-family: 'Noto Sans TC', sans-serif; 
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+    color: #e6e6e6;
+    min-height: 100vh;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+  
+  header {
+    text-align: center;
+    padding: 30px 20px 20px;
+    border-bottom: 2px solid #ffd700;
+    margin-bottom: 30px;
+  }
+  h1 { color: #ffd700; margin: 0 0 10px; font-size: 28px; }
+  .subtitle { color: #aaa; font-size: 14px; }
+  .attribution {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid #ffd700;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 15px auto;
+    max-width: 600px;
+    font-size: 13px;
+    color: #ffd700;
+  }
+  .attribution b { color: #ffed4e; }
+  
+  .mode-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .mode-btn {
+    background: #16213e;
+    border: 2px solid #0f3460;
+    color: #e6e6e6;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .mode-btn:hover { border-color: #ffd700; }
+  .mode-btn.active {
+    background: #ffd700;
+    color: #1a1a2e;
+    border-color: #ffd700;
+    font-weight: bold;
+  }
+  .mode-btn .flag { font-size: 24px; display: block; margin-bottom: 4px; }
+  .mode-btn .label { font-size: 12px; }
+  
+  .input-section {
+    background: #16213e;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #0f3460;
+  }
+  label { 
+    display: block; 
+    color: #ffd700; 
+    font-weight: bold; 
+    margin-bottom: 8px; 
+    font-size: 14px;
+  }
+  textarea {
+    width: 100%;
+    background: #0f3460;
+    color: #e6e6e6;
+    border: 1px solid #1e3a5f;
+    padding: 12px;
+    border-radius: 5px;
+    font-size: 16px;
+    min-height: 80px;
+    resize: vertical;
+    font-family: inherit;
+  }
+  textarea:focus { outline: 2px solid #ffd700; }
+  
+  .voice-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .voice-btn {
+    background: #0f3460;
+    border: 1px solid #1e3a5f;
+    color: #e6e6e6;
+    padding: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .voice-btn.active { background: #ffd700; color: #1a1a2e; border-color: #ffd700; }
+  
+  .rate-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .rate-control input[type="range"] { flex: 1; }
+  .rate-label {
+    background: #ffd700;
+    color: #1a1a2e;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    min-width: 55px;
+    text-align: center;
+    font-size: 13px;
+  }
+  
+  .action-btn {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #1a1a2e;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 15px;
+  }
+  .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  
+  .output-section {
+    background: #16213e;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #0f3460;
+    display: none;
+  }
+  .output-section.active { display: block; }
+  .output-row { margin: 15px 0; }
+  .output-label { color: #ffd700; font-size: 13px; margin-bottom: 5px; }
+  .output-value {
+    background: #0f3460;
+    padding: 12px;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    word-break: break-word;
+    line-height: 1.6;
+  }
+  .output-value.taigi { 
+    font-family: 'Noto Sans TC', sans-serif; 
+    font-size: 17px;
+    line-height: 1.8;
+  }
+  
+  audio { width: 100%; margin-top: 10px; }
+  
+  .status { 
+    color: #4caf50; 
+    font-size: 14px; 
+    margin-left: 10px;
+    display: inline-block;
+  }
+  .status.error { color: #f44336; }
+  .status.loading { color: #ffd700; }
+  
+  .samples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .sample-btn {
+    background: #0f3460;
+    border: 1px solid #1e3a5f;
+    color: #aaa;
+    padding: 5px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .sample-btn:hover { background: #1e3a5f; color: #e6e6e6; }
+  
+  footer {
+    text-align: center;
+    padding: 20px;
+    border-top: 1px solid #0f3460;
+    margin-top: 40px;
+    font-size: 12px;
+    color: #888;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+  <h1>🎙️ 台語 AI 合成展示站</h1>
+  <p class="subtitle">Multi-language → 台語 · 台羅 · 語音</p>
+  <div class="attribution">
+    🏛️ <b>AI 技術提供</b>：國立陽明交通大學 BRONCI Lab · <b>廖元甫 教授團隊</b><br>
+    🔧 <b>整合開發</b>：劍橋分析股份有限公司（Patent I914853）
+  </div>
+</header>
+
+<!-- 模式選擇 -->
+<label>1️⃣ 選擇轉換模式</label>
+<div class="mode-selector" id="modeSelector">
+  <div class="mode-btn active" data-mode="zh-to-taigi">
+    <span class="flag">🇹🇼</span>
+    <span class="label">華語 → 台語</span>
+  </div>
+  <div class="mode-btn" data-mode="zh-to-hakka-sixian">
+    <span class="flag">🎋</span>
+    <span class="label">華語 → 客語（四縣）</span>
+  </div>
+  <div class="mode-btn" data-mode="zh-to-hakka-hailu">
+    <span class="flag">🎋</span>
+    <span class="label">華語 → 客語（海陸）</span>
+  </div>
+  <div class="mode-btn" data-mode="tailo-direct">
+    <span class="flag">🔤</span>
+    <span class="label">台羅 直接念</span>
+  </div>
+</div>
+
+<!-- 輸入 -->
+<div class="input-section">
+  <label>2️⃣ 輸入要轉換的文字</label>
+  <textarea id="inputText" placeholder="輸入華語..."></textarea>
+  
+  <div class="samples" id="samples">
+    <span class="sample-btn" onclick="loadSample('今天天氣很好，我想出去走走。')">天氣閒聊</span>
+    <span class="sample-btn" onclick="loadSample('感謝主的恩典，平安喜樂。')">禱告</span>
+    <span class="sample-btn" onclick="loadSample('太陽之為病，脈浮、頭項強痛而惡寒。')">中醫經典</span>
+    <span class="sample-btn" onclick="loadSample('人無遠慮，必有近憂。')">古文</span>
+  </div>
+  
+  <label style="margin-top: 20px">🎙️ 語者選擇</label>
+  <div class="voice-options" id="voiceOptions">
+    <div class="voice-btn active" data-voice="nan-TW-vs2-M02">男聲 M02</div>
+    <div class="voice-btn" data-voice="nan-TW-vs2-M01">男聲 M01</div>
+    <div class="voice-btn" data-voice="nan-TW-vs2-F01">女聲 F01</div>
+    <div class="voice-btn" data-voice="nan-TW-vs2-F02">女聲 F02</div>
+  </div>
+  
+  <label style="margin-top: 15px">⏱️ 語速</label>
+  <div class="rate-control">
+    <span style="color:#888;font-size:12px">慢</span>
+    <input type="range" id="rateSlider" min="0.7" max="1.3" step="0.05" value="1.0">
+    <span style="color:#888;font-size:12px">快</span>
+    <div class="rate-label" id="rateLabel">1.00x</div>
+  </div>
+  
+  <button class="action-btn" id="generateBtn" onclick="generate()">
+    🚀 轉換並生成語音
+  </button>
+</div>
+
+<!-- 輸出 -->
+<div class="output-section" id="outputSection">
+  <div class="output-row">
+    <div class="output-label">📝 原文</div>
+    <div class="output-value" id="originalText"></div>
+  </div>
+  
+  <div class="output-row" id="taigiRow">
+    <div class="output-label">🈁 翻譯結果</div>
+    <div class="output-value taigi" id="taigiText"></div>
+  </div>
+  
+  <div class="output-row" id="tailoRow">
+    <div class="output-label">🔤 台羅拼音</div>
+    <div class="output-value" id="tailoText"></div>
+  </div>
+  
+  <div class="output-row">
+    <div class="output-label">🔊 語音合成 <span id="audioStatus" class="status"></span></div>
+    <audio id="audio" controls></audio>
+  </div>
+</div>
+
+<footer>
+  <p>Powered by NYCU BRONCI × 劍橋分析</p>
+  <p style="color: #666">廖元甫教授團隊提供 AI 引擎 · 冰焰系統整合</p>
+</footer>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// API Endpoints
+// ═══════════════════════════════════════════════════════
+const API_BASE = window.location.origin;  // 自動用當前網域
+const API = {
+  mtTranslate: API_BASE + '/.netlify/functions/mt-translate',
+  ttsSpeak:    API_BASE + '/.netlify/functions/tts-speak',
+  tailoTts:    API_BASE + '/.netlify/functions/tailo-tts'
+};
+
+let currentMode = 'zh-to-taigi';
+let currentVoice = 'nan-TW-vs2-M02';
+let currentRate = 1.0;
+
+// ═══════════════════════════════════════════════════════
+// UI 事件綁定
+// ═══════════════════════════════════════════════════════
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    
+    const placeholders = {
+      'zh-to-taigi':       '例：今天天氣很好，我想去散步。',
+      'zh-to-hakka-sixian':'例：今天天氣很好。（四縣腔）',
+      'zh-to-hakka-hailu': '例：今天天氣很好。（海陸腔）',
+      'tailo-direct':      '例：thài-iông tsi-uî-pīng, me̍k-hû...'
+    };
+    document.getElementById('inputText').placeholder = placeholders[currentMode] || '';
+    
+    // 台羅模式不需要翻譯那行
+    document.getElementById('taigiRow').style.display = 
+      currentMode === 'tailo-direct' ? 'none' : 'block';
+  };
+});
+
+document.querySelectorAll('.voice-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.voice-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentVoice = btn.dataset.voice;
+  };
+});
+
+document.getElementById('rateSlider').addEventListener('input', (e) => {
+  currentRate = parseFloat(e.target.value);
+  document.getElementById('rateLabel').textContent = currentRate.toFixed(2) + 'x';
+});
+
+function loadSample(text) {
+  document.getElementById('inputText').value = text;
+}
+
+// ═══════════════════════════════════════════════════════
+// 主流程
+// ═══════════════════════════════════════════════════════
+async function generate() {
+  const text = document.getElementById('inputText').value.trim();
+  if (!text) { alert('請輸入文字'); return; }
+  
+  const btn = document.getElementById('generateBtn');
+  const status = document.getElementById('audioStatus');
+  const output = document.getElementById('outputSection');
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ 處理中...';
+  output.classList.add('active');
+  document.getElementById('originalText').textContent = text;
+  
+  try {
+    if (currentMode === 'tailo-direct') {
+      await processTailoDirect(text);
+    } else {
+      await processZhTranslate(text);
+    }
+  } catch (err) {
+    status.textContent = `❌ ${err.message}`;
+    status.className = 'status error';
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 轉換並生成語音';
+  }
+}
+
+// ─── 台羅直送 ──────────────────────────────────────────
+async function processTailoDirect(text) {
+  const status = document.getElementById('audioStatus');
+  document.getElementById('tailoText').textContent = text;
+  
+  status.textContent = '⏳ 送台羅合成...';
+  status.className = 'status loading';
+  const startTime = Date.now();
+  
+  const response = await fetch(API.tailoTts, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      tailo: text, 
+      voice: currentVoice, 
+      rate: currentRate 
+    })
+  });
+  
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  
+  playAudio(data);
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  status.textContent = `✅ ${elapsed}s · ${data.meta?.detectedFormat || ''}`;
+  status.className = 'status';
+}
+
+// ─── 華語翻譯 + 合成 ───────────────────────────────────
+async function processZhTranslate(text) {
+  const status = document.getElementById('audioStatus');
+  
+  // Step 1: 翻譯
+  status.textContent = '⏳ 翻譯中...';
+  status.className = 'status loading';
+  
+  const mtMode = {
+    'zh-to-taigi':        { mode: 'taigi_zh_tw', both: true },
+    'zh-to-hakka-sixian': { mode: 'hakka_zh_hk', both: false },
+    'zh-to-hakka-hailu':  { mode: 'hakka_hailu_zh_hk', both: false }
+  }[currentMode];
+  
+  const mtResp = await fetch(API.mtTranslate, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, ...mtMode })
+  });
+  
+  const mtData = await mtResp.json();
+  if (mtData.error) throw new Error('翻譯失敗：' + mtData.error);
+  
+  // 顯示翻譯結果
+  const translatedText = mtData.taigi || mtData.tailo || '';
+  document.getElementById('taigiText').textContent = translatedText;
+  document.getElementById('tailoText').textContent = mtData.tailo || '—';
+  
+  // Step 2: 合成（送翻譯後的漢字給 TTS）
+  status.textContent = '⏳ 生成語音中...';
+  const startTime = Date.now();
+  
+  const ttsResp = await fetch(API.ttsSpeak, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      text: translatedText, 
+      voice: currentVoice, 
+      rate: currentRate 
+    })
+  });
+  
+  const ttsData = await ttsResp.json();
+  if (ttsData.error) throw new Error('合成失敗：' + ttsData.error);
+  
+  playAudio(ttsData);
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  status.textContent = `✅ 翻譯 + 合成 ${elapsed}s`;
+  status.className = 'status';
+}
+
+// ─── 播放音檔 ──────────────────────────────────────────
+function playAudio(data) {
+  if (!data.audioBase64) throw new Error('沒收到音檔');
+  const audio = document.getElementById('audio');
+  audio.src = `data:${data.mimeType || 'audio/mp4'};base64,${data.audioBase64}`;
+  audio.play().catch(() => {});
+}
+</script>
+
+</body>
+</html>
